@@ -51,52 +51,48 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <div className="mobile-container">
-          <div className="mobile-frame">
-            <BrowserRouter>
-              <Routes>
-                {/* Splash */}
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
+        <BrowserRouter>
+          <Routes>
+            {/* Splash */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
 
-                {/* Customer */}
-                <Route path="/home" element={<CustomerHome />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-                <Route path="/active-booking" element={<ActiveBooking />} />
-                <Route path="/rate-service" element={<RateService />} />
-                <Route path="/my-bookings" element={<MyBookings />} />
-                <Route path="/profile" element={<CustomerProfile />} />
-                <Route path="/notifications" element={<Notifications />} />
+            {/* Customer */}
+            <Route path="/home" element={<CustomerHome />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/booking" element={<Booking />} />
+            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+            <Route path="/active-booking" element={<ActiveBooking />} />
+            <Route path="/rate-service" element={<RateService />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/profile" element={<CustomerProfile />} />
+            <Route path="/notifications" element={<Notifications />} />
 
-                {/* Cleaner */}
-                <Route path="/cleaner" element={<CleanerDashboard />} />
-                <Route path="/cleaner/bookings" element={<BookingDetail />} />
-                <Route path="/cleaner/earnings" element={<CleanerEarnings />} />
-                <Route path="/cleaner/profile" element={<CleanerProfile />} />
+            {/* Cleaner */}
+            <Route path="/cleaner" element={<CleanerDashboard />} />
+            <Route path="/cleaner/bookings" element={<BookingDetail />} />
+            <Route path="/cleaner/earnings" element={<CleanerEarnings />} />
+            <Route path="/cleaner/profile" element={<CleanerProfile />} />
 
-                {/* Enrolment */}
-                <Route path="/enrol/register" element={<Register />} />
-                <Route path="/enrol/status" element={<ApplicationStatus />} />
-                <Route path="/enrol/training" element={<Training />} />
+            {/* Enrolment */}
+            <Route path="/enrol/register" element={<Register />} />
+            <Route path="/enrol/status" element={<ApplicationStatus />} />
+            <Route path="/enrol/training" element={<Training />} />
 
-                {/* Admin */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/bookings" element={<AdminBookings />} />
-                <Route path="/admin/customers" element={<AdminCustomers />} />
-                <Route path="/admin/cleaners" element={<AdminCleaners />} />
-                <Route path="/admin/enrolments" element={<AdminEnrolments />} />
-                <Route path="/admin/training" element={<AdminTrainingProgress />} />
-                <Route path="/admin/services" element={<AdminServices />} />
-                <Route path="/admin/coupons" element={<AdminCoupons />} />
-                <Route path="/admin/reports" element={<AdminReports />} />
+            {/* Admin */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/bookings" element={<AdminBookings />} />
+            <Route path="/admin/customers" element={<AdminCustomers />} />
+            <Route path="/admin/cleaners" element={<AdminCleaners />} />
+            <Route path="/admin/enrolments" element={<AdminEnrolments />} />
+            <Route path="/admin/training" element={<AdminTrainingProgress />} />
+            <Route path="/admin/services" element={<AdminServices />} />
+            <Route path="/admin/coupons" element={<AdminCoupons />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </div>
-        </div>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
