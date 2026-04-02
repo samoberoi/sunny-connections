@@ -8,30 +8,20 @@ import { cleaners } from '@/data/mockData';
 export default function AdminCleaners() {
   return (
     <AdminLayout>
-      <h1 className="font-display text-2xl font-bold text-foreground mb-6">Manage Cleaners</h1>
-      <div className="glass-card rounded-xl overflow-hidden">
+      <h1 className="text-2xl font-bold text-foreground mb-6">Manage Cleaners</h1>
+      <div className="glass-card-elevated rounded-2xl overflow-hidden shadow-apple">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead>Experience</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TableHeader><TableRow>
+            <TableHead>Name</TableHead><TableHead>Rating</TableHead><TableHead>Experience</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+          </TableRow></TableHeader>
           <TableBody>
             {cleaners.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell><StarRating rating={Math.round(c.rating)} readonly size="sm" /></TableCell>
                 <TableCell>{c.experience} yrs</TableCell>
-                <TableCell>
-                  <Badge className={c.available ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}>
-                    {c.available ? 'Available' : 'Unavailable'}
-                  </Badge>
-                </TableCell>
-                <TableCell><Button size="sm" variant="outline">View</Button></TableCell>
+                <TableCell><Badge className={`rounded-lg ${c.available ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{c.available ? 'Available' : 'Unavailable'}</Badge></TableCell>
+                <TableCell><Button size="sm" variant="outline" className="rounded-xl">View</Button></TableCell>
               </TableRow>
             ))}
           </TableBody>

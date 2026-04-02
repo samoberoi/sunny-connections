@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Leaf, Phone } from 'lucide-react';
+import { Phone, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -30,74 +30,82 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col gradient-hero">
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Leaf className="h-10 w-10 text-secondary" />
-            <h1 className="font-display text-3xl font-bold text-primary-foreground">Indiana Green</h1>
-          </div>
-          <p className="text-primary-foreground/70 text-sm">London's Most Trusted Cleaning Service</p>
-        </motion.div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4">
+        <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-xl hover:bg-muted transition-colors">
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </button>
+      </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="w-full max-w-sm bg-card rounded-2xl p-6 shadow-xl"
-        >
+      <div className="px-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {step === 'phone' ? (
             <>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-1">Welcome back</h2>
-              <p className="text-sm text-muted-foreground mb-6">Enter your mobile number to continue</p>
-              
-              <div className="space-y-4">
-                <div className="flex gap-2 mb-4">
-                  {(['customer', 'cleaner', 'admin'] as UserRole[]).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setRole(r)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-medium capitalize transition-colors ${role === r ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
+              <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to <span className="text-gradient">Cleanfit</span></h1>
+              <p className="text-muted-foreground text-sm mb-8">Enter your mobile number to continue</p>
 
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+44 7700 900000"
-                    className="pl-10"
-                  />
-                </div>
-                <Button onClick={handleSendOTP} className="w-full gradient-primary text-primary-foreground">
-                  Send OTP
-                </Button>
+              {/* Role selector */}
+              <div className="flex gap-2 p-1 bg-muted rounded-2xl mb-6">
+                {(['customer', 'cleaner', 'admin'] as UserRole[]).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setRole(r)}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                      role === r
+                        ? 'bg-card shadow-apple text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
               </div>
+
+              <div className="relative mb-6">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+44 7700 900000"
+                  className="pl-12 h-14 rounded-2xl bg-muted/50 border-0 text-base focus-visible:ring-primary/30"
+                />
+              </div>
+
+              <Button
+                onClick={handleSendOTP}
+                className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue"
+              >
+                Send OTP
+              </Button>
             </>
           ) : (
             <>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-1">Verify OTP</h2>
-              <p className="text-sm text-muted-foreground mb-6">Enter the 4-digit code sent to {phone}</p>
-              
-              <div className="flex justify-center mb-6">
+              <h1 className="text-2xl font-bold text-foreground mb-1">Verify your number</h1>
+              <p className="text-muted-foreground text-sm mb-8">Enter the 4-digit code sent to {phone}</p>
+
+              <div className="flex justify-center mb-8">
                 <InputOTP maxLength={4} value={otp} onChange={setOtp}>
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
+                  <InputOTPGroup className="gap-3">
+                    {[0, 1, 2, 3].map(i => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="w-16 h-16 rounded-2xl border-2 border-muted bg-muted/30 text-xl font-bold"
+                      />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
               </div>
 
-              <Button onClick={handleVerify} className="w-full gradient-primary text-primary-foreground">
+              <Button
+                onClick={handleVerify}
+                className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue"
+              >
                 Verify & Continue
               </Button>
-              <button onClick={() => setStep('phone')} className="w-full text-center text-sm text-muted-foreground mt-3 hover:text-foreground">
+
+              <button onClick={() => setStep('phone')} className="w-full text-center text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors">
                 Change number
               </button>
             </>

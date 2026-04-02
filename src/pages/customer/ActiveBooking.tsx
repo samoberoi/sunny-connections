@@ -19,48 +19,45 @@ export default function ActiveBooking() {
 
   return (
     <CustomerLayout>
-      <div className="px-6 pt-6 pb-6">
+      <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <h1 className="font-display text-xl font-semibold text-foreground">Booking Status</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">Booking Status</h1>
         </div>
 
-        <div className="glass-card rounded-xl p-6 mb-6">
-          <div className="space-y-0">
-            {statuses.map((status, i) => {
-              const done = i <= currentStatus;
-              const current = i === currentStatus;
-              return (
-                <div key={status.key} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    {done ? (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                        <CheckCircle className={`h-6 w-6 ${current ? 'text-secondary animate-pulse-gentle' : 'text-primary'}`} />
-                      </motion.div>
-                    ) : (
-                      <Circle className="h-6 w-6 text-muted-foreground/30" />
-                    )}
-                    {i < statuses.length - 1 && <div className={`w-0.5 h-12 ${done ? 'bg-primary' : 'bg-muted'}`} />}
-                  </div>
-                  <div className="pb-6">
-                    <p className={`font-medium text-sm ${done ? 'text-foreground' : 'text-muted-foreground'}`}>{status.label}</p>
-                    <p className="text-xs text-muted-foreground">{status.desc}</p>
-                  </div>
+        <div className="glass-card rounded-2xl p-6 mb-6 shadow-apple">
+          {statuses.map((status, i) => {
+            const done = i <= currentStatus;
+            const current = i === currentStatus;
+            return (
+              <div key={status.key} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  {done ? (
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                      <CheckCircle className={`h-7 w-7 ${current ? 'text-primary animate-pulse' : 'text-primary'}`} />
+                    </motion.div>
+                  ) : (
+                    <Circle className="h-7 w-7 text-muted-foreground/20" />
+                  )}
+                  {i < statuses.length - 1 && <div className={`w-0.5 h-12 rounded-full ${done ? 'bg-primary' : 'bg-muted'}`} />}
                 </div>
-              );
-            })}
-          </div>
+                <div className="pb-6">
+                  <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}>{status.label}</p>
+                  <p className={`text-xs ${done ? 'text-muted-foreground' : 'text-muted-foreground/30'}`}>{status.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Demo controls */}
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setCurrentStatus(Math.max(0, currentStatus - 1))}>
+        <div className="flex gap-3">
+          <Button size="sm" variant="outline" onClick={() => setCurrentStatus(Math.max(0, currentStatus - 1))} className="rounded-xl">
             Previous
           </Button>
           <Button size="sm" onClick={() => {
             if (currentStatus < statuses.length - 1) setCurrentStatus(currentStatus + 1);
             else navigate('/rate-service');
-          }}>
+          }} className="rounded-xl gradient-blue text-primary-foreground">
             {currentStatus < statuses.length - 1 ? 'Next Step' : 'Rate Service'}
           </Button>
         </div>

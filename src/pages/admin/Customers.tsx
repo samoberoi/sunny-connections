@@ -11,18 +11,12 @@ const customers = [
 export default function AdminCustomers() {
   return (
     <AdminLayout>
-      <h1 className="font-display text-2xl font-bold text-foreground mb-6">Manage Customers</h1>
-      <div className="glass-card rounded-xl overflow-hidden">
+      <h1 className="text-2xl font-bold text-foreground mb-6">Manage Customers</h1>
+      <div className="glass-card-elevated rounded-2xl overflow-hidden shadow-apple">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Bookings</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TableHeader><TableRow>
+            <TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Bookings</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead>
+          </TableRow></TableHeader>
           <TableBody>
             {customers.map(c => (
               <TableRow key={c.id}>
@@ -30,7 +24,7 @@ export default function AdminCustomers() {
                 <TableCell>{c.phone}</TableCell>
                 <TableCell>{c.bookings}</TableCell>
                 <TableCell>{c.joined}</TableCell>
-                <TableCell><Button size="sm" variant="outline">View</Button></TableCell>
+                <TableCell><Button size="sm" variant="outline" className="rounded-xl">View</Button></TableCell>
               </TableRow>
             ))}
           </TableBody>

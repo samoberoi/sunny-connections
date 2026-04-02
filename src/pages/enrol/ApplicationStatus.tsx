@@ -12,16 +12,16 @@ const stages = [
 
 export default function ApplicationStatus() {
   const navigate = useNavigate();
-  const currentStage = 1; // under-review
+  const currentStage = 1;
 
   return (
-    <div className="min-h-screen bg-background px-6 pt-6 pb-6">
+    <div className="min-h-screen bg-background px-5 pt-6 pb-6">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/')} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-        <h1 className="font-display text-xl font-semibold text-foreground">Application Status</h1>
+        <button onClick={() => navigate('/')} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+        <h1 className="text-xl font-bold text-foreground">Application Status</h1>
       </div>
 
-      <div className="glass-card rounded-xl p-6">
+      <div className="glass-card rounded-2xl p-6 shadow-apple">
         {stages.map((stage, i) => {
           const done = i <= currentStage;
           const current = i === currentStage;
@@ -29,14 +29,14 @@ export default function ApplicationStatus() {
             <div key={stage.key} className="flex gap-4">
               <div className="flex flex-col items-center">
                 {done ? (
-                  current ? <Clock className="h-6 w-6 text-secondary animate-pulse-gentle" /> : <CheckCircle className="h-6 w-6 text-primary" />
+                  current ? <Clock className="h-7 w-7 text-primary animate-pulse" /> : <CheckCircle className="h-7 w-7 text-primary" />
                 ) : (
-                  <Circle className="h-6 w-6 text-muted-foreground/30" />
+                  <Circle className="h-7 w-7 text-muted-foreground/20" />
                 )}
-                {i < stages.length - 1 && <div className={`w-0.5 h-10 ${done ? 'bg-primary' : 'bg-muted'}`} />}
+                {i < stages.length - 1 && <div className={`w-0.5 h-10 rounded-full ${done ? 'bg-primary' : 'bg-muted'}`} />}
               </div>
               <div className="pb-4">
-                <p className={`font-medium text-sm ${done ? 'text-foreground' : 'text-muted-foreground'}`}>{stage.label}</p>
+                <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}>{stage.label}</p>
                 {current && <p className="text-xs text-muted-foreground">We're reviewing your application</p>}
               </div>
             </div>
@@ -45,7 +45,7 @@ export default function ApplicationStatus() {
       </div>
 
       <div className="mt-6">
-        <Button onClick={() => navigate('/enrol/training')} variant="outline" className="w-full">
+        <Button onClick={() => navigate('/enrol/training')} variant="outline" className="w-full h-12 rounded-2xl">
           Preview Training Programme
         </Button>
       </div>

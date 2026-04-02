@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, MapPin, Star, LogOut } from 'lucide-react';
+import { ArrowLeft, Phone, Star, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CleanerLayout from '@/components/layout/CleanerLayout';
@@ -13,20 +13,20 @@ export default function CleanerProfile() {
 
   return (
     <CleanerLayout>
-      <div className="px-6 pt-6 pb-6">
+      <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <h1 className="font-display text-xl font-semibold text-foreground">My Profile</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">My Profile</h1>
         </div>
 
-        <div className="glass-card rounded-xl p-6 text-center mb-6">
-          <div className="w-20 h-20 rounded-full gradient-primary mx-auto mb-3 flex items-center justify-center text-primary-foreground font-bold text-2xl">
+        <div className="glass-card rounded-2xl p-8 text-center mb-6 shadow-apple">
+          <div className="w-20 h-20 rounded-2xl gradient-blue mx-auto mb-4 flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-blue">
             {user?.name?.[0] || 'E'}
           </div>
-          <h2 className="font-display text-xl font-semibold text-foreground">{user?.name}</h2>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <Star className="h-4 w-4 fill-secondary text-secondary" />
-            <span className="font-medium text-foreground">{cleaner.rating}</span>
+          <h2 className="text-xl font-bold text-foreground">{user?.name}</h2>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span className="font-bold text-foreground">{cleaner.rating}</span>
             <span className="text-sm text-muted-foreground">({cleaner.reviewCount} reviews)</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
@@ -34,24 +34,21 @@ export default function CleanerProfile() {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-4 mb-4">
-          <h3 className="font-semibold text-foreground mb-2">Specialisations</h3>
+        <div className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
+          <h3 className="font-semibold text-foreground mb-3">Specialisations</h3>
           <div className="flex flex-wrap gap-2">
             {cleaner.specialisations.map(s => (
-              <Badge key={s} className="bg-accent text-accent-foreground">{s}</Badge>
+              <Badge key={s} className="bg-accent text-accent-foreground rounded-xl px-3 py-1">{s}</Badge>
             ))}
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-4 mb-6">
+        <div className="glass-card rounded-2xl p-5 mb-6 shadow-apple">
           <h3 className="font-semibold text-foreground mb-2">Details</h3>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>{cleaner.experience} years experience</p>
-            <p>DBS checked & verified</p>
-          </div>
+          <p className="text-sm text-muted-foreground">{cleaner.experience} years experience · DBS checked & verified</p>
         </div>
 
-        <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full text-destructive border-destructive/30">
+        <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-2xl text-destructive border-destructive/20">
           <LogOut className="h-4 w-4 mr-2" /> Log Out
         </Button>
       </div>

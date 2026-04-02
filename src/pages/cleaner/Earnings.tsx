@@ -14,32 +14,33 @@ export default function CleanerEarnings() {
 
   return (
     <CleanerLayout>
-      <div className="px-6 pt-6 pb-6">
+      <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <h1 className="font-display text-xl font-semibold text-foreground">Earnings</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">Earnings</h1>
         </div>
 
-        <div className="glass-card rounded-xl p-6 text-center mb-6">
-          <PoundSterling className="h-8 w-8 mx-auto mb-2 text-primary" />
-          <div className="font-display text-3xl font-bold text-foreground">£{total}</div>
-          <p className="text-sm text-muted-foreground">This week</p>
-          <div className="flex items-center justify-center gap-1 mt-2 text-xs text-primary">
+        <div className="glass-card rounded-2xl p-8 text-center mb-6 shadow-apple">
+          <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-3">
+            <PoundSterling className="h-7 w-7 text-primary" />
+          </div>
+          <div className="text-4xl font-extrabold text-foreground">£{total}</div>
+          <p className="text-sm text-muted-foreground mt-1">This week</p>
+          <div className="flex items-center justify-center gap-1 mt-2 text-xs text-secondary font-semibold">
             <TrendingUp className="h-3 w-3" /> 12% from last week
           </div>
         </div>
 
-        {/* Bar chart */}
-        <div className="glass-card rounded-xl p-4">
-          <h3 className="font-display font-semibold text-foreground mb-4">Daily Breakdown</h3>
+        <div className="glass-card rounded-2xl p-5 shadow-apple">
+          <h3 className="font-bold text-foreground mb-5">Daily Breakdown</h3>
           <div className="flex items-end gap-2 h-40">
             {weeklyData.map(d => (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-muted-foreground">£{d.amount}</span>
-                <div className="w-full rounded-t-md bg-primary/20 relative" style={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%`, minHeight: '4px' }}>
-                  <div className="absolute inset-0 rounded-t-md gradient-primary opacity-70" />
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-2">
+                <span className="text-[10px] font-medium text-muted-foreground">£{d.amount}</span>
+                <div className="w-full rounded-xl relative overflow-hidden" style={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%`, minHeight: '4px' }}>
+                  <div className="absolute inset-0 rounded-xl gradient-blue" />
                 </div>
-                <span className="text-xs text-muted-foreground">{d.day}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground">{d.day}</span>
               </div>
             ))}
           </div>
