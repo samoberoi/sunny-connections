@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Wrench, Tag, BarChart3, Menu } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Wrench, Tag, BarChart3 } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -23,11 +23,11 @@ function AdminSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4">
-          <h2 className={`font-display font-bold text-sidebar-foreground ${collapsed ? 'text-xs' : 'text-lg'}`}>
-            {collapsed ? 'IG' : 'Indiana Green'}
+        <div className="p-4 pb-2">
+          <h2 className={`font-bold text-sidebar-foreground ${collapsed ? 'text-xs' : 'text-lg'}`}>
+            {collapsed ? 'CF' : 'Cleanfit'}
           </h2>
-          {!collapsed && <p className="text-xs text-sidebar-foreground/60 mt-1">Super Admin</p>}
+          {!collapsed && <p className="text-xs text-sidebar-foreground/50 mt-0.5">Super Admin</p>}
         </div>
         <SidebarGroup>
           <SidebarGroupLabel>Management</SidebarGroupLabel>
@@ -38,9 +38,9 @@ function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild>
-                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${active ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'}`}>
+                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${active ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'}`}>
                         <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
+                        {!collapsed && <span className="text-sm">{item.label}</span>}
                       </RouterNavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -60,11 +60,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b border-border px-4 bg-card">
+          <header className="h-14 flex items-center border-b border-border px-4 bg-card/80 backdrop-blur-xl">
             <SidebarTrigger className="mr-4" />
-            <span className="font-display font-semibold text-foreground">Admin Panel</span>
+            <span className="font-bold text-foreground">Admin Panel</span>
           </header>
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
+          <main className="flex-1 p-6 overflow-auto bg-muted/30">{children}</main>
         </div>
       </div>
     </SidebarProvider>
