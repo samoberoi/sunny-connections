@@ -12,19 +12,19 @@ interface ServiceCardProps {
 export default function ServiceCard({ service, onBook }: ServiceCardProps) {
   const Icon = iconMap[service.icon] || Sparkles;
   return (
-    <div className="glass-card rounded-xl p-4 flex items-start gap-4 transition-all hover:shadow-md">
-      <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center shrink-0">
+    <div className="glass-card rounded-2xl p-5 flex items-start gap-4 shadow-apple hover:shadow-apple-lg transition-all">
+      <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center shrink-0">
         <Icon className="h-6 w-6 text-primary" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-display font-semibold text-foreground">{service.name}</h3>
+        <h3 className="font-bold text-foreground">{service.name}</h3>
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{service.description}</p>
         <div className="flex items-center justify-between mt-3">
           <div>
-            <span className="text-lg font-bold text-foreground">£{service.ratePerHour}</span>
+            <span className="text-xl font-extrabold text-foreground">£{service.ratePerHour}</span>
             <span className="text-xs text-muted-foreground">/hr</span>
           </div>
-          <Button size="sm" onClick={() => onBook(service)} className="gradient-primary text-primary-foreground">
+          <Button size="sm" onClick={() => onBook(service)} className="gradient-blue text-primary-foreground rounded-xl shadow-blue/30 font-semibold">
             Book Now
           </Button>
         </div>
