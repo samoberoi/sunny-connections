@@ -30,26 +30,24 @@ export default function Booking() {
 
   return (
     <CustomerLayout>
-      <div className="px-6 pt-6 pb-6">
+      <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <h1 className="font-display text-xl font-semibold text-foreground">Book {service.name}</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">Book {service.name}</h1>
         </div>
 
         <div className="space-y-6">
-          {/* Date */}
           <section>
-            <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" /> Select Date
             </h3>
-            <div className="glass-card rounded-xl p-3">
+            <div className="glass-card rounded-2xl p-3 shadow-apple">
               <Calendar mode="single" selected={date} onSelect={setDate} className="mx-auto" />
             </div>
           </section>
 
-          {/* Time */}
           <section>
-            <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Select Time
             </h3>
             <div className="grid grid-cols-4 gap-2">
@@ -57,7 +55,7 @@ export default function Booking() {
                 <button
                   key={t}
                   onClick={() => setTime(t)}
-                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${time === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all ${time === t ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
                 >
                   {t}
                 </button>
@@ -65,17 +63,16 @@ export default function Booking() {
             </div>
           </section>
 
-          {/* Duration */}
           <section>
-            <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Duration
             </h3>
             <div className="flex gap-2">
-              {Array.from({ length: service.maxDuration - service.minDuration + 1 }, (_, i) => service.minDuration + i).slice(0, 6).map(d => (
+              {Array.from({ length: Math.min(service.maxDuration - service.minDuration + 1, 6) }, (_, i) => service.minDuration + i).map(d => (
                 <button
                   key={d}
                   onClick={() => setDuration(d)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${duration === d ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${duration === d ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground'}`}
                 >
                   {d}h
                 </button>
@@ -83,9 +80,8 @@ export default function Booking() {
             </div>
           </section>
 
-          {/* Recurring */}
           <section>
-            <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <Repeat className="h-4 w-4 text-primary" /> Frequency
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -93,7 +89,7 @@ export default function Booking() {
                 <button
                   key={val}
                   onClick={() => setRecurring(val)}
-                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${recurring === val ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all ${recurring === val ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground'}`}
                 >
                   {label}
                 </button>
@@ -101,30 +97,28 @@ export default function Booking() {
             </div>
           </section>
 
-          {/* Address */}
           <section>
-            <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Address
             </h3>
             <div className="space-y-2">
-              <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} />
-              <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} />
+              <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
+              <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
             </div>
           </section>
 
-          {/* Summary */}
-          <div className="glass-card rounded-xl p-4">
-            <div className="flex justify-between text-sm mb-1">
+          <div className="glass-card rounded-2xl p-5 shadow-apple">
+            <div className="flex justify-between text-sm mb-2">
               <span className="text-muted-foreground">{service.name}</span>
               <span className="text-foreground">£{service.ratePerHour}/hr × {duration}h</span>
             </div>
-            <div className="flex justify-between font-display font-bold text-lg">
+            <div className="flex justify-between font-extrabold text-xl">
               <span>Total</span>
-              <span className="text-primary">£{totalCost}</span>
+              <span className="text-gradient">£{totalCost}</span>
             </div>
           </div>
 
-          <Button onClick={handleConfirm} className="w-full gradient-primary text-primary-foreground h-12 text-base font-semibold">
+          <Button onClick={handleConfirm} className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue">
             Confirm Booking
           </Button>
         </div>

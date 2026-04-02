@@ -21,23 +21,25 @@ export default function Services() {
 
   return (
     <CustomerLayout>
-      <div className="px-6 pt-6">
+      <div className="px-5 pt-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <h1 className="font-display text-xl font-semibold text-foreground">Our Services</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">Our Services</h1>
         </div>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 p-1 bg-muted rounded-2xl mb-6">
           {['all', 'cleaning', 'housekeeping'].map(cat => (
-            <Button
+            <button
               key={cat}
-              size="sm"
-              variant={category === cat ? 'default' : 'outline'}
               onClick={() => setCategory(cat)}
-              className={category === cat ? 'gradient-primary text-primary-foreground' : ''}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                category === cat
+                  ? 'bg-card shadow-apple text-foreground'
+                  : 'text-muted-foreground'
+              }`}
             >
-              {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </Button>
+              {cat === 'all' ? 'All' : cat}
+            </button>
           ))}
         </div>
 
