@@ -1,23 +1,35 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import ServiceCard from '@/components/ServiceCard';
-import { services } from '@/data/mockData';
-import { Service } from '@/types';
+import { useServices, ServiceRow } from '@/hooks/useServices';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Services() {
   const [searchParams] = useSearchParams();
   const initialCat = searchParams.get('cat') || 'all';
   const [category, setCategory] = useState<string>(initialCat);
   const navigate = useNavigate();
+  const { data: services, isLoading } = useServices();
 
-  const filtered = category === 'all' ? services : services.filter(s => s.category === category);
+  const filtered = !services ? [] : category === 'all' ? services : services.filter(s => s.category === category);
 
-  const handleBook = (service: Service) => {
+  const handleBook = (service: ServiceRow) => {
     navigate(`/booking?service=${service.id}`);
   };
+
+  // Adapt ServiceRow to the shape ServiceCard expects
+  const toServiceCardProps = (s: ServiceRow) => ({
+    id: s.id,
+    name: s.name,
+    description: s.description,
+    category: s.category,
+    ratePerHour: s.rate_per_hour,
+    minDuration: s.min_duration,
+    maxDuration: s.max_duration,
+    icon: s.icon,
+  });
 
   return (
     <CustomerLayout>
@@ -44,9 +56,15 @@ export default function Services() {
         </div>
 
         <div className="space-y-3 pb-6">
-          {filtered.map(service => (
-            <ServiceCard key={service.id} service={service} onBook={handleBook} />
-          ))}
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-2xl" />
+            ))
+          ) : (
+            filtered.map(service => (
+              <ServiceCard key={service.id} service={toServiceCardProps(service)} onBook={() => handleBook(service)} />
+            ))
+          )}
         </div>
       </div>
     </CustomerLayout>

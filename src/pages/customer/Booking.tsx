@@ -5,35 +5,66 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import CustomerLayout from '@/components/layout/CustomerLayout';
-import { services } from '@/data/mockData';
+import { useService } from '@/hooks/useServices';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Booking() {
   const [searchParams] = useSearchParams();
-  const serviceId = searchParams.get('service') || 's1';
-  const service = services.find(s => s.id === serviceId) || services[0];
+  const serviceId = searchParams.get('service') || '';
+  const { data: service, isLoading } = useService(serviceId);
   const navigate = useNavigate();
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState('09:00');
-  const [duration, setDuration] = useState(service.minDuration);
+  const [duration, setDuration] = useState(2);
   const [recurring, setRecurring] = useState<'none' | 'weekly' | 'fortnightly' | 'monthly'>('none');
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
 
-  const totalCost = service.ratePerHour * duration;
+  // Update duration when service loads
+  const minDur = service?.min_duration || 2;
+  const maxDur = service?.max_duration || 8;
+  const ratePerHour = service?.rate_per_hour || 0;
+  const totalCost = ratePerHour * duration;
 
   const handleConfirm = () => {
+    if (!service) return;
     navigate('/booking-confirmation', {
-      state: { service, date: date?.toISOString(), time, duration, recurring, address, postcode, totalCost }
+      state: {
+        service: {
+          id: service.id,
+          name: service.name,
+          ratePerHour: service.rate_per_hour,
+        },
+        date: date?.toISOString(),
+        time,
+        duration,
+        recurring,
+        address,
+        postcode,
+        totalCost,
+      }
     });
   };
+
+  if (isLoading) {
+    return (
+      <CustomerLayout>
+        <div className="px-5 pt-6 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-32 rounded-2xl" />
+        </div>
+      </CustomerLayout>
+    );
+  }
 
   return (
     <CustomerLayout>
       <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="text-xl font-bold text-foreground">Book {service.name}</h1>
+          <h1 className="text-xl font-bold text-foreground">Book {service?.name}</h1>
         </div>
 
         <div className="space-y-6">
@@ -68,7 +99,7 @@ export default function Booking() {
               <Clock className="h-4 w-4 text-primary" /> Duration
             </h3>
             <div className="flex gap-2">
-              {Array.from({ length: Math.min(service.maxDuration - service.minDuration + 1, 6) }, (_, i) => service.minDuration + i).map(d => (
+              {Array.from({ length: Math.min(maxDur - minDur + 1, 6) }, (_, i) => minDur + i).map(d => (
                 <button
                   key={d}
                   onClick={() => setDuration(d)}
@@ -109,8 +140,8 @@ export default function Booking() {
 
           <div className="glass-card rounded-2xl p-5 shadow-apple">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">{service.name}</span>
-              <span className="text-foreground">£{service.ratePerHour}/hr × {duration}h</span>
+              <span className="text-muted-foreground">{service?.name}</span>
+              <span className="text-foreground">£{ratePerHour}/hr × {duration}h</span>
             </div>
             <div className="flex justify-between font-extrabold text-xl">
               <span>Total</span>

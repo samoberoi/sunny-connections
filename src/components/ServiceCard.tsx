@@ -1,12 +1,22 @@
-import { Service } from '@/types';
 import { Sparkles, Home, ChefHat, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const iconMap: Record<string, any> = { Sparkles, Home, ChefHat, LayoutGrid, Shirt: Sparkles, Bed: Home };
 
+interface ServiceCardService {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  ratePerHour: number;
+  minDuration: number;
+  maxDuration: number;
+  icon: string;
+}
+
 interface ServiceCardProps {
-  service: Service;
-  onBook: (service: Service) => void;
+  service: ServiceCardService;
+  onBook: () => void;
 }
 
 export default function ServiceCard({ service, onBook }: ServiceCardProps) {
@@ -24,7 +34,7 @@ export default function ServiceCard({ service, onBook }: ServiceCardProps) {
             <span className="text-xl font-extrabold text-foreground">£{service.ratePerHour}</span>
             <span className="text-xs text-muted-foreground">/hr</span>
           </div>
-          <Button size="sm" onClick={() => onBook(service)} className="gradient-blue text-primary-foreground rounded-xl shadow-blue/30 font-semibold">
+          <Button size="sm" onClick={onBook} className="gradient-blue text-primary-foreground rounded-xl shadow-blue/30 font-semibold">
             Book Now
           </Button>
         </div>
