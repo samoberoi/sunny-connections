@@ -134,10 +134,12 @@ export default function Register() {
             <span className="font-display font-bold text-white">Join Clean Fit</span>
           </div>
           <div>
+            {(() => { const StepIcon = steps[step].icon; return (
             <div className="flex items-center gap-2 mb-2">
-              <steps[step].icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
+              <StepIcon className="h-4 w-4 text-primary" strokeWidth={1.5} />
               <span className="text-white text-sm font-semibold">{steps[step].title}</span>
             </div>
+            ); })()}
             <p className="text-white/50 text-xs mb-3">{steps[step].desc}</p>
             {/* Progress bar */}
             <div className="h-1 bg-white/10 rounded-full overflow-hidden">
