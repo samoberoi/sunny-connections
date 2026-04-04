@@ -48,5 +48,5 @@ export const trainingModules: TrainingModule[] = [
 
 export const notifications: Notification[] = [
   { id: 'n1', title: 'Booking Confirmed', message: 'Your Regular Cleaning with Emma Thompson is confirmed for 5 Apr at 9:00 AM.', type: 'booking', read: false, createdAt: '2026-04-01T10:00:00Z' },
-  { id: 'n2', title: 'Welcome to Indiana Green!', message: 'Use code WELCOME20 for 20% off your first clean.', type: 'promo', read: false, createdAt: '2026-04-01T09:00:00Z' },
+  { id: 'n2', title: 'Welcome to Cleanfit!', message: 'Use code WELCOME20 for 20% off your first clean.', type: 'promo', read: false, createdAt: '2026-04-01T09:00:00Z' },
 ];
