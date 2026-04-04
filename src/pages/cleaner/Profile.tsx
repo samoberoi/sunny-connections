@@ -1,57 +1,68 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Star, LogOut } from 'lucide-react';
+import { Smartphone, Star, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CleanerLayout from '@/components/layout/CleanerLayout';
+import PageTransition from '@/components/PageTransition';
+import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
-import { cleaners } from '@/data/mockData';
+import { useCleaners } from '@/hooks/useCleaners';
 
 export default function CleanerProfile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const cleaner = cleaners[0];
+  const { data: cleaners } = useCleaners();
+  const cleaner = cleaners?.[0];
 
   return (
     <CleanerLayout>
-      <div className="px-5 pt-6 pb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="text-xl font-bold text-foreground">My Profile</h1>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 text-center mb-6 shadow-apple">
-          <div className="w-20 h-20 rounded-2xl gradient-blue mx-auto mb-4 flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-blue">
-            {user?.name?.[0] || 'E'}
+      <PageTransition>
+        <div className="px-5 pt-6 pb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <BackButton />
+            <h1 className="text-xl font-bold text-foreground">My Profile</h1>
           </div>
-          <h2 className="text-xl font-bold text-foreground">{user?.name}</h2>
-          <div className="flex items-center justify-center gap-2 mt-2">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-bold text-foreground">{cleaner.rating}</span>
-            <span className="text-sm text-muted-foreground">({cleaner.reviewCount} reviews)</span>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-            <Phone className="h-3 w-3" /> {user?.phone}
-          </div>
-        </div>
 
-        <div className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
-          <h3 className="font-semibold text-foreground mb-3">Specialisations</h3>
-          <div className="flex flex-wrap gap-2">
-            {cleaner.specialisations.map(s => (
-              <Badge key={s} className="bg-accent text-accent-foreground rounded-xl px-3 py-1">{s}</Badge>
-            ))}
+          <div className="glass-card rounded-2xl p-8 text-center mb-6 shadow-apple">
+            <div className="w-20 h-20 rounded-2xl gradient-blue mx-auto mb-4 flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-blue">
+              {user?.name?.[0] || 'E'}
+            </div>
+            <h2 className="text-xl font-bold text-foreground">{user?.name}</h2>
+            {cleaner && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Star className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
+                <span className="font-bold text-foreground">{cleaner.rating}</span>
+                <span className="text-sm text-muted-foreground">({cleaner.review_count} reviews)</span>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
+              <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone}
+            </div>
           </div>
-        </div>
 
-        <div className="glass-card rounded-2xl p-5 mb-6 shadow-apple">
-          <h3 className="font-semibold text-foreground mb-2">Details</h3>
-          <p className="text-sm text-muted-foreground">{cleaner.experience} years experience · DBS checked & verified</p>
-        </div>
+          {cleaner && (
+            <>
+              <div className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
+                <h3 className="font-semibold text-foreground mb-3 text-sm">Specialisations</h3>
+                <div className="flex flex-wrap gap-2">
+                  {cleaner.specialisations.map((s: string) => (
+                    <Badge key={s} className="bg-accent text-accent-foreground rounded-xl px-3 py-1 text-xs">{s}</Badge>
+                  ))}
+                </div>
+              </div>
 
-        <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-2xl text-destructive border-destructive/20">
-          <LogOut className="h-4 w-4 mr-2" /> Log Out
-        </Button>
-      </div>
+              <div className="glass-card rounded-2xl p-5 mb-6 shadow-apple">
+                <h3 className="font-semibold text-foreground mb-2 text-sm">Details</h3>
+                <p className="text-sm text-muted-foreground">{cleaner.experience} years experience · DBS checked & verified</p>
+              </div>
+            </>
+          )}
+
+          <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/5">
+            <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
+          </Button>
+        </div>
+      </PageTransition>
     </CleanerLayout>
   );
 }
