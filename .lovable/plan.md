@@ -1,188 +1,165 @@
 
 
-# Indiana Green — Cleaning & Housekeeping App for London
+# Clean Fit — Complete End-to-End Production Overhaul
 
-A SnapIt-style hyper-modern cleaning platform with three portals: **Customer**, **Cleaner**, and **Super Admin**.
-
----
-
-## Brand & Design System
-
-- Brand name: **Indiana Green**
-- Primary colour: rich green (`#2E7D32` family), accents in gold/amber
-- Mobile-first, modern UI with smooth transitions, rounded cards, gradient headers
-- UK English throughout (colour, favourite, organise, etc.)
-- Currency: GBP (£)
+A full redesign and functional completion of all three portals (Customer, Cleaner, Super Admin) with every screen, transition, and backend interaction accounted for.
 
 ---
 
-## Portal 1: Customer App
+## Issues Found
 
-### Pages & Flows
+### Design Issues
+1. **Splash screen** depends on a generated `hero-cleaner.jpg` that may not render well — replace with animated gradient
+2. **No route protection** — any unauthenticated user can access /home, /cleaner, /admin
+3. **Login exposes role selector** (customer/cleaner/admin) — end users should not see this; separate login routes needed
+4. **Active booking page** has manual "Previous/Next" debug buttons instead of real status flow
+5. **Booking confirmation** generates random OTP client-side instead of using the one from the database
+6. **No actual booking creation** — Booking.tsx navigates to confirmation via `state` but never writes to the `bookings` table
+7. **Cleaner dashboard** shows all bookings, not filtered to the logged-in cleaner
+8. **Cleaner BookingDetail** fetches any non-completed booking, not the cleaner's own
+9. **Earnings page** is entirely hardcoded mock data
+10. **Customer Profile** shows hardcoded address instead of fetching from `addresses` table
+11. **Rating/Review** is UI-only — never writes to the database
+12. **Enrolment Register** captures no form state — all inputs are uncontrolled
+13. **Admin pages** lack proper CRUD (edit/delete buttons are non-functional)
+14. **No payment flow** screen exists
+15. **WelcomeCoupon** doesn't pull from the database coupons
+16. **Inconsistent back navigation** — some pages use BackButton, some use raw SVG
 
-1. **Splash / Welcome Screen** — logo, tagline, "Get Started" button
-2. **Mobile OTP Login** — UK phone input (+44), OTP entry (using existing `input-otp` component), verify
-3. **Welcome Coupon Modal** — first-time user popup: "Welcome! 20% off your first clean — Claim Now"
-4. **Home Page**
-   - Hero with animated illustration of cleaners
-   - Trust badges: "25+ Years Experience", "2,000+ Happy Customers", "80+ Verified Professionals", "Most Trusted UK App"
-   - Service categories: **Cleaning** vs **Housekeeping** (card selection)
-   - "Book Instantly" vs "Schedule for Later" toggle
-5. **Service Listing** — list of services with descriptions, hourly rates in £, duration selector
-6. **Scheduling Flow**
-   - Date & time picker (calendar component)
-   - One-time vs Recurring (weekly/fortnightly/monthly)
-   - Duration selector (2h, 3h, 4h, custom)
-   - Address input (UK postcode lookup style)
-7. **Booking Confirmation** — assigned cleaner profile (photo, name, rating), booking OTP displayed, booking summary
-8. **Active Booking Tracker** — status updates (Assigned → En Route → OTP Verified → In Progress → Complete)
-9. **Rating & Review** — 5-star rating for cleaner, optional text review, submit
-
-### Additional Customer Pages
-- **My Bookings** — upcoming & past bookings
-- **Profile** — name, phone, saved addresses
-- **Notifications** — booking updates
-
----
-
-## Portal 2: Cleaner App
-
-### Pages & Flows
-
-1. **Cleaner Login** — phone OTP (same mechanism)
-2. **Dashboard** — today's bookings, upcoming schedule, earnings summary
-3. **Booking Detail** — customer name, address, service type, duration, OTP input field to verify arrival
-4. **OTP Verification** — cleaner enters customer's OTP to start the job
-5. **Job Completion** — mark as done, notes field
-6. **Earnings** — weekly/monthly breakdown
-7. **Profile** — availability, skills, documents
+### Functional Gaps
+- Booking never saved to database
+- No cleaner assignment logic
+- No booking status updates
+- Rating never persisted
+- Enrolment form data not submitted to database
+- Addresses not CRUD-able
+- Admin cannot actually edit/create services, approve enrolments, or manage cleaners
 
 ---
 
-## Portal 3: Cleaner Enrolment (Job Seeker)
+## Implementation Plan
 
-### Registration Flow (UK context)
+### Batch 1: Design System + Route Protection + Auth Fixes
 
-1. **Personal Details** — full name, DOB, phone, email, UK postcode, right-to-work status
-2. **Identity Verification** — upload ID (passport/driving licence/BRP), proof of address
-3. **Experience** — years of cleaning experience, previous employers, specialisations
-4. **References** — 2 professional references with contact details
-5. **DBS Check Consent** — disclosure and barring service consent form
-6. **Availability** — preferred working days/hours, travel radius
-7. **Bank Details** — for payment (sort code, account number)
-8. **Agreement** — terms of service, code of conduct acceptance
-9. **Application Submitted** — status tracker (Submitted → Under Review → Interview → Training → Active)
+**Files**: `src/index.css`, `tailwind.config.ts`, `src/App.tsx`, `src/contexts/AuthContext.tsx`, `src/pages/customer/Login.tsx`
 
-### Training Programme (post-approval)
+- Update CSS: add Plus Jakarta Sans font import, refine glass-card borders for more premium look, add `.card-press` utility (`whileTap` scale)
+- Add `ProtectedRoute` wrapper component that checks auth state and redirects to `/login` if not authenticated, and checks role for portal access
+- Remove role selector tabs from Login page — customers log in at `/login`, cleaners at `/cleaner/login`, admins at `/admin/login`
+- Create `/cleaner/login` and `/admin/login` route components (reuse Login with role prop)
+- Fix AuthContext `verifyOtp` to properly await the sign-in before returning (currently fires async without await)
+- Add auto-confirm email signup via `cloud--configure_auth`
 
-Interactive training module system with progress tracking:
+### Batch 2: Splash + Customer Home Redesign
 
-- **Level 1: Professional Presence** (3 modules)
-  - L1.1 Polished Appearance
-  - L1.2 Professional Cleaning Kit
-  - L1.3 Customer Service Excellence
-- **Level 2: Five-Star Cleaning Principles** (5 modules)
-  - L2.1 Harness the Power of Water
-  - L2.2 Chunk by Chunk – Top to Bottom
-  - L2.3 Unclogging & Flow
-  - L2.4 Zooming In – Attention to Detail
-  - L2.5 Zooming Out – Presentation Mastery
-- **Level 3: Ongoing Excellence** — monthly modules (placeholder)
+**Files**: `src/pages/Index.tsx`, `src/pages/customer/Home.tsx`, `src/components/WelcomeCoupon.tsx`
 
-Each module: title, content (from your provided text), "Mark as Complete" button, progress bar per level.
+- **Splash**: Replace hero image with animated gradient background + floating Lucide icons (Sparkles, SprayBottle, Home) + Clean Fit wordmark
+- Tagline: *"London's homes don't clean themselves. But we do."*
+- Two CTAs: "Book a Clean" → `/login`, "Become a Cleaner" → `/enrol/register`
+- **Home**: Add time-of-day greeting (*"Good morning"* / *"Good afternoon"* / *"Good evening"*)
+- Add search bar that navigates to `/services`
+- Add horizontal quick-action pills: Home Clean, Office Clean, Deep Clean, End of Tenancy
+- Wire WelcomeCoupon to fetch active coupons from database
+- Add active booking banner at top if user has an in-progress booking
+
+### Batch 3: Complete Booking Flow + Database Write
+
+**Files**: `src/pages/customer/Booking.tsx`, `src/pages/customer/BookingConfirmation.tsx`, `src/pages/customer/ActiveBooking.tsx`, `src/pages/customer/RateService.tsx`
+
+- **Booking.tsx**: Add property type selector (Flat/House/Office), add notes field, validate all fields before enabling confirm. On confirm → `INSERT INTO bookings` with all fields, generate OTP server-side (or use default `1111`), navigate to confirmation with booking ID
+- **BookingConfirmation.tsx**: Fetch the created booking from DB by ID, show assigned cleaner (or "Assigning..." state), display the DB-stored OTP
+- **ActiveBooking.tsx**: Remove debug Previous/Next buttons. Fetch booking status from DB. Show simulated map area with ETA. Add real-time status subscription via Supabase Realtime. Show OTP prominently when status is "en-route". Add cleaner contact card
+- **RateService.tsx**: On submit → `UPDATE bookings SET rating, review WHERE id = bookingId`. Add quick-feedback tags (Punctual, Thorough, Friendly). British humour: *"How'd they do? Be honest — we can take it."*
+- Add Supabase Realtime subscription on bookings table for live status updates
+
+**Migration**: `ALTER PUBLICATION supabase_realtime ADD TABLE public.bookings;`
+
+### Batch 4: My Bookings + Profile + Notifications
+
+**Files**: `src/pages/customer/MyBookings.tsx`, `src/pages/customer/Profile.tsx`, `src/pages/customer/Notifications.tsx`
+
+- **MyBookings**: Add tabs (Active / Upcoming / Past) using shadcn Tabs. Active bookings show "Track" button. Past bookings show "Re-book" button. Add pull-to-refresh pattern
+- **Profile**: Fetch saved addresses from `addresses` table. Add "Add Address" form with postcode + address lines. Add edit/delete for addresses. Add "Refer a Mate" section. Add notification preferences toggle. Editable name field with save
+- **Notifications**: Group by date (Today, Yesterday, Earlier). Tap to mark as read (update DB). Different icon per type
+
+### Batch 5: Cleaner Portal — Complete Overhaul
+
+**Files**: `src/pages/cleaner/Dashboard.tsx`, `src/pages/cleaner/BookingDetail.tsx` (rename to Jobs.tsx), `src/pages/cleaner/Earnings.tsx`, `src/pages/cleaner/Profile.tsx`, `src/components/layout/CleanerLayout.tsx`
+
+- **Dashboard**: Filter bookings by `cleaner_id = user.id`. Add availability toggle (update `cleaners.available`). Show next job card prominently. Weekly earnings mini-chart from actual bookings data
+- **Jobs (renamed from BookingDetail)**: Add tabs: "Available" (unassigned bookings) | "My Jobs" (assigned to me) | "Completed". Available jobs show "Accept" button → updates `bookings.cleaner_id`. My Jobs show OTP entry → status update flow. Job detail: reveal full address after accepting, show "Start Job" (updates status to in-progress), "Complete Job" (updates status to completed)
+- **Earnings**: Calculate from actual completed bookings (`SUM(total_cost) WHERE cleaner_id = me AND status = completed`). Group by day/week. Show stats: total jobs, avg rating, total hours
+- **Profile**: Show cleaner record data. Editable specialisations. Show ratings received. Show DBS/verification status
+- Update CleanerLayout nav: rename "Jobs" label, update route to `/cleaner/jobs`
+- Add route `/cleaner/jobs` in App.tsx
+
+### Batch 6: Enrolment Flow — Wire to Database
+
+**Files**: `src/pages/enrol/Register.tsx`, `src/pages/enrol/ApplicationStatus.tsx`, `src/pages/enrol/Training.tsx`
+
+- **Register**: Add controlled state for ALL form fields across 8 steps. Validate each step before allowing "Next". On final submit → `INSERT INTO enrolment_applications` with all collected data. Show loading state during submission. British humour: *"Brilliant! We'll have a proper gander at your application."*
+- **ApplicationStatus**: Fetch application from DB by `user_id`. Show real status from DB instead of hardcoded `currentStage = 1`
+- **Training**: Wire completion to `training_progress` table (INSERT/DELETE). Fetch existing progress on load. Show certificate-style completion UI per level
+
+### Batch 7: Super Admin — Full CRUD + Real Data
+
+**Files**: All `src/pages/admin/*.tsx`, `src/components/layout/AdminLayout.tsx`
+
+- **Dashboard**: Wire revenue to actual booking totals. Add recent activity feed (latest bookings, signups). Add period selector for chart (7d/30d/90d). Show real stats from DB queries
+- **Bookings**: Add status filter dropdown. Add "Assign Cleaner" action (dropdown of available cleaners). Add "Cancel" action. Inline status update
+- **Customers**: Fetch from `profiles WHERE role = 'customer'`. Show total bookings count, total spend. View profile detail
+- **Cleaners**: Fetch from `cleaners` joined with `profiles`. Toggle availability. View/edit cleaner details. Show ratings
+- **Enrolments**: Add "Approve" / "Reject" buttons that update `enrolment_applications.status`. On approve → create cleaner record + profile
+- **Services**: Wire "Add Service" button to dialog form → `INSERT INTO services`. Wire "Edit" to dialog → `UPDATE services`. Add "Deactivate" toggle
+- **Coupons**: Wire "Add Coupon" form. Edit/deactivate existing coupons
+- **Reports**: Wire charts to real aggregated data from bookings table
+- **Training**: View cleaner training progress. Bulk manage modules
+
+### Batch 8: Animations + Content + Final Polish
+
+**Files**: Multiple files — final pass
+
+- Add `framer-motion` `whileTap={{ scale: 0.97 }}` to all interactive cards/buttons
+- Ensure all page transitions use consistent `PageTransition` wrapper
+- Add skeleton loaders to every page that fetches data
+- Add empty states with British humour to every list view
+- Verify all icons are Lucide outline at `strokeWidth={1.5}`
+- Add `scrollbar-hide` to all horizontal scroll areas
+- Test all navigation flows end-to-end
+- Add 404 page with witty copy: *"This page has done a runner. Let's get you home."*
+- Ensure bottom nav safe area padding works on all pages
 
 ---
 
-## Portal 4: Super Admin
+## Database Changes Required
 
-1. **Dashboard** — key metrics (bookings today, revenue, active cleaners, new signups)
-2. **Manage Bookings** — list all bookings, filter by status/date/cleaner
-3. **Manage Customers** — customer list, booking history, block/flag
-4. **Manage Cleaners** — cleaner list, approval status, documents, training progress
-5. **Enrolment Queue** — pending applications, approve/reject with notes
-6. **Training Management** — view cleaner training progress per module
-7. **Services & Pricing** — CRUD for service types and rates
-8. **Coupons & Promotions** — create/manage discount codes
-9. **Reports** — revenue, booking volume, ratings charts (using recharts)
+1. **Migration**: Enable Realtime on bookings table
+2. **Migration**: Add `property_type` column to bookings (`text DEFAULT 'house'`)
+3. **Migration**: Add `notes` column to bookings (`text`)
+4. **Migration**: Add RLS policy for cleaners to view/update bookings assigned to them
+5. **Migration**: Add RLS policy for cleaners to accept unassigned bookings (update `cleaner_id`)
+6. **Seed data**: Insert sample bookings for testing
+7. **Auth config**: Enable auto-confirm for email signups (since we simulate phone auth)
 
 ---
 
-## Technical Approach
+## New Routes to Add
 
-| Concern | Approach |
-|---------|---------|
-| **Routing** | React Router with role-based route groups: `/`, `/cleaner`, `/enrol`, `/admin` |
-| **State** | React Context for auth state, React Query for data |
-| **Auth** | Simulated OTP flow (UI-complete, backend-ready). No real SMS until Supabase/Twilio connected |
-| **Data** | Local state / mock data for now. Supabase-ready interfaces |
-| **UI** | Existing shadcn/ui components + custom cards, modals, steppers |
-| **Charts** | recharts (already installed) for admin dashboard |
-| **Training** | Accordion-based module viewer with progress stored in state |
+| Route | Component | Purpose |
+|-------|-----------|---------|
+| `/cleaner/login` | CleanerLogin | Cleaner-specific login |
+| `/admin/login` | AdminLogin | Admin-specific login |
+| `/cleaner/jobs` | CleanerJobs | Available + assigned jobs |
 
-### File Structure (key new files)
+---
 
-```text
-src/
-├── contexts/AuthContext.tsx
-├── data/mockData.ts
-├── pages/
-│   ├── customer/
-│   │   ├── Login.tsx
-│   │   ├── Home.tsx
-│   │   ├── Services.tsx
-│   │   ├── Booking.tsx
-│   │   ├── BookingConfirmation.tsx
-│   │   ├── ActiveBooking.tsx
-│   │   ├── RateService.tsx
-│   │   ├── MyBookings.tsx
-│   │   └── Profile.tsx
-│   ├── cleaner/
-│   │   ├── Dashboard.tsx
-│   │   ├── BookingDetail.tsx
-│   │   ├── VerifyOTP.tsx
-│   │   ├── Earnings.tsx
-│   │   └── Profile.tsx
-│   ├── enrol/
-│   │   ├── Register.tsx (multi-step form)
-│   │   ├── ApplicationStatus.tsx
-│   │   └── Training.tsx
-│   └── admin/
-│       ├── Dashboard.tsx
-│       ├── Bookings.tsx
-│       ├── Customers.tsx
-│       ├── Cleaners.tsx
-│       ├── Enrolments.tsx
-│       ├── TrainingProgress.tsx
-│       ├── Services.tsx
-│       ├── Coupons.tsx
-│       └── Reports.tsx
-├── components/
-│   ├── WelcomeCoupon.tsx
-│   ├── TrustBadges.tsx
-│   ├── ServiceCard.tsx
-│   ├── BookingSteps.tsx
-│   ├── CleanerCard.tsx
-│   ├── TrainingModule.tsx
-│   ├── StarRating.tsx
-│   └── layout/
-│       ├── CustomerLayout.tsx
-│       ├── CleanerLayout.tsx
-│       ├── AdminLayout.tsx (sidebar)
-│       └── BottomNav.tsx
-```
+## Summary
 
-### Implementation Order
-
-1. Design system update (green brand colours, fonts)
-2. Auth context + OTP login screen
-3. Customer home page with trust badges and service selection
-4. Booking flow (service → schedule → confirm)
-5. Booking confirmation + OTP + active tracker + rating
-6. Cleaner portal (dashboard, booking detail, OTP verify)
-7. Enrolment multi-step registration form
-8. Training programme viewer
-9. Super admin dashboard with sidebar + all management pages
-10. Mock data wiring throughout
-
-All UI-complete with mock data. Backend integration (Supabase, Twilio for real OTP) can be added after.
+- **~40 files modified**, **~5 new files created**
+- **3 database migrations** (realtime, new columns, RLS policies)
+- **8 implementation batches** in dependency order
+- Every screen functional end-to-end with real database reads/writes
+- Consistent premium design with glassmorphism, outline icons, smooth transitions
+- British humour woven throughout all copy
 
