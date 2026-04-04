@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        display: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        display: ["Space Grotesk", "Plus Jakarta Sans", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -51,6 +51,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        lime: {
+          DEFAULT: "hsl(68 75% 55%)",
+          foreground: "hsl(220 20% 8%)",
+          light: "hsl(68 60% 90%)",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -68,6 +73,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "1.75rem",
+        "4xl": "2rem",
       },
       keyframes: {
         "accordion-down": {
@@ -94,6 +101,10 @@ export default {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "blob-morph": {
+          "0%, 100%": { borderRadius: "42% 58% 70% 30% / 45% 45% 55% 55%" },
+          "50%": { borderRadius: "58% 42% 30% 70% / 55% 45% 55% 45%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -102,6 +113,7 @@ export default {
         "shimmer": "shimmer 2s linear infinite",
         "fade-in-up": "fade-in-up 0.5s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
+        "blob-morph": "blob-morph 8s ease-in-out infinite",
       },
     },
   },
