@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, Circle, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 
 const statuses = [
@@ -20,13 +21,11 @@ export default function ActiveBooking() {
     <CustomerLayout>
       <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full glass flex items-center justify-center">
-            <ArrowLeft className="h-4 w-4 text-secondary-foreground" />
-          </button>
-          <h1 className="text-xl font-bold text-secondary-foreground">Booking Status</h1>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold text-foreground">Booking Status</h1>
         </div>
 
-        <div className="glass rounded-2xl p-6 mb-6 border border-secondary-foreground/5">
+        <div className="glass-card rounded-2xl p-6 mb-6 shadow-apple">
           {statuses.map((status, i) => {
             const done = i <= currentStatus;
             const current = i === currentStatus;
@@ -38,13 +37,13 @@ export default function ActiveBooking() {
                       <CheckCircle className={`h-7 w-7 ${current ? 'text-primary animate-pulse' : 'text-primary'}`} />
                     </motion.div>
                   ) : (
-                    <Circle className="h-7 w-7 text-secondary-foreground/10" />
+                    <Circle className="h-7 w-7 text-muted-foreground/20" />
                   )}
-                  {i < statuses.length - 1 && <div className={`w-0.5 h-12 rounded-full ${done ? 'bg-primary' : 'bg-secondary-foreground/5'}`} />}
+                  {i < statuses.length - 1 && <div className={`w-0.5 h-12 rounded-full ${done ? 'bg-primary' : 'bg-muted'}`} />}
                 </div>
                 <div className="pb-6">
-                  <p className={`font-semibold text-sm ${done ? 'text-secondary-foreground' : 'text-secondary-foreground/30'}`}>{status.label}</p>
-                  <p className={`text-xs ${done ? 'text-secondary-foreground/50' : 'text-secondary-foreground/15'}`}>{status.desc}</p>
+                  <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}>{status.label}</p>
+                  <p className={`text-xs ${done ? 'text-muted-foreground' : 'text-muted-foreground/30'}`}>{status.desc}</p>
                 </div>
               </div>
             );
@@ -52,15 +51,15 @@ export default function ActiveBooking() {
         </div>
 
         <div className="flex gap-3">
-          <button onClick={() => setCurrentStatus(Math.max(0, currentStatus - 1))} className="flex-1 h-12 rounded-xl glass text-secondary-foreground/60 font-medium text-sm border border-secondary-foreground/5">
+          <Button size="sm" variant="outline" onClick={() => setCurrentStatus(Math.max(0, currentStatus - 1))} className="rounded-xl">
             Previous
-          </button>
-          <button onClick={() => {
+          </Button>
+          <Button size="sm" onClick={() => {
             if (currentStatus < statuses.length - 1) setCurrentStatus(currentStatus + 1);
             else navigate('/rate-service');
-          }} className="flex-1 h-12 rounded-xl gradient-lime text-primary-foreground font-bold text-sm shadow-lime">
+          }} className="rounded-xl gradient-blue text-primary-foreground">
             {currentStatus < statuses.length - 1 ? 'Next Step' : 'Rate Service'}
-          </button>
+          </Button>
         </div>
       </div>
     </CustomerLayout>
