@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,10 @@ import BackButton from '@/components/BackButton';
 import { toast } from 'sonner';
 
 export default function Login() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const roleParam = (searchParams.get('role') as UserRole) || 'customer';
+  const pathnameRole: UserRole | undefined = location.pathname.startsWith('/admin') ? 'admin' : location.pathname.startsWith('/cleaner') ? 'cleaner' : undefined;
+  const roleParam = ((searchParams.get('role') as UserRole) || pathnameRole || 'customer') as UserRole;
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
