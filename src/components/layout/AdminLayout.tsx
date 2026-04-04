@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Wrench, Tag, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Settings, Tag, BarChart3 } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -10,7 +10,7 @@ const navItems = [
   { to: '/admin/cleaners', icon: UserCheck, label: 'Cleaners' },
   { to: '/admin/enrolments', icon: GraduationCap, label: 'Enrolments' },
   { to: '/admin/training', icon: GraduationCap, label: 'Training' },
-  { to: '/admin/services', icon: Wrench, label: 'Services' },
+  { to: '/admin/services', icon: Settings, label: 'Services' },
   { to: '/admin/coupons', icon: Tag, label: 'Coupons' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
 ];
@@ -38,8 +38,8 @@ function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild>
-                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${active ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'}`}>
-                        <item.icon className="h-4 w-4 shrink-0" />
+                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 ${active ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'}`}>
+                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                         {!collapsed && <span className="text-sm">{item.label}</span>}
                       </RouterNavLink>
                     </SidebarMenuButton>
