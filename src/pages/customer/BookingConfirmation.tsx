@@ -1,33 +1,44 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CircleCheck, MapPin, Clock, ShieldCheck } from 'lucide-react';
+import { CircleCheck, MapPin, Clock, ShieldCheck, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import StarRating from '@/components/StarRating';
 import { useCleaners } from '@/hooks/useCleaners';
+import { toast } from 'sonner';
 
 export default function BookingConfirmation() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { data: cleaners } = useCleaners();
   const cleaner = cleaners?.[0];
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  const otp = state?.otp || '1111';
+
+  const copyOtp = () => {
+    navigator.clipboard.writeText(otp);
+    toast.success('OTP copied!');
+  };
 
   return (
     <CustomerLayout>
       <PageTransition>
         <div className="px-5 pt-6 pb-6">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
+              className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-4"
+            >
               <CircleCheck className="h-10 w-10 text-primary" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">Booking Confirmed!</h1>
-            <p className="text-muted-foreground text-sm mt-1">Your cleaner is on the way</p>
+            </motion.div>
+            <h1 className="text-2xl font-bold text-foreground">Sorted!</h1>
+            <p className="text-muted-foreground text-sm mt-1">Your cleaner's practically on their way</p>
           </motion.div>
 
           {cleaner && (
-            <div className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl gradient-blue flex items-center justify-center text-primary-foreground font-bold text-lg shadow-blue">
                   {cleaner.name[0]}
@@ -41,16 +52,21 @@ export default function BookingConfirmation() {
                   <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div className="glass-card rounded-2xl p-6 mb-4 text-center shadow-apple">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-2xl p-6 mb-4 text-center shadow-apple">
             <p className="text-sm text-muted-foreground mb-3">Share this OTP with your cleaner</p>
-            <div className="text-4xl font-extrabold tracking-[0.4em] text-gradient">{otp}</div>
+            <div className="flex items-center justify-center gap-3">
+              <div className="text-4xl font-extrabold tracking-[0.4em] text-gradient">{otp}</div>
+              <button onClick={copyOtp} className="w-8 h-8 rounded-xl bg-accent flex items-center justify-center">
+                <Copy className="h-4 w-4 text-primary" strokeWidth={1.5} />
+              </button>
+            </div>
             <p className="text-xs text-muted-foreground mt-3">The cleaner will enter this code upon arrival</p>
-          </div>
+          </motion.div>
 
-          <div className="glass-card rounded-2xl p-5 mb-6 space-y-3 shadow-apple">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-2xl p-5 mb-6 space-y-3 shadow-apple">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-accent flex items-center justify-center">
                 <Clock className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -72,10 +88,10 @@ export default function BookingConfirmation() {
               <span>Total</span>
               <span className="text-gradient">£{state?.totalCost || 54}</span>
             </div>
-          </div>
+          </motion.div>
 
           <div className="space-y-3">
-            <Button onClick={() => navigate('/active-booking')} className="w-full h-14 gradient-blue text-primary-foreground rounded-2xl shadow-blue font-semibold text-base transition-opacity hover:opacity-95">
+            <Button onClick={() => navigate('/active-booking', { state: { bookingId: state?.bookingId } })} className="w-full h-14 gradient-blue text-primary-foreground rounded-2xl shadow-blue font-semibold text-base transition-opacity hover:opacity-95">
               Track Booking
             </Button>
             <Button onClick={() => navigate('/home')} variant="outline" className="w-full h-12 rounded-2xl">

@@ -1,10 +1,10 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, PoundSterling, User } from 'lucide-react';
+import { LayoutDashboard, Briefcase, PoundSterling, User } from 'lucide-react';
 
 const navItems = [
   { to: '/cleaner', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/cleaner/bookings', icon: CalendarDays, label: 'Jobs' },
+  { to: '/cleaner/jobs', icon: Briefcase, label: 'Jobs' },
   { to: '/cleaner/earnings', icon: PoundSterling, label: 'Earnings' },
   { to: '/cleaner/profile', icon: User, label: 'Profile' },
 ];

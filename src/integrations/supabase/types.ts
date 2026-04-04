@@ -61,7 +61,9 @@ export type Database = {
           date: string
           duration: number
           id: string
+          notes: string | null
           otp: string
+          property_type: string
           rating: number | null
           recurring: Database["public"]["Enums"]["recurring_type"]
           review: string | null
@@ -85,7 +87,9 @@ export type Database = {
           date: string
           duration: number
           id?: string
+          notes?: string | null
           otp?: string
+          property_type?: string
           rating?: number | null
           recurring?: Database["public"]["Enums"]["recurring_type"]
           review?: string | null
@@ -109,7 +113,9 @@ export type Database = {
           date?: string
           duration?: number
           id?: string
+          notes?: string | null
           otp?: string
+          property_type?: string
           rating?: number | null
           recurring?: Database["public"]["Enums"]["recurring_type"]
           review?: string | null

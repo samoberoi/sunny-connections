@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CircleCheck, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,50 @@ import { Progress } from '@/components/ui/progress';
 import BackButton from '@/components/BackButton';
 import PageTransition from '@/components/PageTransition';
 import { useTrainingModules } from '@/hooks/useTrainingModules';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function Training() {
   const navigate = useNavigate();
   const { data: dbModules, isLoading } = useTrainingModules();
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const { data: progressData = [] } = useQuery({
+    queryKey: ['my-training-progress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('training_progress').select('*').eq('user_id', user.id);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const completedIds = new Set(progressData.filter(p => p.completed).map(p => p.module_id));
+
+  const toggleComplete = useMutation({
+    mutationFn: async (moduleId: string) => {
+      if (!user?.id) return;
+      if (completedIds.has(moduleId)) {
+        await supabase.from('training_progress').delete().eq('user_id', user.id).eq('module_id', moduleId);
+      } else {
+        await supabase.from('training_progress').insert({
+          user_id: user.id,
+          module_id: moduleId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-training-progress'] });
+      toast.success('Progress updated!');
+    },
+  });
 
   const modules = (dbModules || []).map(m => ({
     ...m,
@@ -24,14 +61,6 @@ export default function Training() {
     const lvlModules = modules.filter(m => m.level === level);
     const completed = lvlModules.filter(m => m.completed).length;
     return lvlModules.length > 0 ? Math.round((completed / lvlModules.length) * 100) : 0;
-  };
-
-  const toggleComplete = (id: string) => {
-    setCompletedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
   };
 
   const totalCompleted = modules.filter(m => m.completed).length;
@@ -55,7 +84,7 @@ export default function Training() {
           </button>
           <span className="font-bold text-primary-foreground">Training Programme</span>
         </div>
-        <p className="text-primary-foreground/60 text-sm mb-4">Become a Five-Star Cleaner with Cleanfit</p>
+        <p className="text-primary-foreground/60 text-sm mb-4">Become a Five-Star Cleaner with Clean Fit</p>
         <div>
           <div className="flex justify-between text-xs text-primary-foreground/60 mb-1.5">
             <span>Overall Progress</span>
@@ -106,7 +135,7 @@ export default function Training() {
                             </ul>
                             <Button
                               size="sm"
-                              onClick={() => toggleComplete(mod.id)}
+                              onClick={() => toggleComplete.mutate(mod.id)}
                               className={`rounded-xl ${!mod.completed ? 'gradient-blue text-primary-foreground shadow-blue/30' : ''}`}
                               variant={mod.completed ? 'outline' : 'default'}
                             >

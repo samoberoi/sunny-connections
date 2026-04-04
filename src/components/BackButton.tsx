@@ -4,11 +4,13 @@ import { ChevronLeft } from 'lucide-react';
 interface BackButtonProps {
   to?: string | number;
   className?: string;
+  onClick?: () => void;
 }
 
-export default function BackButton({ to, className = '' }: BackButtonProps) {
+export default function BackButton({ to, className = '', onClick }: BackButtonProps) {
   const navigate = useNavigate();
   const handleClick = () => {
+    if (onClick) { onClick(); return; }
     if (typeof to === 'string') navigate(to);
     else navigate(typeof to === 'number' ? to : -1);
   };
