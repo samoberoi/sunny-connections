@@ -18,19 +18,11 @@ export default function Services() {
 
   const filtered = !services ? [] : category === 'all' ? services : services.filter(s => s.category === category);
 
-  const handleBook = (service: ServiceRow) => {
-    navigate(`/booking?service=${service.id}`);
-  };
+  const handleBook = (service: ServiceRow) => navigate(`/booking?service=${service.id}`);
 
   const toServiceCardProps = (s: ServiceRow) => ({
-    id: s.id,
-    name: s.name,
-    description: s.description,
-    category: s.category,
-    ratePerHour: s.rate_per_hour,
-    minDuration: s.min_duration,
-    maxDuration: s.max_duration,
-    icon: s.icon,
+    id: s.id, name: s.name, description: s.description, category: s.category,
+    ratePerHour: s.rate_per_hour, minDuration: s.min_duration, maxDuration: s.max_duration, icon: s.icon,
   });
 
   return (
@@ -39,20 +31,15 @@ export default function Services() {
         <div className="px-5 pt-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-xl font-bold text-foreground">Our Services</h1>
+            <h1 className="text-2xl font-display font-black text-foreground">Our Services</h1>
           </div>
 
-          <div className="flex gap-2 p-1 bg-muted rounded-2xl mb-6">
+          <div className="flex gap-2 p-1 bg-foreground rounded-2xl mb-6">
             {['all', 'cleaning', 'housekeeping'].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all duration-200 ${
-                  category === cat
-                    ? 'bg-card shadow-apple text-foreground'
-                    : 'text-muted-foreground'
-                }`}
-              >
+              <button key={cat} onClick={() => setCategory(cat)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 ${
+                  category === cat ? 'bg-primary text-foreground' : 'text-card/50'
+                }`}>
                 {cat === 'all' ? 'All' : cat}
               </button>
             ))}
@@ -60,9 +47,7 @@ export default function Services() {
 
           <div className="space-y-3 pb-6">
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 rounded-2xl" />
-              ))
+              Array.from({ length: 4 }).map((_, i) => (<Skeleton key={i} className="h-28 rounded-2xl" />))
             ) : filtered.length === 0 ? (
               <EmptyState icon={SearchX} title="No services found" description="Try a different category" />
             ) : (
