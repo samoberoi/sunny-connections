@@ -8,6 +8,7 @@ import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCleaners } from '@/hooks/useCleaners';
+import cleanKitchen from '@/assets/clean-kitchen.jpg';
 
 export default function CustomerHome() {
   const [showCoupon, setShowCoupon] = useState(false);
@@ -57,21 +58,30 @@ export default function CustomerHome() {
         </div>
 
         <motion.div variants={stagger} initial="hidden" animate="show" className="px-5 space-y-5">
-          {/* Hero card */}
-          <motion.div variants={fadeUp} className="bg-foreground rounded-3xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px]" />
-            <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-1">Premium Cleaning</p>
-            <h2 className="text-2xl font-display font-black text-white leading-tight mb-4">
-              Your home,<br />
-              <span className="text-primary">sorted.</span>
-            </h2>
-            <Button
-              onClick={() => navigate('/services')}
-              className="bg-primary text-primary-foreground rounded-2xl font-semibold text-sm h-11 px-6 hover:bg-primary/90"
-            >
-              Book Now
-              <ArrowRight className="h-4 w-4 ml-2" strokeWidth={1.5} />
-            </Button>
+          {/* Hero card with image */}
+          <motion.div variants={fadeUp} className="rounded-3xl overflow-hidden relative" style={{ height: 200 }}>
+            <img
+              src={cleanKitchen}
+              alt="Sparkling clean kitchen"
+              className="w-full h-full object-cover"
+              width={800}
+              height={512}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <p className="text-white/60 text-xs font-medium uppercase tracking-wider mb-1">Premium Cleaning</p>
+              <h2 className="text-xl font-display font-black text-white leading-tight mb-3">
+                Your home, <span className="text-primary">sorted.</span>
+              </h2>
+              <Button
+                onClick={() => navigate('/services')}
+                size="sm"
+                className="bg-primary text-primary-foreground rounded-xl font-semibold text-xs h-9 px-5 hover:bg-primary/90"
+              >
+                Book Now
+                <ArrowRight className="h-3.5 w-3.5 ml-1.5" strokeWidth={1.5} />
+              </Button>
+            </div>
           </motion.div>
 
           {/* Services */}
