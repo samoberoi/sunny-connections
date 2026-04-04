@@ -35,7 +35,6 @@ export default function CleanerEarnings() {
     ? (completedBookings.filter(b => b.rating).reduce((s, b) => s + (b.rating || 0), 0) / completedBookings.filter(b => b.rating).length).toFixed(1)
     : '—';
 
-  // Group by day for chart
   const dayMap: Record<string, number> = {};
   completedBookings.forEach(b => {
     const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short' });
@@ -53,45 +52,40 @@ export default function CleanerEarnings() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-xl font-bold text-foreground">Earnings</h1>
+            <h1 className="text-2xl font-display font-black text-foreground">Earnings</h1>
           </div>
 
-          <div className="glass-card rounded-2xl p-8 text-center mb-6 shadow-apple">
-            <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-3">
-              <PoundSterling className="h-7 w-7 text-primary" strokeWidth={1.5} />
-            </div>
-            <div className="text-4xl font-extrabold text-foreground">£{totalEarnings}</div>
-            <p className="text-sm text-muted-foreground mt-1">Total Earnings</p>
+          {/* Big earnings card */}
+          <div className="gradient-neon rounded-3xl p-8 text-center mb-6 shadow-neon">
+            <PoundSterling className="h-8 w-8 text-foreground/60 mx-auto mb-2" strokeWidth={1.5} />
+            <div className="text-5xl font-display font-black text-foreground">£{totalEarnings}</div>
+            <p className="text-sm text-foreground/60 mt-1 font-medium">Total Earnings</p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="glass-card rounded-2xl p-3 text-center shadow-apple">
-              <Briefcase className="h-4 w-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
-              <div className="text-lg font-bold text-foreground">{completedBookings.length}</div>
-              <div className="text-[10px] text-muted-foreground">Jobs</div>
-            </div>
-            <div className="glass-card rounded-2xl p-3 text-center shadow-apple">
-              <Clock className="h-4 w-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
-              <div className="text-lg font-bold text-foreground">{totalHours}</div>
-              <div className="text-[10px] text-muted-foreground">Hours</div>
-            </div>
-            <div className="glass-card rounded-2xl p-3 text-center shadow-apple">
-              <Star className="h-4 w-4 text-amber-400 mx-auto mb-1" strokeWidth={1.5} />
-              <div className="text-lg font-bold text-foreground">{avgRating}</div>
-              <div className="text-[10px] text-muted-foreground">Avg Rating</div>
-            </div>
+            {[
+              { icon: Briefcase, value: completedBookings.length, label: 'Jobs', color: 'gradient-pink' },
+              { icon: Clock, value: totalHours, label: 'Hours', color: 'gradient-cyan' },
+              { icon: Star, value: avgRating, label: 'Rating', color: 'bg-foreground' },
+            ].map(stat => (
+              <div key={stat.label} className={`${stat.color} rounded-2xl p-3 text-center ${stat.color === 'bg-foreground' ? 'text-card' : 'text-foreground'}`}>
+                <stat.icon className="h-4 w-4 mx-auto mb-1" strokeWidth={1.5} />
+                <div className="text-lg font-display font-black">{stat.value}</div>
+                <div className="text-[10px] font-medium opacity-60">{stat.label}</div>
+              </div>
+            ))}
           </div>
 
-          <div className="glass-card rounded-2xl p-5 shadow-apple">
-            <h3 className="font-bold text-foreground mb-5 text-sm">Weekly Breakdown</h3>
+          <div className="bg-card rounded-2xl p-5 shadow-apple">
+            <h3 className="font-display font-bold text-foreground mb-5 text-sm">Weekly Breakdown</h3>
             <div className="flex items-end gap-2 h-40">
               {weeklyData.map(d => (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[10px] font-medium text-muted-foreground">£{d.amount}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground">£{d.amount}</span>
                   <div className="w-full rounded-xl relative overflow-hidden" style={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%`, minHeight: '4px' }}>
-                    <div className="absolute inset-0 rounded-xl gradient-blue" />
+                    <div className="absolute inset-0 rounded-xl gradient-neon" />
                   </div>
-                  <span className="text-[10px] font-semibold text-muted-foreground">{d.day}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground">{d.day}</span>
                 </div>
               ))}
             </div>
