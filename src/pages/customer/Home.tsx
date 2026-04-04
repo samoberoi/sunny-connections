@@ -208,5 +208,3 @@ export default function CustomerHome() {
     </CustomerLayout>
   );
 }
-
-import { PoundSterling, Star } from 'lucide-react';
