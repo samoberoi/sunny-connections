@@ -11,11 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 
 const statusStyles: Record<string, string> = {
-  pending: 'bg-muted text-muted-foreground',
-  assigned: 'bg-foreground text-primary-foreground',
-  'en-route': 'bg-foreground text-primary-foreground',
-  'otp-verified': 'bg-foreground text-primary-foreground',
-  'in-progress': 'bg-foreground text-primary-foreground',
+  pending: 'bg-accent text-accent-foreground',
+  assigned: 'bg-primary/10 text-primary',
+  'en-route': 'bg-primary/10 text-primary',
+  'otp-verified': 'bg-primary/10 text-primary',
+  'in-progress': 'bg-primary text-primary-foreground',
   completed: 'bg-muted text-muted-foreground',
   cancelled: 'bg-destructive/10 text-destructive',
 };
@@ -61,12 +61,12 @@ export default function MyBookings() {
                       <Badge className={`${statusStyles[b.status]} text-[10px] rounded-lg font-semibold border-0`}>{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                      <Clock className="h-3 w-3" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
+                      <Clock className="h-3 w-3 text-primary" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}
+                      <MapPin className="h-3 w-3 text-primary" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}
                     </div>
-                    {b.cleaner_name && <p className="text-xs text-muted-foreground mt-2">Cleaner: {b.cleaner_name}</p>}
+                    {b.cleaner_name && <p className="text-xs text-primary mt-2 font-medium">Cleaner: {b.cleaner_name}</p>}
                   </div>
                 ))}
               </div>

@@ -52,9 +52,9 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-display font-black text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Overview of your cleaning empire</p>
         </div>
-        <div className="flex items-center gap-2 border border-border rounded-full px-3 py-1.5">
-          <TrendingUp className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
-          <span className="text-xs font-semibold text-foreground">+12%</span>
+        <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5">
+          <TrendingUp className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+          <span className="text-xs font-semibold text-primary">+12%</span>
         </div>
       </div>
 
@@ -67,7 +67,9 @@ export default function AdminDashboard() {
             transition={{ delay: i * 0.05, duration: 0.35 }}
             className="border border-border rounded-2xl p-5"
           >
-            <stat.icon className="h-5 w-5 text-muted-foreground mb-3" strokeWidth={1.5} />
+            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3">
+              <stat.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            </div>
             <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
             <p className="text-2xl font-display font-black text-foreground mt-1">{stat.value}</p>
           </motion.div>
@@ -81,7 +83,7 @@ export default function AdminDashboard() {
             <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(0, 0%, 70%)" />
             <YAxis tick={{ fontSize: 12 }} stroke="hsl(0, 0%, 70%)" />
             <Tooltip />
-            <Bar dataKey="revenue" fill="hsl(0, 0%, 10%)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="revenue" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

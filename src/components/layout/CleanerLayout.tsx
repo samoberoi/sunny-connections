@@ -24,7 +24,7 @@ export default function CleanerLayout({ children }: { children: ReactNode }) {
                   key={to}
                   to={to}
                   className={`flex flex-col items-center gap-1 py-3 px-4 transition-all duration-200 ${
-                    active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
+                    active ? 'text-primary' : 'text-muted-foreground hover:text-foreground/70'
                   }`}
                 >
                   <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />

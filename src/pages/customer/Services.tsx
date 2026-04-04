@@ -38,7 +38,7 @@ export default function Services() {
             {['all', 'cleaning', 'housekeeping'].map(cat => (
               <button key={cat} onClick={() => setCategory(cat)}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all duration-200 ${
-                  category === cat ? 'bg-foreground text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  category === cat ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}>
                 {cat === 'all' ? 'All' : cat}
               </button>

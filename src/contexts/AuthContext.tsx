@@ -112,14 +112,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSkipAuthChange(true);
       await supabase.auth.signOut();
 
-      // Try sign in first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: DEFAULT_PASSWORD,
       });
 
       if (signInError) {
-        // Sign up if not exists
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password: DEFAULT_PASSWORD,
@@ -148,10 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Now update profile with correct role
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
-        // Upsert profile
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('id')
@@ -169,7 +165,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .insert({ user_id: authUser.id, role: pendingRole, phone: pendingPhone, name });
         }
 
-        // Set user directly with correct role - no race condition
         setUser({
           id: authUser.id,
           phone: pendingPhone,

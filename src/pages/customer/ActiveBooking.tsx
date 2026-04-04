@@ -67,7 +67,7 @@ export default function ActiveBooking() {
           </div>
 
           {/* Simulated Map */}
-          <div className="relative bg-muted rounded-2xl overflow-hidden mb-5" style={{ height: 180 }}>
+          <div className="relative bg-accent rounded-2xl overflow-hidden mb-5" style={{ height: 180 }}>
             <div className="absolute inset-0 opacity-[0.06]" style={{
               backgroundImage: `linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px)`,
               backgroundSize: '30px 30px',
@@ -76,18 +76,18 @@ export default function ActiveBooking() {
               <motion.div
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="absolute top-1/3 left-1/3 w-9 h-9 rounded-full bg-foreground shadow-elevated flex items-center justify-center"
+                className="absolute top-1/3 left-1/3 w-9 h-9 rounded-full bg-primary shadow-elevated flex items-center justify-center"
               >
                 <Navigation className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
               </motion.div>
             )}
-            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-foreground" />
-            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-foreground animate-pulse-ring" />
+            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-primary" />
+            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-primary animate-pulse-ring" />
 
             {booking?.cleaner_name && (
               <div className="absolute bottom-3 left-3 right-3 glass-card-elevated rounded-xl px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-primary-foreground font-semibold text-xs">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
                     {booking.cleaner_name[0]}
                   </div>
                   <div>
@@ -98,11 +98,11 @@ export default function ActiveBooking() {
                   </div>
                 </div>
                 <div className="flex gap-1.5">
-                  <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors">
-                    <Phone className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                  <button className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                    <Phone className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
-                  <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors">
-                    <MessageCircle className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                  <button className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                    <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -110,8 +110,8 @@ export default function ActiveBooking() {
           </div>
 
           {(liveStatus === 'en-route' || liveStatus === 'assigned') && booking?.otp && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-foreground rounded-2xl p-5 mb-5 text-center">
-              <p className="text-xs text-primary-foreground/40 mb-2 font-medium uppercase tracking-wider">Share code with cleaner</p>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary rounded-2xl p-5 mb-5 text-center">
+              <p className="text-xs text-primary-foreground/60 mb-2 font-medium uppercase tracking-wider">Share code with cleaner</p>
               <div className="text-3xl font-display font-black tracking-[0.4em] text-primary-foreground">{booking.otp}</div>
             </motion.div>
           )}
@@ -126,12 +126,12 @@ export default function ActiveBooking() {
                   <div className="flex flex-col items-center">
                     {done ? (
                       <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400 }}>
-                        <CircleCheck className={`h-5 w-5 text-foreground ${current ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+                        <CircleCheck className={`h-5 w-5 text-primary ${current ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
                       </motion.div>
                     ) : (
                       <Circle className="h-5 w-5 text-border" strokeWidth={1.5} />
                     )}
-                    {i < statuses.length - 1 && <div className={`w-px h-8 transition-colors duration-300 ${done ? 'bg-foreground' : 'bg-border'}`} />}
+                    {i < statuses.length - 1 && <div className={`w-px h-8 transition-colors duration-300 ${done ? 'bg-primary' : 'bg-border'}`} />}
                   </div>
                   <div className="pb-3">
                     <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/40'}`}>{status.label}</p>
@@ -143,7 +143,7 @@ export default function ActiveBooking() {
           </div>
 
           {liveStatus === 'completed' && (
-            <Button onClick={() => navigate('/rate-service', { state: { bookingId: booking?.id } })} className="w-full h-14 font-semibold text-base rounded-2xl">
+            <Button onClick={() => navigate('/rate-service', { state: { bookingId: booking?.id } })} className="w-full h-14 font-semibold text-base rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
               Rate Service
             </Button>
           )}

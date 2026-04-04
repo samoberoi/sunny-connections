@@ -62,20 +62,21 @@ export default function CleanerDashboard() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => toggleAvailability.mutate()}
-              className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-muted transition-colors"
+              className={`flex items-center gap-2 rounded-full px-4 py-2 transition-colors ${
+                cleanerRecord?.available ? 'bg-primary/10 border border-primary/20' : 'border border-border'
+              }`}
             >
               {cleanerRecord?.available ? (
-                <ToggleRight className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                <ToggleRight className="h-5 w-5 text-primary" strokeWidth={1.5} />
               ) : (
                 <ToggleLeft className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
               )}
-              <span className="text-xs font-semibold text-foreground">
+              <span className={`text-xs font-semibold ${cleanerRecord?.available ? 'text-primary' : 'text-foreground'}`}>
                 {cleanerRecord?.available ? 'Online' : 'Offline'}
               </span>
             </motion.button>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
               { icon: CalendarDays, label: 'Today', value: todayBookings.length.toString() },
@@ -89,32 +90,33 @@ export default function CleanerDashboard() {
                 transition={{ delay: i * 0.06, duration: 0.35 }}
                 className="border border-border rounded-2xl p-4 text-center"
               >
-                <stat.icon className="h-4 w-4 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="w-8 h-8 rounded-lg bg-accent mx-auto mb-2 flex items-center justify-center">
+                  <stat.icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                </div>
                 <div className="text-lg font-display font-black text-foreground">{stat.value}</div>
                 <div className="text-[10px] font-medium text-muted-foreground">{stat.label}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Today's Jobs */}
           <section>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display font-semibold text-xs uppercase tracking-wider text-muted-foreground">Today's Jobs</h3>
-              <button onClick={() => navigate('/cleaner/jobs')} className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">View all →</button>
+              <button onClick={() => navigate('/cleaner/jobs')} className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">View all →</button>
             </div>
             {todayBookings.length === 0 ? (
               <EmptyState icon={CalendarDays} title="No jobs today" description="No jobs today. Cuppa time! ☕" />
             ) : (
               <div className="space-y-3">
                 {todayBookings.map(b => (
-                  <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => navigate('/cleaner/jobs')} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => navigate('/cleaner/jobs')} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex justify-between mb-2">
                       <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                      <Badge className="bg-muted text-muted-foreground text-[10px] rounded-lg font-semibold border-0">{b.status.replace('-', ' ')}</Badge>
+                      <Badge className="bg-primary/10 text-primary text-[10px] rounded-lg font-semibold border-0">{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{b.customer_name}</p>
                     <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" strokeWidth={1.5} /> {b.time} · {b.duration}h</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-primary" strokeWidth={1.5} /> {b.time} · {b.duration}h</span>
                       <span>{b.address_postcode}</span>
                     </div>
                   </motion.div>
