@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Home, Zap, CalendarDays, Clock, MapPin, ChevronRight, User, MessageCircle, Ticket } from 'lucide-react';
+import { Sparkles, Home, Zap, CalendarDays, Clock, MapPin, ChevronRight, User, MessageCircle, Ticket, PoundSterling, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import TrustBadges from '@/components/TrustBadges';
