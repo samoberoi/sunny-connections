@@ -21,7 +21,6 @@ export default function Booking() {
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
 
-  // Update duration when service loads
   const minDur = service?.min_duration || 2;
   const maxDur = service?.max_duration || 8;
   const ratePerHour = service?.rate_per_hour || 0;
@@ -31,18 +30,9 @@ export default function Booking() {
     if (!service) return;
     navigate('/booking-confirmation', {
       state: {
-        service: {
-          id: service.id,
-          name: service.name,
-          ratePerHour: service.rate_per_hour,
-        },
+        service: { id: service.id, name: service.name, ratePerHour: service.rate_per_hour },
         date: date?.toISOString(),
-        time,
-        duration,
-        recurring,
-        address,
-        postcode,
-        totalCost,
+        time, duration, recurring, address, postcode, totalCost,
       }
     });
   };
@@ -51,9 +41,8 @@ export default function Booking() {
     return (
       <CustomerLayout>
         <div className="px-5 pt-6 space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 rounded-2xl" />
-          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-8 w-48 bg-secondary-foreground/5" />
+          <Skeleton className="h-64 rounded-2xl bg-secondary-foreground/5" />
         </div>
       </CustomerLayout>
     );
@@ -63,22 +52,26 @@ export default function Booking() {
     <CustomerLayout>
       <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="text-xl font-bold text-foreground">Book {service?.name}</h1>
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full glass flex items-center justify-center">
+            <ArrowLeft className="h-4 w-4 text-secondary-foreground" />
+          </button>
+          <h1 className="text-xl font-bold text-secondary-foreground">Book {service?.name}</h1>
         </div>
 
         <div className="space-y-6">
+          {/* Date */}
           <section>
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-secondary-foreground mb-3 flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" /> Select Date
             </h3>
-            <div className="glass-card rounded-2xl p-3 shadow-apple">
-              <Calendar mode="single" selected={date} onSelect={setDate} className="mx-auto" />
+            <div className="glass rounded-2xl p-3 border border-secondary-foreground/5">
+              <Calendar mode="single" selected={date} onSelect={setDate} className="mx-auto [&_.rdp-day_button]:text-secondary-foreground [&_.rdp-day_button.rdp-day_selected]:bg-primary [&_.rdp-day_button.rdp-day_selected]:text-primary-foreground" />
             </div>
           </section>
 
+          {/* Time */}
           <section>
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-secondary-foreground mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Select Time
             </h3>
             <div className="grid grid-cols-4 gap-2">
@@ -86,7 +79,11 @@ export default function Booking() {
                 <button
                   key={t}
                   onClick={() => setTime(t)}
-                  className={`py-3 rounded-xl text-sm font-medium transition-all ${time === t ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                    time === t
+                      ? 'gradient-lime text-primary-foreground shadow-lime/30'
+                      : 'glass text-secondary-foreground/50 hover:text-secondary-foreground border border-secondary-foreground/5'
+                  }`}
                 >
                   {t}
                 </button>
@@ -94,8 +91,9 @@ export default function Booking() {
             </div>
           </section>
 
+          {/* Duration */}
           <section>
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-secondary-foreground mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Duration
             </h3>
             <div className="flex gap-2">
@@ -103,7 +101,11 @@ export default function Booking() {
                 <button
                   key={d}
                   onClick={() => setDuration(d)}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${duration === d ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground'}`}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                    duration === d
+                      ? 'gradient-lime text-primary-foreground shadow-lime/30'
+                      : 'glass text-secondary-foreground/50 border border-secondary-foreground/5'
+                  }`}
                 >
                   {d}h
                 </button>
@@ -111,8 +113,9 @@ export default function Booking() {
             </div>
           </section>
 
+          {/* Frequency */}
           <section>
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-secondary-foreground mb-3 flex items-center gap-2">
               <Repeat className="h-4 w-4 text-primary" /> Frequency
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -120,7 +123,11 @@ export default function Booking() {
                 <button
                   key={val}
                   onClick={() => setRecurring(val)}
-                  className={`py-3 rounded-xl text-sm font-medium transition-all ${recurring === val ? 'gradient-blue text-primary-foreground shadow-blue/30' : 'bg-muted text-muted-foreground'}`}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                    recurring === val
+                      ? 'gradient-lime text-primary-foreground shadow-lime/30'
+                      : 'glass text-secondary-foreground/50 border border-secondary-foreground/5'
+                  }`}
                 >
                   {label}
                 </button>
@@ -128,30 +135,32 @@ export default function Booking() {
             </div>
           </section>
 
+          {/* Address */}
           <section>
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-secondary-foreground mb-3 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Address
             </h3>
             <div className="space-y-2">
-              <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
-              <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
+              <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl bg-secondary-foreground/5 border-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/20" />
+              <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl bg-secondary-foreground/5 border-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/20" />
             </div>
           </section>
 
-          <div className="glass-card rounded-2xl p-5 shadow-apple">
+          {/* Total */}
+          <div className="glass rounded-2xl p-5 border border-secondary-foreground/5">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">{service?.name}</span>
-              <span className="text-foreground">£{ratePerHour}/hr × {duration}h</span>
+              <span className="text-secondary-foreground/50">{service?.name}</span>
+              <span className="text-secondary-foreground">£{ratePerHour}/hr × {duration}h</span>
             </div>
             <div className="flex justify-between font-extrabold text-xl">
-              <span>Total</span>
+              <span className="text-secondary-foreground">Total</span>
               <span className="text-gradient">£{totalCost}</span>
             </div>
           </div>
 
-          <Button onClick={handleConfirm} className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue">
+          <button onClick={handleConfirm} className="w-full h-14 text-base font-bold gradient-lime text-primary-foreground rounded-2xl shadow-lime">
             Confirm Booking
-          </Button>
+          </button>
         </div>
       </div>
     </CustomerLayout>
