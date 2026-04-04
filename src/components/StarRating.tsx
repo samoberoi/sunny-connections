@@ -7,7 +7,7 @@ interface StarRatingProps {
   readonly?: boolean;
 }
 
-const sizes = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-8 w-8' };
+const sizes = { sm: 'h-3.5 w-3.5', md: 'h-5 w-5', lg: 'h-7 w-7' };
 
 export default function StarRating({ rating, onRate, size = 'md', readonly = false }: StarRatingProps) {
   return (
@@ -20,7 +20,14 @@ export default function StarRating({ rating, onRate, size = 'md', readonly = fal
           onClick={() => onRate?.(star)}
           className={`transition-all ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'}`}
         >
-          <Star className={`${sizes[size]} ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`} />
+          <Star
+            className={`${sizes[size]} transition-colors ${
+              star <= rating
+                ? 'text-amber-400 fill-amber-400'
+                : 'text-muted-foreground/25'
+            }`}
+            strokeWidth={1.5}
+          />
         </button>
       ))}
     </div>
