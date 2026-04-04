@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (signInError) {
       // Sign up if not exists
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password: DEFAULT_PASSWORD,
         options: {
@@ -126,6 +126,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (signUpError) {
         console.error('Auth error:', signUpError);
         return false;
+      }
+
+      // If signup didn't auto-confirm, try signing in again after a brief wait
+      if (signUpData?.user && !signUpData.session) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password: DEFAULT_PASSWORD,
+        });
+        if (retryError) {
+          console.error('Sign-in after signup failed:', retryError);
+          return false;
+        }
       }
     }
 
