@@ -3,6 +3,9 @@ import { CircleCheck, Circle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BackButton from '@/components/BackButton';
 import PageTransition from '@/components/PageTransition';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 const stages = [
   { key: 'submitted', label: 'Application Submitted' },
@@ -14,7 +17,19 @@ const stages = [
 
 export default function ApplicationStatus() {
   const navigate = useNavigate();
-  const currentStage = 1;
+  const { user } = useAuth();
+
+  const { data: application } = useQuery({
+    queryKey: ['my-application', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('enrolment_applications').select('*').eq('user_id', user.id).order('submitted_at', { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const currentStage = application ? stages.findIndex(s => s.key === application.status) : 0;
 
   return (
     <div className="min-h-screen bg-background px-5 pt-6 pb-6">
@@ -40,7 +55,9 @@ export default function ApplicationStatus() {
                 </div>
                 <div className="pb-4">
                   <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}>{stage.label}</p>
-                  {current && <p className="text-xs text-muted-foreground">We're reviewing your application</p>}
+                  {current && <p className="text-xs text-muted-foreground">
+                    {application?.status === 'submitted' ? "We're reviewing your application" : `Currently at: ${stage.label}`}
+                  </p>}
                 </div>
               </div>
             );
