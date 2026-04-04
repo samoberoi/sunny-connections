@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from '@/components/StarRating';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -18,14 +17,14 @@ export default function RateService() {
       <CustomerLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center">
-            <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-5">
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="h-12 w-12 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Thank You!</h2>
-            <p className="text-muted-foreground mb-8">Your feedback helps us maintain five-star standards.</p>
-            <Button onClick={() => navigate('/home')} className="gradient-blue text-primary-foreground rounded-2xl shadow-blue h-12 px-8">
+            <h2 className="text-2xl font-bold text-secondary-foreground mb-2">Thank You!</h2>
+            <p className="text-secondary-foreground/50 mb-8">Your feedback helps us maintain five-star standards.</p>
+            <button onClick={() => navigate('/home')} className="gradient-lime text-primary-foreground rounded-2xl shadow-lime h-12 px-8 font-bold">
               Back to Home
-            </Button>
+            </button>
           </motion.div>
         </div>
       </CustomerLayout>
@@ -35,38 +34,38 @@ export default function RateService() {
   return (
     <CustomerLayout>
       <div className="px-5 pt-6 pb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Rate Your Service</h1>
-        <p className="text-muted-foreground text-sm mb-8">How was your experience with Emma Thompson?</p>
+        <h1 className="text-2xl font-bold text-secondary-foreground mb-1">Rate Your Service</h1>
+        <p className="text-secondary-foreground/50 text-sm mb-8">How was your experience with Emma Thompson?</p>
 
-        <div className="glass-card rounded-2xl p-8 mb-6 text-center shadow-apple">
-          <div className="w-20 h-20 rounded-2xl gradient-blue mx-auto mb-4 flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-blue">
+        <div className="glass rounded-2xl p-8 mb-6 text-center border border-secondary-foreground/5">
+          <div className="w-20 h-20 rounded-2xl gradient-lime mx-auto mb-4 flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-lime">
             E
           </div>
-          <h3 className="font-bold text-foreground mb-4">Emma Thompson</h3>
+          <h3 className="font-bold text-secondary-foreground mb-4">Emma Thompson</h3>
           <StarRating rating={rating} onRate={setRating} size="lg" />
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-xs text-secondary-foreground/40 mt-3">
             {rating === 0 ? 'Tap a star to rate' : rating <= 2 ? "We'll do better" : rating <= 4 ? 'Good service' : 'Excellent!'}
           </p>
         </div>
 
         <div className="mb-6">
-          <label className="text-sm font-semibold text-foreground mb-2 block">Leave a review (optional)</label>
+          <label className="text-sm font-semibold text-secondary-foreground mb-2 block">Leave a review (optional)</label>
           <Textarea
             placeholder="Tell us about your experience..."
             value={review}
             onChange={e => setReview(e.target.value)}
             rows={4}
-            className="rounded-2xl bg-muted/50 border-0 resize-none"
+            className="rounded-2xl bg-secondary-foreground/5 border-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/20 resize-none"
           />
         </div>
 
-        <Button
+        <button
           onClick={() => setSubmitted(true)}
           disabled={rating === 0}
-          className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue disabled:opacity-40"
+          className="w-full h-14 text-base font-bold gradient-lime text-primary-foreground rounded-2xl shadow-lime disabled:opacity-40"
         >
           Submit Review
-        </Button>
+        </button>
       </div>
     </CustomerLayout>
   );

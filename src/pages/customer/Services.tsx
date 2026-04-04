@@ -19,7 +19,6 @@ export default function Services() {
     navigate(`/booking?service=${service.id}`);
   };
 
-  // Adapt ServiceRow to the shape ServiceCard expects
   const toServiceCardProps = (s: ServiceRow) => ({
     id: s.id,
     name: s.name,
@@ -35,19 +34,21 @@ export default function Services() {
     <CustomerLayout>
       <div className="px-5 pt-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="text-xl font-bold text-foreground">Our Services</h1>
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full glass flex items-center justify-center">
+            <ArrowLeft className="h-4 w-4 text-secondary-foreground" />
+          </button>
+          <h1 className="text-xl font-bold text-secondary-foreground">Our Services</h1>
         </div>
 
-        <div className="flex gap-2 p-1 bg-muted rounded-2xl mb-6">
+        <div className="flex gap-2 mb-6">
           {['all', 'cleaning', 'housekeeping'].map(cat => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all ${
                 category === cat
-                  ? 'bg-card shadow-apple text-foreground'
-                  : 'text-muted-foreground'
+                  ? 'gradient-lime text-primary-foreground shadow-lime/30'
+                  : 'glass text-secondary-foreground/50 hover:text-secondary-foreground'
               }`}
             >
               {cat === 'all' ? 'All' : cat}
@@ -58,7 +59,7 @@ export default function Services() {
         <div className="space-y-3 pb-6">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-2xl" />
+              <Skeleton key={i} className="h-24 rounded-2xl bg-secondary-foreground/5" />
             ))
           ) : (
             filtered.map(service => (

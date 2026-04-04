@@ -10,20 +10,20 @@ const badges = [
 
 export default function TrustBadges() {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3">
       {badges.map((badge, i) => (
         <motion.div
           key={badge.label}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08 }}
-          className="glass-card rounded-2xl p-4 text-center shadow-apple"
+          className="glass rounded-2xl p-4 text-center border border-secondary-foreground/5"
         >
-          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mx-auto mb-2">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mx-auto mb-2">
             <badge.icon className="h-5 w-5 text-primary" />
           </div>
-          <div className="text-xl font-bold text-foreground">{badge.value}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">{badge.label}</div>
+          <div className="text-xl font-bold text-secondary-foreground">{badge.value}</div>
+          <div className="text-[10px] text-secondary-foreground/40 mt-0.5 font-medium">{badge.label}</div>
         </motion.div>
       ))}
     </div>
