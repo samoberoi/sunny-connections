@@ -64,12 +64,12 @@ export default function Login() {
       toast.error('Invalid OTP. Use 1111 for testing.');
       return;
     }
-    toast.success('Verified!');
+    toast.success('Welcome to Clean Fit! 🎉');
     setTimeout(() => {
       if (role === 'customer') navigate('/home');
       else if (role === 'cleaner') navigate('/cleaner');
       else navigate('/admin');
-    }, 400);
+    }, 300);
   };
 
   const slideVariants = {
