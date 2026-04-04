@@ -24,13 +24,13 @@ function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-foreground">
         <div className="p-4 pb-2">
-          <h2 className={`font-display font-black text-primary-foreground ${collapsed ? 'text-xs' : 'text-lg'}`}>
+          <h2 className={`font-display font-black text-white ${collapsed ? 'text-xs' : 'text-lg'}`}>
             {collapsed ? 'CF' : 'Clean Fit'}
           </h2>
-          {!collapsed && <p className="text-xs text-primary-foreground/30 mt-0.5 font-medium">Super Admin</p>}
+          {!collapsed && <p className="text-xs text-primary mt-0.5 font-medium">Super Admin</p>}
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primary-foreground/20 text-[10px] uppercase tracking-widest">Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white/20 text-[10px] uppercase tracking-widest">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
@@ -38,7 +38,7 @@ function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild>
-                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active ? 'bg-primary-foreground text-foreground font-semibold' : 'text-primary-foreground/40 hover:bg-primary-foreground/5 hover:text-primary-foreground/70'}`}>
+                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active ? 'bg-primary text-primary-foreground font-semibold' : 'text-white/40 hover:bg-white/5 hover:text-white/70'}`}>
                         <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                         {!collapsed && <span className="text-sm">{item.label}</span>}
                       </RouterNavLink>

@@ -66,34 +66,32 @@ export default function CustomerProfile() {
             <h1 className="text-xl font-display font-black text-foreground">Profile</h1>
           </div>
 
-          {/* Avatar & name */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-foreground mx-auto mb-4 flex items-center justify-center text-primary-foreground font-semibold text-2xl">
+            <div className="w-20 h-20 rounded-full bg-primary mx-auto mb-4 flex items-center justify-center text-primary-foreground font-semibold text-2xl">
               {user?.name?.[0] || 'A'}
             </div>
             <h2 className="text-xl font-display font-black text-foreground">{user?.name || 'Guest'}</h2>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-              <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone || '07700 900000'}
+              <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '1111111111'}
             </div>
           </div>
 
-          {/* Addresses */}
           <div className="border border-border rounded-2xl p-5 mb-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display font-semibold text-foreground text-sm">Saved Addresses</h3>
               <Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
                 <DialogTrigger asChild>
-                  <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors">
-                    <Plus className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                  <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
+                    <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
                   </button>
                 </DialogTrigger>
                 <DialogContent className="rounded-2xl">
                   <DialogHeader><DialogTitle>Add Address</DialogTitle></DialogHeader>
                   <div className="space-y-3 pt-2">
-                    <Input placeholder="Label (e.g. Home, Office)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} className="h-12 rounded-xl" />
-                    <Input placeholder="Address line" value={newAddress.line1} onChange={e => setNewAddress({ ...newAddress, line1: e.target.value })} className="h-12 rounded-xl" />
-                    <Input placeholder="Postcode" value={newAddress.postcode} onChange={e => setNewAddress({ ...newAddress, postcode: e.target.value })} className="h-12 rounded-xl" />
-                    <Button onClick={() => addAddress.mutate()} disabled={!newAddress.line1 || !newAddress.postcode} className="w-full rounded-xl font-semibold">Save Address</Button>
+                    <Input placeholder="Label (e.g. Home, Office)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
+                    <Input placeholder="Address line" value={newAddress.line1} onChange={e => setNewAddress({ ...newAddress, line1: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
+                    <Input placeholder="Postcode" value={newAddress.postcode} onChange={e => setNewAddress({ ...newAddress, postcode: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
+                    <Button onClick={() => addAddress.mutate()} disabled={!newAddress.line1 || !newAddress.postcode} className="w-full rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">Save Address</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -104,7 +102,7 @@ export default function CustomerProfile() {
               <div className="space-y-3">
                 {addresses.map((addr: any) => (
                   <div key={addr.id} className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" strokeWidth={1.5} />
                     <div className="flex-1">
                       <p className="text-xs font-semibold text-foreground">{addr.label}</p>
                       <p className="text-sm text-muted-foreground">{addr.line1}, {addr.postcode}</p>
@@ -118,9 +116,8 @@ export default function CustomerProfile() {
             )}
           </div>
 
-          {/* Refer */}
-          <div className="border border-border rounded-2xl p-5 mb-4 flex items-center gap-3">
-            <Share2 className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+          <div className="border border-primary/20 bg-accent rounded-2xl p-5 mb-4 flex items-center gap-3">
+            <Share2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
             <div className="flex-1">
               <h3 className="font-semibold text-foreground text-sm">Refer a Mate</h3>
               <p className="text-xs text-muted-foreground">Know someone who hates hoovering?</p>

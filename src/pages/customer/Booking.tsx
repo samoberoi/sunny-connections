@@ -96,14 +96,14 @@ export default function Booking() {
           <div className="space-y-6">
             {/* Property Type */}
             <section>
-              <h3 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <Home className="h-3.5 w-3.5" strokeWidth={1.5} /> Property Type
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {propertyTypes.map(pt => (
                   <motion.button key={pt.value} whileTap={{ scale: 0.97 }} onClick={() => setPropertyType(pt.value)}
                     className={`py-4 rounded-xl text-sm font-semibold transition-all duration-200 flex flex-col items-center gap-2 border ${
-                      propertyType === pt.value ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
+                      propertyType === pt.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}>
                     <pt.icon className="h-5 w-5" strokeWidth={1.5} />
                     {pt.label}
@@ -131,7 +131,7 @@ export default function Booking() {
                 {['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'].map(t => (
                   <motion.button key={t} whileTap={{ scale: 0.97 }} onClick={() => setTime(t)}
                     className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-                      time === t ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
+                      time === t ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}>
                     {t}
                   </motion.button>
@@ -148,7 +148,7 @@ export default function Booking() {
                 {Array.from({ length: Math.min(maxDur - minDur + 1, 6) }, (_, i) => minDur + i).map(d => (
                   <motion.button key={d} whileTap={{ scale: 0.97 }} onClick={() => setDuration(d)}
                     className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-                      duration === d ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
+                      duration === d ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}>
                     {d}h
                   </motion.button>
@@ -165,7 +165,7 @@ export default function Booking() {
                 {([['none', 'One-time'], ['weekly', 'Weekly'], ['fortnightly', 'Fortnightly'], ['monthly', 'Monthly']] as const).map(([val, label]) => (
                   <motion.button key={val} whileTap={{ scale: 0.97 }} onClick={() => setRecurring(val)}
                     className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-                      recurring === val ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
+                      recurring === val ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}>
                     {label}
                   </motion.button>
@@ -179,8 +179,8 @@ export default function Booking() {
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Address
               </h3>
               <div className="space-y-2">
-                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border" />
-                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border" />
+                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
+                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
               </div>
             </section>
 
@@ -189,13 +189,13 @@ export default function Booking() {
               <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <StickyNote className="h-3.5 w-3.5" strokeWidth={1.5} /> Special Instructions
               </h3>
-              <Textarea placeholder="Leave key under mat, allergies, pet-friendly products..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border resize-none" />
+              <Textarea placeholder="Leave key under mat, allergies, pet-friendly products..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border resize-none focus-visible:ring-primary/30" />
             </section>
 
             {/* Total */}
-            <div className="bg-foreground rounded-2xl p-5 text-primary-foreground">
+            <div className="bg-primary rounded-2xl p-5 text-primary-foreground">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-primary-foreground/50">{service?.name}</span>
+                <span className="text-primary-foreground/60">{service?.name}</span>
                 <span>£{ratePerHour}/hr × {duration}h</span>
               </div>
               <div className="flex justify-between font-display font-black text-xl">
@@ -205,7 +205,7 @@ export default function Booking() {
             </div>
 
             <Button onClick={handleConfirm} disabled={submitting || !address || !postcode}
-              className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 transition-opacity">
+              className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 transition-opacity bg-primary text-primary-foreground hover:bg-primary/90">
               {submitting ? 'Creating booking...' : 'Confirm Booking'}
             </Button>
           </div>

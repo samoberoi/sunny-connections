@@ -112,7 +112,7 @@ export default function CleanerJobs() {
 
             <div className="border border-border rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center text-primary-foreground font-semibold">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
                   <User className="h-5 w-5" strokeWidth={1.5} />
                 </div>
                 <div>
@@ -121,11 +121,11 @@ export default function CleanerJobs() {
                 </div>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><Clock className="h-4 w-4" strokeWidth={1.5} /> {selectedJob.date} at {selectedJob.time} · {selectedJob.duration}h</div>
-                <div className="flex items-center gap-2"><MapPin className="h-4 w-4" strokeWidth={1.5} /> {selectedJob.address_line1}, {selectedJob.address_postcode}</div>
+                <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" strokeWidth={1.5} /> {selectedJob.date} at {selectedJob.time} · {selectedJob.duration}h</div>
+                <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" strokeWidth={1.5} /> {selectedJob.address_line1}, {selectedJob.address_postcode}</div>
               </div>
               <div className="mt-4 pt-4 border-t border-border flex justify-between font-display font-black text-lg">
-                <span>Earnings</span><span>£{selectedJob.total_cost}</span>
+                <span>Earnings</span><span className="text-primary">£{selectedJob.total_cost}</span>
               </div>
             </div>
 
@@ -137,28 +137,28 @@ export default function CleanerJobs() {
                   <InputOTP maxLength={4} value={otp} onChange={setOtp}>
                     <InputOTPGroup className="gap-3">
                       {[0,1,2,3].map(i => (
-                        <InputOTPSlot key={i} index={i} className="w-14 h-14 rounded-2xl border-2 border-border text-xl font-bold" />
+                        <InputOTPSlot key={i} index={i} className="w-14 h-14 rounded-2xl border-2 border-border text-xl font-bold focus:border-primary" />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <Button onClick={verifyOtp} className="w-full h-12 rounded-2xl font-semibold">Verify & Start Job</Button>
+                <Button onClick={verifyOtp} className="w-full h-12 rounded-2xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">Verify & Start Job</Button>
               </div>
             ) : selectedJob.status === 'otp-verified' ? (
               <div className="border border-border rounded-2xl p-6 text-center">
-                <CircleCheck className="h-8 w-8 text-foreground mx-auto mb-3" strokeWidth={1.5} />
+                <CircleCheck className="h-8 w-8 text-primary mx-auto mb-3" strokeWidth={1.5} />
                 <p className="font-semibold text-foreground mb-4">OTP Verified! Ready to start.</p>
-                <Button onClick={startJob} className="w-full h-12 rounded-2xl font-semibold">Start Cleaning</Button>
+                <Button onClick={startJob} className="w-full h-12 rounded-2xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">Start Cleaning</Button>
               </div>
             ) : selectedJob.status === 'in-progress' ? (
               <div className="border border-border rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
-                  <CircleCheck className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                  <CircleCheck className="h-5 w-5 text-primary" strokeWidth={1.5} />
                   <span className="font-semibold text-foreground text-sm">Job in Progress</span>
                 </div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Completion Notes</label>
-                <Textarea placeholder="Any notes about the job..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border mb-4 resize-none" />
-                <Button onClick={completeJob} className="w-full h-12 rounded-2xl font-semibold">Mark as Complete</Button>
+                <Textarea placeholder="Any notes about the job..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border mb-4 resize-none focus-visible:ring-primary/30" />
+                <Button onClick={completeJob} className="w-full h-12 rounded-2xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">Mark as Complete</Button>
               </div>
             ) : null}
           </div>
@@ -178,9 +178,9 @@ export default function CleanerJobs() {
 
           <Tabs defaultValue="available">
             <TabsList className="w-full bg-muted rounded-2xl p-1 mb-5">
-              <TabsTrigger value="available" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">Available ({available.length})</TabsTrigger>
-              <TabsTrigger value="my-jobs" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">My Jobs ({myJobs.length})</TabsTrigger>
-              <TabsTrigger value="completed" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">Done ({completed.length})</TabsTrigger>
+              <TabsTrigger value="available" className="flex-1 rounded-xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available ({available.length})</TabsTrigger>
+              <TabsTrigger value="my-jobs" className="flex-1 rounded-xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">My Jobs ({myJobs.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="flex-1 rounded-xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Done ({completed.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="available">
@@ -192,13 +192,13 @@ export default function CleanerJobs() {
                     <motion.div key={b.id} whileTap={{ scale: 0.98 }} className="border border-border rounded-2xl p-4">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <span className="text-sm font-display font-black text-foreground">£{b.total_cost}</span>
+                        <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-1">{b.customer_name}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                        <Clock className="h-3 w-3" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
+                        <Clock className="h-3 w-3 text-primary" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
                       </div>
-                      <Button size="sm" onClick={() => acceptJob.mutate(b.id)} className="w-full rounded-xl text-xs font-semibold">
+                      <Button size="sm" onClick={() => acceptJob.mutate(b.id)} className="w-full rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
                         Accept Job
                       </Button>
                     </motion.div>
@@ -213,10 +213,10 @@ export default function CleanerJobs() {
               ) : (
                 <div className="space-y-3">
                   {myJobs.map(b => (
-                    <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => setSelectedBooking(b.id)} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                    <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => setSelectedBooking(b.id)} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <Badge className="bg-muted text-foreground text-[10px] rounded-lg font-medium border-0">{b.status.replace('-', ' ')}</Badge>
+                        <Badge className="bg-primary/10 text-primary text-[10px] rounded-lg font-medium border-0">{b.status.replace('-', ' ')}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
                     </motion.div>
@@ -234,10 +234,10 @@ export default function CleanerJobs() {
                     <div key={b.id} className="border border-border rounded-2xl p-4">
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <span className="text-sm font-display font-black text-foreground">£{b.total_cost}</span>
+                        <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">{b.customer_name} · {b.date}</p>
-                      {b.rating && <p className="text-xs text-muted-foreground mt-1">★ {b.rating}/5</p>}
+                      {b.rating && <p className="text-xs text-primary mt-1">★ {b.rating}/5</p>}
                     </div>
                   ))}
                 </div>
