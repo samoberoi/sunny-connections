@@ -15,6 +15,7 @@ import Login from "./pages/customer/Login";
 import CustomerHome from "./pages/customer/Home";
 import Services from "./pages/customer/Services";
 import Booking from "./pages/customer/Booking";
+import SearchingCleaner from "./pages/customer/SearchingCleaner";
 import BookingConfirmation from "./pages/customer/BookingConfirmation";
 import ActiveBooking from "./pages/customer/ActiveBooking";
 import RateService from "./pages/customer/RateService";
