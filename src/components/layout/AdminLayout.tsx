@@ -24,13 +24,13 @@ function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-foreground">
         <div className="p-4 pb-2">
-          <h2 className={`font-display font-black text-card ${collapsed ? 'text-xs' : 'text-lg'}`}>
+          <h2 className={`font-display font-black text-primary-foreground ${collapsed ? 'text-xs' : 'text-lg'}`}>
             {collapsed ? 'CF' : 'Clean Fit'}
           </h2>
-          {!collapsed && <p className="text-xs text-card/40 mt-0.5 font-medium">Super Admin</p>}
+          {!collapsed && <p className="text-xs text-primary-foreground/30 mt-0.5 font-medium">Super Admin</p>}
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-card/30 text-[10px] uppercase tracking-widest">Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-primary-foreground/20 text-[10px] uppercase tracking-widest">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
@@ -38,7 +38,7 @@ function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild>
-                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active ? 'bg-primary text-foreground font-bold' : 'text-card/50 hover:bg-card/5 hover:text-card/80'}`}>
+                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active ? 'bg-primary-foreground text-foreground font-semibold' : 'text-primary-foreground/40 hover:bg-primary-foreground/5 hover:text-primary-foreground/70'}`}>
                         <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                         {!collapsed && <span className="text-sm">{item.label}</span>}
                       </RouterNavLink>
@@ -60,9 +60,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b border-border px-4 bg-card">
+          <header className="h-14 flex items-center border-b border-border px-4 bg-background">
             <SidebarTrigger className="mr-4" />
-            <span className="font-display font-bold text-foreground">Admin Panel</span>
+            <span className="font-display font-semibold text-foreground text-sm">Admin Panel</span>
           </header>
           <main className="flex-1 p-6 overflow-auto bg-background">{children}</main>
         </div>

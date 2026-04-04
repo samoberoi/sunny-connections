@@ -41,8 +41,7 @@ export default function CleanerEarnings() {
     dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost);
   });
   const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => ({
-    day: d,
-    amount: dayMap[d] || 0,
+    day: d, amount: dayMap[d] || 0,
   }));
   const max = Math.max(...weeklyData.map(d => d.amount), 1);
 
@@ -52,40 +51,37 @@ export default function CleanerEarnings() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-2xl font-display font-black text-foreground">Earnings</h1>
+            <h1 className="text-xl font-display font-black text-foreground">Earnings</h1>
           </div>
 
-          {/* Big earnings card */}
-          <div className="gradient-neon rounded-3xl p-8 text-center mb-6 shadow-neon">
-            <PoundSterling className="h-8 w-8 text-foreground/60 mx-auto mb-2" strokeWidth={1.5} />
-            <div className="text-5xl font-display font-black text-foreground">£{totalEarnings}</div>
-            <p className="text-sm text-foreground/60 mt-1 font-medium">Total Earnings</p>
+          <div className="bg-foreground rounded-2xl p-8 text-center mb-6">
+            <PoundSterling className="h-6 w-6 text-primary-foreground/40 mx-auto mb-2" strokeWidth={1.5} />
+            <div className="text-4xl font-display font-black text-primary-foreground">£{totalEarnings}</div>
+            <p className="text-sm text-primary-foreground/40 mt-1 font-medium">Total Earnings</p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { icon: Briefcase, value: completedBookings.length, label: 'Jobs', color: 'gradient-pink' },
-              { icon: Clock, value: totalHours, label: 'Hours', color: 'gradient-cyan' },
-              { icon: Star, value: avgRating, label: 'Rating', color: 'bg-foreground' },
+              { icon: Briefcase, value: completedBookings.length, label: 'Jobs' },
+              { icon: Clock, value: totalHours, label: 'Hours' },
+              { icon: Star, value: avgRating, label: 'Rating' },
             ].map(stat => (
-              <div key={stat.label} className={`${stat.color} rounded-2xl p-3 text-center ${stat.color === 'bg-foreground' ? 'text-card' : 'text-foreground'}`}>
-                <stat.icon className="h-4 w-4 mx-auto mb-1" strokeWidth={1.5} />
-                <div className="text-lg font-display font-black">{stat.value}</div>
-                <div className="text-[10px] font-medium opacity-60">{stat.label}</div>
+              <div key={stat.label} className="border border-border rounded-2xl p-3 text-center">
+                <stat.icon className="h-4 w-4 mx-auto mb-1 text-muted-foreground" strokeWidth={1.5} />
+                <div className="text-lg font-display font-black text-foreground">{stat.value}</div>
+                <div className="text-[10px] font-medium text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
 
-          <div className="bg-card rounded-2xl p-5 shadow-apple">
-            <h3 className="font-display font-bold text-foreground mb-5 text-sm">Weekly Breakdown</h3>
+          <div className="border border-border rounded-2xl p-5">
+            <h3 className="font-display font-semibold text-foreground mb-5 text-sm">Weekly Breakdown</h3>
             <div className="flex items-end gap-2 h-40">
               {weeklyData.map(d => (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[10px] font-bold text-muted-foreground">£{d.amount}</span>
-                  <div className="w-full rounded-xl relative overflow-hidden" style={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%`, minHeight: '4px' }}>
-                    <div className="absolute inset-0 rounded-xl gradient-neon" />
-                  </div>
-                  <span className="text-[10px] font-bold text-muted-foreground">{d.day}</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">£{d.amount}</span>
+                  <div className="w-full rounded-lg bg-foreground" style={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%`, minHeight: '4px' }} />
+                  <span className="text-[10px] font-medium text-muted-foreground">{d.day}</span>
                 </div>
               ))}
             </div>

@@ -31,14 +31,14 @@ export default function Services() {
         <div className="px-5 pt-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-2xl font-display font-black text-foreground">Our Services</h1>
+            <h1 className="text-xl font-display font-black text-foreground">Our Services</h1>
           </div>
 
-          <div className="flex gap-2 p-1 bg-foreground rounded-2xl mb-6">
+          <div className="flex gap-2 p-1 border border-border rounded-2xl mb-6">
             {['all', 'cleaning', 'housekeeping'].map(cat => (
               <button key={cat} onClick={() => setCategory(cat)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 ${
-                  category === cat ? 'bg-primary text-foreground' : 'text-card/50'
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all duration-200 ${
+                  category === cat ? 'bg-foreground text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}>
                 {cat === 'all' ? 'All' : cat}
               </button>

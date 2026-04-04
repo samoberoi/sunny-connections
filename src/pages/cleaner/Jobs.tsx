@@ -25,7 +25,6 @@ export default function CleanerJobs() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [notes, setNotes] = useState('');
 
-  // Get cleaner record for this user
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
     queryFn: async () => {
@@ -53,15 +52,13 @@ export default function CleanerJobs() {
     mutationFn: async (bookingId: string) => {
       if (!cleanerRecord || !user) return;
       const { error } = await supabase.from('bookings').update({
-        cleaner_id: cleanerRecord.id,
-        cleaner_name: user.name,
-        status: 'assigned' as any,
+        cleaner_id: cleanerRecord.id, cleaner_name: user.name, status: 'assigned' as any,
       }).eq('id', bookingId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] });
-      toast.success('Job accepted! 🎉');
+      toast.success('Job accepted!');
     },
   });
 
@@ -70,9 +67,7 @@ export default function CleanerJobs() {
       const { error } = await supabase.from('bookings').update({ status: status as any }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] }),
   });
 
   const selectedJob = allBookings.find(b => b.id === selectedBooking);
@@ -81,7 +76,7 @@ export default function CleanerJobs() {
     if (selectedJob && otp === selectedJob.otp) {
       setOtpVerified(true);
       updateStatus.mutate({ id: selectedJob.id, status: 'otp-verified' });
-      toast.success('OTP verified! You may start the job.');
+      toast.success('OTP verified!');
     } else {
       toast.error('Invalid OTP');
     }
@@ -97,7 +92,7 @@ export default function CleanerJobs() {
   const completeJob = () => {
     if (selectedJob) {
       updateStatus.mutate({ id: selectedJob.id, status: 'completed' });
-      toast.success("Job completed! Brilliant work! 🧹");
+      toast.success('Job completed!');
       setSelectedBooking(null);
       setOtpVerified(false);
       setOtp('');
@@ -112,58 +107,58 @@ export default function CleanerJobs() {
           <div className="px-5 pt-6 pb-6">
             <div className="flex items-center gap-3 mb-6">
               <BackButton onClick={() => { setSelectedBooking(null); setOtpVerified(false); setOtp(''); }} />
-              <h1 className="text-xl font-bold text-foreground">Job Details</h1>
+              <h1 className="text-xl font-display font-black text-foreground">Job Details</h1>
             </div>
 
-            <div className="glass-card rounded-2xl p-5 mb-4 shadow-apple">
+            <div className="border border-border rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center">
-                  <User className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center text-primary-foreground font-semibold">
+                  <User className="h-5 w-5" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground text-sm">{selectedJob.customer_name}</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{selectedJob.customer_name}</h3>
                   <p className="text-xs text-muted-foreground">{selectedJob.service_name}</p>
                 </div>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" strokeWidth={1.5} /> {selectedJob.date} at {selectedJob.time} · {selectedJob.duration}h</div>
-                <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" strokeWidth={1.5} /> {selectedJob.address_line1}, {selectedJob.address_postcode}</div>
+                <div className="flex items-center gap-2"><Clock className="h-4 w-4" strokeWidth={1.5} /> {selectedJob.date} at {selectedJob.time} · {selectedJob.duration}h</div>
+                <div className="flex items-center gap-2"><MapPin className="h-4 w-4" strokeWidth={1.5} /> {selectedJob.address_line1}, {selectedJob.address_postcode}</div>
               </div>
-              <div className="mt-4 pt-4 border-t border-border flex justify-between font-extrabold text-lg">
-                <span>Earnings</span><span className="text-gradient">£{selectedJob.total_cost}</span>
+              <div className="mt-4 pt-4 border-t border-border flex justify-between font-display font-black text-lg">
+                <span>Earnings</span><span>£{selectedJob.total_cost}</span>
               </div>
             </div>
 
             {selectedJob.status === 'assigned' || selectedJob.status === 'en-route' ? (
-              <div className="glass-card rounded-2xl p-6 text-center shadow-apple">
-                <h3 className="font-bold text-foreground mb-2 text-sm">Enter Customer OTP</h3>
+              <div className="border border-border rounded-2xl p-6 text-center">
+                <h3 className="font-semibold text-foreground mb-2 text-sm">Enter Customer OTP</h3>
                 <p className="text-xs text-muted-foreground mb-5">Ask the customer for their 4-digit code</p>
                 <div className="flex justify-center mb-5">
                   <InputOTP maxLength={4} value={otp} onChange={setOtp}>
                     <InputOTPGroup className="gap-3">
                       {[0,1,2,3].map(i => (
-                        <InputOTPSlot key={i} index={i} className="w-14 h-14 rounded-2xl border-2 border-muted bg-muted/30 text-xl font-bold" />
+                        <InputOTPSlot key={i} index={i} className="w-14 h-14 rounded-2xl border-2 border-border text-xl font-bold" />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <Button onClick={verifyOtp} className="w-full h-12 gradient-blue text-primary-foreground rounded-2xl shadow-blue font-semibold">Verify & Start Job</Button>
+                <Button onClick={verifyOtp} className="w-full h-12 rounded-2xl font-semibold">Verify & Start Job</Button>
               </div>
             ) : selectedJob.status === 'otp-verified' ? (
-              <div className="glass-card rounded-2xl p-6 shadow-apple text-center">
-                <CircleCheck className="h-10 w-10 text-primary mx-auto mb-3" strokeWidth={1.5} />
-                <p className="font-bold text-foreground mb-4">OTP Verified! Ready to start.</p>
-                <Button onClick={startJob} className="w-full h-12 gradient-blue text-primary-foreground rounded-2xl shadow-blue font-semibold">Start Cleaning</Button>
+              <div className="border border-border rounded-2xl p-6 text-center">
+                <CircleCheck className="h-8 w-8 text-foreground mx-auto mb-3" strokeWidth={1.5} />
+                <p className="font-semibold text-foreground mb-4">OTP Verified! Ready to start.</p>
+                <Button onClick={startJob} className="w-full h-12 rounded-2xl font-semibold">Start Cleaning</Button>
               </div>
             ) : selectedJob.status === 'in-progress' ? (
-              <div className="glass-card rounded-2xl p-6 shadow-apple">
+              <div className="border border-border rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
-                  <CircleCheck className="h-5 w-5 text-secondary" strokeWidth={1.5} />
-                  <span className="font-bold text-foreground text-sm">Job in Progress</span>
+                  <CircleCheck className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                  <span className="font-semibold text-foreground text-sm">Job in Progress</span>
                 </div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">Completion Notes</label>
-                <Textarea placeholder="Any notes about the job..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-2xl bg-muted/50 border-0 mb-4 resize-none" />
-                <Button onClick={completeJob} className="w-full h-12 gradient-teal text-secondary-foreground rounded-2xl font-semibold">Mark as Complete</Button>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Completion Notes</label>
+                <Textarea placeholder="Any notes about the job..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border mb-4 resize-none" />
+                <Button onClick={completeJob} className="w-full h-12 rounded-2xl font-semibold">Mark as Complete</Button>
               </div>
             ) : null}
           </div>
@@ -178,32 +173,32 @@ export default function CleanerJobs() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-xl font-bold text-foreground">Jobs</h1>
+            <h1 className="text-xl font-display font-black text-foreground">Jobs</h1>
           </div>
 
           <Tabs defaultValue="available">
             <TabsList className="w-full bg-muted rounded-2xl p-1 mb-5">
-              <TabsTrigger value="available" className="flex-1 rounded-xl text-xs data-[state=active]:shadow-apple">Available ({available.length})</TabsTrigger>
-              <TabsTrigger value="my-jobs" className="flex-1 rounded-xl text-xs data-[state=active]:shadow-apple">My Jobs ({myJobs.length})</TabsTrigger>
-              <TabsTrigger value="completed" className="flex-1 rounded-xl text-xs data-[state=active]:shadow-apple">Done ({completed.length})</TabsTrigger>
+              <TabsTrigger value="available" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">Available ({available.length})</TabsTrigger>
+              <TabsTrigger value="my-jobs" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">My Jobs ({myJobs.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="flex-1 rounded-xl text-xs data-[state=active]:bg-foreground data-[state=active]:text-primary-foreground">Done ({completed.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="available">
               {available.length === 0 ? (
-                <EmptyState icon={Briefcase} title="No available jobs" description="No jobs today. Cuppa time! ☕" />
+                <EmptyState icon={Briefcase} title="No available jobs" description="No jobs right now. Cuppa time! ☕" />
               ) : (
                 <div className="space-y-3">
                   {available.map(b => (
-                    <motion.div key={b.id} whileTap={{ scale: 0.97 }} className="glass-card rounded-2xl p-4 shadow-apple">
+                    <motion.div key={b.id} whileTap={{ scale: 0.98 }} className="border border-border rounded-2xl p-4">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <span className="text-sm font-bold text-gradient">£{b.total_cost}</span>
+                        <span className="text-sm font-display font-black text-foreground">£{b.total_cost}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-1">{b.customer_name}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                         <Clock className="h-3 w-3" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
                       </div>
-                      <Button size="sm" onClick={() => acceptJob.mutate(b.id)} className="w-full gradient-blue text-primary-foreground rounded-xl text-xs font-semibold">
+                      <Button size="sm" onClick={() => acceptJob.mutate(b.id)} className="w-full rounded-xl text-xs font-semibold">
                         Accept Job
                       </Button>
                     </motion.div>
@@ -218,13 +213,12 @@ export default function CleanerJobs() {
               ) : (
                 <div className="space-y-3">
                   {myJobs.map(b => (
-                    <motion.div key={b.id} whileTap={{ scale: 0.97 }} onClick={() => setSelectedBooking(b.id)} className="glass-card rounded-2xl p-4 shadow-apple cursor-pointer">
+                    <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => setSelectedBooking(b.id)} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <Badge className="bg-primary/10 text-primary text-xs rounded-lg">{b.status.replace('-', ' ')}</Badge>
+                        <Badge className="bg-muted text-foreground text-[10px] rounded-lg font-medium border-0">{b.status.replace('-', ' ')}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{b.address_postcode}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -237,10 +231,10 @@ export default function CleanerJobs() {
               ) : (
                 <div className="space-y-3">
                   {completed.map(b => (
-                    <div key={b.id} className="glass-card rounded-2xl p-4 shadow-apple">
+                    <div key={b.id} className="border border-border rounded-2xl p-4">
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <span className="text-sm font-bold text-secondary">£{b.total_cost}</span>
+                        <span className="text-sm font-display font-black text-foreground">£{b.total_cost}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">{b.customer_name} · {b.date}</p>
                       {b.rating && <p className="text-xs text-muted-foreground mt-1">★ {b.rating}/5</p>}

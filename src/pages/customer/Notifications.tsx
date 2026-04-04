@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const typeIcons = { booking: CalendarDays, promo: Tag, system: Bell };
-const typeColors = { booking: 'gradient-cyan', promo: 'gradient-pink', system: 'gradient-neon' };
 
 function groupByDate(notifications: any[]) {
   const today = new Date();
@@ -55,7 +54,7 @@ export default function Notifications() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-2xl font-display font-black text-foreground">Notifications</h1>
+            <h1 className="text-xl font-display font-black text-foreground">Notifications</h1>
           </div>
 
           {notifications.length === 0 ? (
@@ -64,22 +63,21 @@ export default function Notifications() {
             <div className="space-y-5">
               {Object.entries(grouped).map(([label, items]) => (
                 <section key={label}>
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{label}</h3>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">{label}</h3>
                   <div className="space-y-2">
                     {items.map((n: any) => {
                       const Icon = typeIcons[n.type as keyof typeof typeIcons] || Bell;
-                      const color = typeColors[n.type as keyof typeof typeColors] || 'bg-muted';
                       return (
                         <button
                           key={n.id}
                           onClick={() => !n.read && markRead.mutate(n.id)}
-                          className={`w-full text-left bg-card rounded-2xl p-4 flex gap-3 shadow-apple transition-all ${!n.read ? 'border-l-4 border-l-primary' : 'opacity-60'}`}
+                          className={`w-full text-left border border-border rounded-2xl p-4 flex gap-3 transition-all ${!n.read ? 'border-l-4 border-l-foreground' : 'opacity-50'}`}
                         >
-                          <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center shrink-0`}>
+                          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
                             <Icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                           </div>
                           <div>
-                            <h4 className="font-bold text-sm text-foreground">{n.title}</h4>
+                            <h4 className="font-semibold text-sm text-foreground">{n.title}</h4>
                             <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
                             <p className="text-xs text-muted-foreground/50 mt-1">{new Date(n.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>

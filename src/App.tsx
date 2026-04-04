@@ -15,6 +15,7 @@ import Login from "./pages/customer/Login";
 import CustomerHome from "./pages/customer/Home";
 import Services from "./pages/customer/Services";
 import Booking from "./pages/customer/Booking";
+import SearchingCleaner from "./pages/customer/SearchingCleaner";
 import BookingConfirmation from "./pages/customer/BookingConfirmation";
 import ActiveBooking from "./pages/customer/ActiveBooking";
 import RateService from "./pages/customer/RateService";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/services" element={<ProtectedRoute allowedRoles={['customer']}><Services /></ProtectedRoute>} />
             <Route path="/booking" element={<ProtectedRoute allowedRoles={['customer']}><Booking /></ProtectedRoute>} />
             <Route path="/booking-confirmation" element={<ProtectedRoute allowedRoles={['customer']}><BookingConfirmation /></ProtectedRoute>} />
+            <Route path="/searching-cleaner" element={<ProtectedRoute allowedRoles={['customer']}><SearchingCleaner /></ProtectedRoute>} />
             <Route path="/active-booking" element={<ProtectedRoute allowedRoles={['customer']}><ActiveBooking /></ProtectedRoute>} />
             <Route path="/rate-service" element={<ProtectedRoute allowedRoles={['customer']}><RateService /></ProtectedRoute>} />
             <Route path="/my-bookings" element={<ProtectedRoute allowedRoles={['customer']}><MyBookings /></ProtectedRoute>} />

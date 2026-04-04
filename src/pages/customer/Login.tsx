@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, ArrowLeft, Sparkles } from 'lucide-react';
+import { Smartphone, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -37,12 +37,6 @@ export default function Login() {
     admin: 'Admin Panel',
   };
 
-  const roleColors: Record<UserRole, string> = {
-    customer: 'gradient-neon',
-    cleaner: 'gradient-cyan',
-    admin: 'gradient-dark',
-  };
-
   const handleSendOTP = async () => {
     if (phone.length < 10) {
       toast.error('Please enter a valid UK mobile number');
@@ -64,12 +58,12 @@ export default function Login() {
       toast.error('Invalid OTP. Use 1111 for testing.');
       return;
     }
-    toast.success('Verified! Signing you in...');
+    toast.success('Verified!');
     setTimeout(() => {
       if (role === 'customer') navigate('/home');
       else if (role === 'cleaner') navigate('/cleaner');
       else navigate('/admin');
-    }, 600);
+    }, 400);
   };
 
   const slideVariants = {
@@ -80,26 +74,21 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with neon accent */}
-      <div className={`${roleColors[role]} px-8 pt-14 pb-20 rounded-b-[2.5rem]`}>
-        <button onClick={() => navigate('/')} className="w-10 h-10 rounded-2xl bg-foreground/10 flex items-center justify-center mb-8">
-          <ArrowLeft className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+      {/* Minimal header */}
+      <div className="px-8 pt-14 pb-16">
+        <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center mb-12 hover:bg-muted transition-colors">
+          <ArrowLeft className="h-4 w-4 text-foreground" strokeWidth={1.5} />
         </button>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-xl bg-foreground/10 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-foreground" strokeWidth={1.5} />
-          </div>
-          <span className="text-sm font-bold text-foreground/60 uppercase tracking-wider">{role}</span>
-        </div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">{role}</p>
         <h1 className="text-3xl font-display font-black text-foreground leading-tight">
           Sign in to<br />{roleLabels[role]}
         </h1>
       </div>
 
-      <div className="px-8 -mt-8">
+      <div className="px-8">
         <AnimatePresence mode="wait">
           {step === 'phone' ? (
-            <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="glass-card-elevated rounded-3xl p-6">
+            <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <p className="text-muted-foreground text-sm mb-6">Enter your mobile number to continue</p>
 
               <div className="relative mb-6">
@@ -110,7 +99,7 @@ export default function Login() {
                   placeholder="07700 900 000"
                   inputMode="numeric"
                   maxLength={14}
-                  className="pl-12 h-14 rounded-2xl bg-muted/50 border-0 text-base focus-visible:ring-primary/30"
+                  className="pl-12 h-14 rounded-2xl border border-border bg-background text-base focus-visible:ring-foreground/20"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                   {phone.length}/11
@@ -120,17 +109,17 @@ export default function Login() {
               <Button
                 onClick={handleSendOTP}
                 disabled={phone.length < 10 || isLoading}
-                className="w-full h-14 text-base font-bold gradient-neon text-foreground rounded-2xl shadow-neon disabled:opacity-50 transition-opacity"
+                className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 transition-opacity"
               >
                 {isLoading ? 'Sending...' : 'Send OTP'}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Test: <span className="font-mono font-bold text-foreground">1111</span>
+                Test OTP: <span className="font-mono font-bold text-foreground">1111</span>
               </p>
             </motion.div>
           ) : (
-            <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="glass-card-elevated rounded-3xl p-6">
+            <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <p className="text-muted-foreground text-sm mb-6">Enter the 4-digit code sent to {displayPhone}</p>
 
               <div className="flex justify-center mb-8">
@@ -140,7 +129,7 @@ export default function Login() {
                       <InputOTPSlot
                         key={i}
                         index={i}
-                        className="w-16 h-16 rounded-2xl border-2 border-muted bg-muted/30 text-xl font-bold"
+                        className="w-16 h-16 rounded-2xl border-2 border-border bg-background text-xl font-bold"
                       />
                     ))}
                   </InputOTPGroup>
@@ -150,7 +139,7 @@ export default function Login() {
               <Button
                 onClick={handleVerify}
                 disabled={otp.length !== 4 || isLoading}
-                className="w-full h-14 text-base font-bold gradient-neon text-foreground rounded-2xl shadow-neon disabled:opacity-50 transition-opacity"
+                className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 transition-opacity"
               >
                 {isLoading ? 'Verifying...' : 'Verify & Continue'}
               </Button>

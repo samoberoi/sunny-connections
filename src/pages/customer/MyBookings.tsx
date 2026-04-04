@@ -10,14 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 
-const statusColors: Record<string, string> = {
+const statusStyles: Record<string, string> = {
   pending: 'bg-muted text-muted-foreground',
-  assigned: 'bg-primary/20 text-foreground',
-  'en-route': 'bg-cyan/30 text-foreground',
-  'otp-verified': 'bg-primary/30 text-foreground',
-  'in-progress': 'bg-pink/30 text-foreground',
-  completed: 'bg-foreground text-card',
-  cancelled: 'bg-destructive/15 text-destructive',
+  assigned: 'bg-foreground text-primary-foreground',
+  'en-route': 'bg-foreground text-primary-foreground',
+  'otp-verified': 'bg-foreground text-primary-foreground',
+  'in-progress': 'bg-foreground text-primary-foreground',
+  completed: 'bg-muted text-muted-foreground',
+  cancelled: 'bg-destructive/10 text-destructive',
 };
 
 export default function MyBookings() {
@@ -43,7 +43,7 @@ export default function MyBookings() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-2xl font-display font-black text-foreground">My Bookings</h1>
+            <h1 className="text-xl font-display font-black text-foreground">My Bookings</h1>
           </div>
 
           {bookings.length === 0 && (
@@ -52,13 +52,13 @@ export default function MyBookings() {
 
           {upcoming.length > 0 && (
             <section className="mb-6">
-              <h3 className="font-display font-bold text-foreground mb-3 text-sm">Upcoming</h3>
+              <h3 className="font-display font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">Upcoming</h3>
               <div className="space-y-3">
                 {upcoming.map(b => (
-                  <div key={b.id} className="bg-card rounded-2xl p-4 shadow-apple">
+                  <div key={b.id} className="border border-border rounded-2xl p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-foreground text-sm">{b.service_name}</h4>
-                      <Badge className={`${statusColors[b.status]} text-xs rounded-lg font-bold`}>{b.status.replace('-', ' ')}</Badge>
+                      <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+                      <Badge className={`${statusStyles[b.status]} text-[10px] rounded-lg font-semibold border-0`}>{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                       <Clock className="h-3 w-3" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
@@ -75,13 +75,13 @@ export default function MyBookings() {
 
           {past.length > 0 && (
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 text-sm">Past</h3>
+              <h3 className="font-display font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">Past</h3>
               <div className="space-y-3">
                 {past.map(b => (
-                  <div key={b.id} className="bg-card rounded-2xl p-4 shadow-apple">
+                  <div key={b.id} className="border border-border rounded-2xl p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-foreground text-sm">{b.service_name}</h4>
-                      <Badge className={`${statusColors[b.status]} text-xs rounded-lg font-bold`}>{b.status}</Badge>
+                      <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+                      <Badge className={`${statusStyles[b.status]} text-[10px] rounded-lg font-semibold border-0`}>{b.status}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">{b.date} · {b.cleaner_name}</p>
                     {b.rating && <div className="mt-2"><StarRating rating={b.rating} readonly size="sm" /></div>}
