@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CircleCheck, Circle, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CircleCheck, Circle, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import BackButton from '@/components/BackButton';
 import PageTransition from '@/components/PageTransition';
 import { useTrainingModules } from '@/hooks/useTrainingModules';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import cleaningSupplies from '@/assets/cleaning-supplies.jpg';
 
 export default function Training() {
   const navigate = useNavigate();
@@ -38,10 +39,7 @@ export default function Training() {
         await supabase.from('training_progress').delete().eq('user_id', user.id).eq('module_id', moduleId);
       } else {
         await supabase.from('training_progress').insert({
-          user_id: user.id,
-          module_id: moduleId,
-          completed: true,
-          completed_at: new Date().toISOString(),
+          user_id: user.id, module_id: moduleId, completed: true, completed_at: new Date().toISOString(),
         });
       }
     },
@@ -51,18 +49,13 @@ export default function Training() {
     },
   });
 
-  const modules = (dbModules || []).map(m => ({
-    ...m,
-    completed: completedIds.has(m.id),
-  }));
-
+  const modules = (dbModules || []).map(m => ({ ...m, completed: completedIds.has(m.id) }));
   const levels = [1, 2, 3];
   const levelProgress = (level: number) => {
-    const lvlModules = modules.filter(m => m.level === level);
-    const completed = lvlModules.filter(m => m.completed).length;
-    return lvlModules.length > 0 ? Math.round((completed / lvlModules.length) * 100) : 0;
+    const lvl = modules.filter(m => m.level === level);
+    const done = lvl.filter(m => m.completed).length;
+    return lvl.length > 0 ? Math.round((done / lvl.length) * 100) : 0;
   };
-
   const totalCompleted = modules.filter(m => m.completed).length;
 
   if (isLoading) {
@@ -77,20 +70,31 @@ export default function Training() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="gradient-hero px-5 pt-6 pb-10 rounded-b-[2rem]">
-        <div className="flex items-center gap-3 mb-5">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-primary-foreground/10 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-          <span className="font-bold text-primary-foreground">Training Programme</span>
-        </div>
-        <p className="text-primary-foreground/60 text-sm mb-4">Become a Five-Star Cleaner with Clean Fit</p>
-        <div>
-          <div className="flex justify-between text-xs text-primary-foreground/60 mb-1.5">
-            <span>Overall Progress</span>
-            <span>{totalCompleted}/{modules.length} modules</span>
+      {/* Hero header with image */}
+      <div className="relative h-48 overflow-hidden">
+        <img src={cleaningSupplies} alt="Cleaning supplies" className="w-full h-full object-cover" loading="lazy" width={800} height={512} />
+        <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 to-foreground/80" />
+        <div className="absolute inset-0 px-5 pt-6 pb-4 flex flex-col justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+              <ArrowLeft className="h-4 w-4 text-white" strokeWidth={1.5} />
+            </button>
+            <span className="font-display font-bold text-white">Training Programme</span>
           </div>
-          <Progress value={modules.length > 0 ? (totalCompleted / modules.length) * 100 : 0} className="h-2 bg-primary-foreground/20" />
+          <div>
+            <p className="text-white/50 text-xs mb-3">Become a Five-Star Cleaner with Clean Fit</p>
+            <div className="flex justify-between text-xs text-white/50 mb-1.5">
+              <span>Overall Progress</span>
+              <span>{totalCompleted}/{modules.length} modules</span>
+            </div>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                animate={{ width: modules.length > 0 ? `${(totalCompleted / modules.length) * 100}%` : '0%' }}
+                transition={{ duration: 0.5 }}
+                className="h-full bg-primary rounded-full"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -105,7 +109,7 @@ export default function Training() {
             return (
               <section key={level}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-foreground text-sm">Level {level}: {title.split('–')[0].trim()}</h3>
+                  <h3 className="font-display font-bold text-foreground text-sm">Level {level}: {title.split('–')[0].trim()}</h3>
                   <span className="text-xs font-semibold text-primary">{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-1.5 mb-3" />
@@ -114,18 +118,22 @@ export default function Training() {
                   {lvlModules.map(mod => {
                     const expanded = expandedId === mod.id;
                     return (
-                      <div key={mod.id} className="glass-card rounded-2xl overflow-hidden shadow-apple">
+                      <div key={mod.id} className="border border-border rounded-2xl overflow-hidden">
                         <button onClick={() => setExpandedId(expanded ? null : mod.id)} className="w-full flex items-center gap-3 p-4 text-left">
                           {mod.completed ? (
                             <CircleCheck className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />
                           ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground/20 shrink-0" strokeWidth={1.5} />
+                            <Circle className="h-5 w-5 text-border shrink-0" strokeWidth={1.5} />
                           )}
                           <span className="flex-1 font-medium text-sm text-foreground">L{mod.level}.{mod.module_number} {mod.title}</span>
                           {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} /> : <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />}
                         </button>
                         {expanded && (
-                          <div className="px-4 pb-4 border-t border-border pt-4">
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="px-4 pb-4 border-t border-border pt-4"
+                          >
                             <ul className="space-y-2 mb-5">
                               {mod.content.map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-muted-foreground flex gap-2">
@@ -136,12 +144,12 @@ export default function Training() {
                             <Button
                               size="sm"
                               onClick={() => toggleComplete.mutate(mod.id)}
-                              className={`rounded-xl ${!mod.completed ? 'gradient-blue text-primary-foreground shadow-blue/30' : ''}`}
+                              className={`rounded-xl ${!mod.completed ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`}
                               variant={mod.completed ? 'outline' : 'default'}
                             >
                               {mod.completed ? 'Mark Incomplete' : 'Mark as Complete'}
                             </Button>
-                          </div>
+                          </motion.div>
                         )}
                       </div>
                     );

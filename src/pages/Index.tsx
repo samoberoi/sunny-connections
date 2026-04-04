@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, ShieldCheck, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import heroCleaning from '@/assets/hero-cleaning.jpg';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -18,52 +19,78 @@ export default function Index() {
   }, [isAuthenticated, user, navigate]);
 
   return (
-    <div className="min-h-screen bg-foreground relative overflow-hidden">
-      {/* Blue glow accent */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]" />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Hero image */}
+      <div className="relative h-[55vh] overflow-hidden">
+        <motion.img
+          src={heroCleaning}
+          alt="Professional cleaning a luxury home"
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full h-full object-cover"
+          width={800}
+          height={1024}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-foreground/20 via-transparent to-background" />
 
-      <div className="relative z-10 min-h-screen flex flex-col justify-between px-8 pt-16 pb-12">
-        {/* Brand */}
+        {/* Brand on image */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex items-center gap-2"
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="absolute top-6 left-6 flex items-center gap-2"
         >
-          <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
-          <h2 className="text-lg font-display font-bold text-white tracking-tight">Clean Fit</h2>
+          <Sparkles className="h-5 w-5 text-white" strokeWidth={1.5} />
+          <span className="text-lg font-display font-bold text-white drop-shadow-lg">Clean Fit</span>
         </motion.div>
+      </div>
 
-        {/* Hero */}
-        <div className="flex-1 flex flex-col justify-center -mt-12">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[2.75rem] leading-[1.05] font-display font-black text-white"
-          >
+      {/* Content */}
+      <div className="relative z-10 px-8 -mt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <h1 className="text-3xl font-display font-black text-foreground leading-tight">
             London's homes
             <br />
             don't clean
             <br />
             <span className="text-primary">themselves.</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            className="text-white/50 text-base mt-4 max-w-[280px] leading-relaxed"
-          >
+          </h1>
+          <p className="text-muted-foreground text-sm mt-3 max-w-[280px] leading-relaxed">
             Premium cleaning, sorted in seconds. Trusted by thousands across London.
-          </motion.p>
-        </div>
+          </p>
+        </motion.div>
+
+        {/* Trust badges */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+          className="flex gap-4 mt-5"
+        >
+          {[
+            { icon: Star, label: '4.9 rated' },
+            { icon: ShieldCheck, label: 'DBS checked' },
+            { icon: Clock, label: 'Same day' },
+          ].map(badge => (
+            <div key={badge.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <badge.icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+              <span className="font-medium">{badge.label}</span>
+            </div>
+          ))}
+        </motion.div>
 
         {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-3"
+          className="space-y-3 mt-8 pb-12"
         >
           <Button
             onClick={() => navigate('/login')}
@@ -76,13 +103,13 @@ export default function Index() {
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/login?role=cleaner')}
-              className="flex-1 h-12 rounded-2xl border border-white/15 text-white/50 text-sm font-medium hover:text-white/70 hover:border-white/25 transition-colors"
+              className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               Join as Cleaner
             </button>
             <button
               onClick={() => navigate('/login?role=admin')}
-              className="flex-1 h-12 rounded-2xl border border-white/15 text-white/50 text-sm font-medium hover:text-white/70 hover:border-white/25 transition-colors"
+              className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               Admin
             </button>
