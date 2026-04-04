@@ -55,10 +55,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingPhone, setPendingPhone] = useState('');
   const [pendingRole, setPendingRole] = useState<UserRole>('customer');
+  const [skipAuthChange, setSkipAuthChange] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession);
+      if (skipAuthChange) {
+        setIsLoading(false);
+        return;
+      }
       if (newSession?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -90,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [skipAuthChange]);
 
   const login = async (phone: string, role: UserRole) => {
     setPendingPhone(phone);
@@ -104,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const name = roleNames[pendingRole];
 
     try {
-      // Sign out any existing session first
+      setSkipAuthChange(true);
       await supabase.auth.signOut();
 
       // Try sign in first
@@ -119,20 +124,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email,
           password: DEFAULT_PASSWORD,
           options: {
-            data: {
-              name,
-              phone: pendingPhone,
-              role: pendingRole,
-            },
+            data: { name, phone: pendingPhone, role: pendingRole },
           },
         });
 
         if (signUpError) {
           console.error('Auth error:', signUpError);
+          setSkipAuthChange(false);
           return false;
         }
 
-        // If signup didn't auto-confirm, try signing in again
         if (signUpData?.user && !signUpData.session) {
           await new Promise(resolve => setTimeout(resolve, 1000));
           const { error: retryError } = await supabase.auth.signInWithPassword({
@@ -141,23 +142,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
           if (retryError) {
             console.error('Sign-in after signup failed:', retryError);
+            setSkipAuthChange(false);
             return false;
           }
         }
       }
 
-      // Update profile role if it changed
+      // Now update profile with correct role
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
-        await supabase
+        // Upsert profile
+        const { data: existingProfile } = await supabase
           .from('profiles')
-          .update({ role: pendingRole, phone: pendingPhone, name })
-          .eq('user_id', authUser.id);
+          .select('id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          await supabase
+            .from('profiles')
+            .update({ role: pendingRole, phone: pendingPhone, name })
+            .eq('user_id', authUser.id);
+        } else {
+          await supabase
+            .from('profiles')
+            .insert({ user_id: authUser.id, role: pendingRole, phone: pendingPhone, name });
+        }
+
+        // Set user directly with correct role - no race condition
+        setUser({
+          id: authUser.id,
+          phone: pendingPhone,
+          name,
+          role: pendingRole,
+          createdAt: new Date().toISOString(),
+        });
+
+        const currentSession = await supabase.auth.getSession();
+        setSession(currentSession.data.session);
       }
 
+      setSkipAuthChange(false);
+      setIsLoading(false);
       return true;
     } catch (err) {
       console.error('verifyOtp unexpected error:', err);
+      setSkipAuthChange(false);
       return false;
     }
   };

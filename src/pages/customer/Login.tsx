@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone } from 'lucide-react';
+import { Smartphone, ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
-import BackButton from '@/components/BackButton';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -35,7 +34,13 @@ export default function Login() {
   const roleLabels: Record<UserRole, string> = {
     customer: 'Clean Fit',
     cleaner: 'Clean Fit Pro',
-    admin: 'Clean Fit Admin',
+    admin: 'Admin Panel',
+  };
+
+  const roleColors: Record<UserRole, string> = {
+    customer: 'gradient-neon',
+    cleaner: 'gradient-cyan',
+    admin: 'gradient-dark',
   };
 
   const handleSendOTP = async () => {
@@ -64,7 +69,7 @@ export default function Login() {
       if (role === 'customer') navigate('/home');
       else if (role === 'cleaner') navigate('/cleaner');
       else navigate('/admin');
-    }, 800);
+    }, 600);
   };
 
   const slideVariants = {
@@ -75,16 +80,27 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="px-6 pt-6 pb-4">
-        <BackButton to="/" />
+      {/* Header with neon accent */}
+      <div className={`${roleColors[role]} px-8 pt-14 pb-20 rounded-b-[2.5rem]`}>
+        <button onClick={() => navigate('/')} className="w-10 h-10 rounded-2xl bg-foreground/10 flex items-center justify-center mb-8">
+          <ArrowLeft className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+        </button>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-xl bg-foreground/10 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+          </div>
+          <span className="text-sm font-bold text-foreground/60 uppercase tracking-wider">{role}</span>
+        </div>
+        <h1 className="text-3xl font-display font-black text-foreground leading-tight">
+          Sign in to<br />{roleLabels[role]}
+        </h1>
       </div>
 
-      <div className="px-8">
+      <div className="px-8 -mt-8">
         <AnimatePresence mode="wait">
           {step === 'phone' ? (
-            <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to <span className="text-gradient">{roleLabels[role]}</span></h1>
-              <p className="text-muted-foreground text-sm mb-8">Enter your mobile number to continue</p>
+            <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="glass-card-elevated rounded-3xl p-6">
+              <p className="text-muted-foreground text-sm mb-6">Enter your mobile number to continue</p>
 
               <div className="relative mb-6">
                 <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
@@ -104,19 +120,18 @@ export default function Login() {
               <Button
                 onClick={handleSendOTP}
                 disabled={phone.length < 10 || isLoading}
-                className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue disabled:opacity-50 transition-opacity"
+                className="w-full h-14 text-base font-bold gradient-neon text-foreground rounded-2xl shadow-neon disabled:opacity-50 transition-opacity"
               >
                 {isLoading ? 'Sending...' : 'Send OTP'}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Test OTP: <span className="font-mono font-bold text-foreground">1111</span>
+                Test: <span className="font-mono font-bold text-foreground">1111</span>
               </p>
             </motion.div>
           ) : (
-            <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h1 className="text-2xl font-bold text-foreground mb-1">Verify your number</h1>
-              <p className="text-muted-foreground text-sm mb-8">Enter the 4-digit code sent to {displayPhone}</p>
+            <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="glass-card-elevated rounded-3xl p-6">
+              <p className="text-muted-foreground text-sm mb-6">Enter the 4-digit code sent to {displayPhone}</p>
 
               <div className="flex justify-center mb-8">
                 <InputOTP maxLength={4} value={otp} onChange={setOtp}>
@@ -135,7 +150,7 @@ export default function Login() {
               <Button
                 onClick={handleVerify}
                 disabled={otp.length !== 4 || isLoading}
-                className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue disabled:opacity-50 transition-opacity"
+                className="w-full h-14 text-base font-bold gradient-neon text-foreground rounded-2xl shadow-neon disabled:opacity-50 transition-opacity"
               >
                 {isLoading ? 'Verifying...' : 'Verify & Continue'}
               </Button>
