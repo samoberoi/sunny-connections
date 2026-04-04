@@ -1,14 +1,16 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Star, ShieldCheck, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import OnboardingSlides from '@/components/OnboardingSlides';
 import heroCleaning from '@/assets/hero-cleaning.jpg';
 
 export default function Index() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -18,8 +20,20 @@ export default function Index() {
     }
   }, [isAuthenticated, user, navigate]);
 
+  useEffect(() => {
+    const seen = localStorage.getItem('onboarding_complete');
+    if (!seen) setShowOnboarding(true);
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('onboarding_complete', '1');
+    setShowOnboarding(false);
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {showOnboarding && <OnboardingSlides onComplete={handleOnboardingComplete} />}
+
       {/* Hero image */}
       <div className="relative h-[55vh] overflow-hidden">
         <motion.img
@@ -32,10 +46,7 @@ export default function Index() {
           width={800}
           height={1024}
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-foreground/20 via-transparent to-background" />
-
-        {/* Brand on image */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -66,7 +77,6 @@ export default function Index() {
           </p>
         </motion.div>
 
-        {/* Trust badges */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -85,7 +95,6 @@ export default function Index() {
           ))}
         </motion.div>
 
-        {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -102,13 +111,13 @@ export default function Index() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => navigate('/login?role=cleaner')}
+              onClick={() => navigate('/cleaner/login')}
               className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               Join as Cleaner
             </button>
             <button
-              onClick={() => navigate('/login?role=admin')}
+              onClick={() => navigate('/admin/login')}
               className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               Admin
