@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
 import Index from "./pages/Index";
@@ -23,7 +24,7 @@ import Notifications from "./pages/customer/Notifications";
 
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
-import BookingDetail from "./pages/cleaner/BookingDetail";
+import CleanerJobs from "./pages/cleaner/Jobs";
 import CleanerEarnings from "./pages/cleaner/Earnings";
 import CleanerProfile from "./pages/cleaner/Profile";
 
@@ -53,42 +54,44 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Splash */}
+            {/* Public */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/cleaner/login" element={<Login />} />
+            <Route path="/admin/login" element={<Login />} />
 
             {/* Customer */}
-            <Route path="/home" element={<CustomerHome />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/booking" element={<Booking />} />
-            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-            <Route path="/active-booking" element={<ActiveBooking />} />
-            <Route path="/rate-service" element={<RateService />} />
-            <Route path="/my-bookings" element={<MyBookings />} />
-            <Route path="/profile" element={<CustomerProfile />} />
-            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/home" element={<ProtectedRoute allowedRoles={['customer']}><CustomerHome /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute allowedRoles={['customer']}><Services /></ProtectedRoute>} />
+            <Route path="/booking" element={<ProtectedRoute allowedRoles={['customer']}><Booking /></ProtectedRoute>} />
+            <Route path="/booking-confirmation" element={<ProtectedRoute allowedRoles={['customer']}><BookingConfirmation /></ProtectedRoute>} />
+            <Route path="/active-booking" element={<ProtectedRoute allowedRoles={['customer']}><ActiveBooking /></ProtectedRoute>} />
+            <Route path="/rate-service" element={<ProtectedRoute allowedRoles={['customer']}><RateService /></ProtectedRoute>} />
+            <Route path="/my-bookings" element={<ProtectedRoute allowedRoles={['customer']}><MyBookings /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute allowedRoles={['customer']}><CustomerProfile /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute allowedRoles={['customer']}><Notifications /></ProtectedRoute>} />
 
             {/* Cleaner */}
-            <Route path="/cleaner" element={<CleanerDashboard />} />
-            <Route path="/cleaner/bookings" element={<BookingDetail />} />
-            <Route path="/cleaner/earnings" element={<CleanerEarnings />} />
-            <Route path="/cleaner/profile" element={<CleanerProfile />} />
+            <Route path="/cleaner" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerDashboard /></ProtectedRoute>} />
+            <Route path="/cleaner/jobs" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerJobs /></ProtectedRoute>} />
+            <Route path="/cleaner/earnings" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerEarnings /></ProtectedRoute>} />
+            <Route path="/cleaner/profile" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerProfile /></ProtectedRoute>} />
 
-            {/* Enrolment */}
+            {/* Enrolment (public) */}
             <Route path="/enrol/register" element={<Register />} />
             <Route path="/enrol/status" element={<ApplicationStatus />} />
             <Route path="/enrol/training" element={<Training />} />
 
             {/* Admin */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/bookings" element={<AdminBookings />} />
-            <Route path="/admin/customers" element={<AdminCustomers />} />
-            <Route path="/admin/cleaners" element={<AdminCleaners />} />
-            <Route path="/admin/enrolments" element={<AdminEnrolments />} />
-            <Route path="/admin/training" element={<AdminTrainingProgress />} />
-            <Route path="/admin/services" element={<AdminServices />} />
-            <Route path="/admin/coupons" element={<AdminCoupons />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/bookings" element={<ProtectedRoute allowedRoles={['admin']}><AdminBookings /></ProtectedRoute>} />
+            <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['admin']}><AdminCustomers /></ProtectedRoute>} />
+            <Route path="/admin/cleaners" element={<ProtectedRoute allowedRoles={['admin']}><AdminCleaners /></ProtectedRoute>} />
+            <Route path="/admin/enrolments" element={<ProtectedRoute allowedRoles={['admin']}><AdminEnrolments /></ProtectedRoute>} />
+            <Route path="/admin/training" element={<ProtectedRoute allowedRoles={['admin']}><AdminTrainingProgress /></ProtectedRoute>} />
+            <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['admin']}><AdminServices /></ProtectedRoute>} />
+            <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={['admin']}><AdminCoupons /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 20% 98%;
     --foreground: 220 20% 10%;
 
     --card: 0 0% 100%;
@@ -21,7 +21,7 @@
     --secondary: 160 65% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 96%;
+    --muted: 220 15% 94%;
     --muted-foreground: 220 10% 50%;
 
     --accent: 215 90% 95%;
@@ -29,6 +29,9 @@
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 38 90% 20%;
 
     --border: 220 15% 92%;
     --input: 220 15% 92%;
@@ -99,8 +102,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -114,8 +117,11 @@
   .gradient-teal {
     background: linear-gradient(135deg, hsl(160 65% 48%), hsl(180 55% 40%));
   }
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(38 90% 55%), hsl(28 85% 50%));
+  }
   .gradient-hero {
-    background: linear-gradient(180deg, hsl(215 95% 55%) 0%, hsl(220 85% 48%) 100%);
+    background: linear-gradient(180deg, hsl(215 95% 55%) 0%, hsl(225 85% 48%) 100%);
   }
   .text-gradient {
     background: linear-gradient(135deg, hsl(215 95% 55%), hsl(230 80% 55%));
@@ -134,11 +140,11 @@
     -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.04);
   }
   .glass-card-elevated {
     background: rgba(255, 255, 255, 0.92);
@@ -148,13 +154,25 @@
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
   }
   .shadow-apple {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
   }
   .shadow-apple-lg {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
   }
   .shadow-blue {
     box-shadow: 0 8px 32px hsla(215, 95%, 55%, 0.25);
   }
+  .shadow-warm {
+    box-shadow: 0 8px 32px hsla(38, 90%, 55%, 0.25);
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
-

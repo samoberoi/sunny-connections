@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,16 @@ import BackButton from '@/components/BackButton';
 import { toast } from 'sonner';
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const roleParam = (searchParams.get('role') as UserRole) || 'customer';
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [role, setRole] = useState<UserRole>('customer');
   const [isLoading, setIsLoading] = useState(false);
   const { login, verifyOtp } = useAuth();
   const navigate = useNavigate();
+
+  const role: UserRole = roleParam;
 
   const handlePhoneChange = (value: string) => {
     const digits = value.replace(/[^0-9]/g, '');
@@ -26,6 +29,12 @@ export default function Login() {
   const displayPhone = phone.length > 0
     ? phone.replace(/(\d{4})(\d{3})(\d{0,4})/, '$1 $2 $3').trim()
     : '';
+
+  const roleLabels: Record<UserRole, string> = {
+    customer: 'Clean Fit',
+    cleaner: 'Clean Fit Pro',
+    admin: 'Clean Fit Admin',
+  };
 
   const handleSendOTP = async () => {
     if (phone.length < 10) {
@@ -39,9 +48,11 @@ export default function Login() {
     toast.success('OTP sent! Use 1111 for testing.');
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length !== 4) return;
-    const success = verifyOtp(otp);
+    setIsLoading(true);
+    const success = await verifyOtp(otp);
+    setIsLoading(false);
     if (!success) {
       toast.error('Invalid OTP. Use 1111 for testing.');
       return;
@@ -51,7 +62,7 @@ export default function Login() {
       if (role === 'customer') navigate('/home');
       else if (role === 'cleaner') navigate('/cleaner');
       else navigate('/admin');
-    }, 1500);
+    }, 800);
   };
 
   const slideVariants = {
@@ -70,24 +81,8 @@ export default function Login() {
         <AnimatePresence mode="wait">
           {step === 'phone' ? (
             <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to <span className="text-gradient">Cleanfit</span></h1>
+              <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to <span className="text-gradient">{roleLabels[role]}</span></h1>
               <p className="text-muted-foreground text-sm mb-8">Enter your mobile number to continue</p>
-
-              <div className="flex gap-2 p-1 bg-muted rounded-2xl mb-6">
-                {(['customer', 'cleaner', 'admin'] as UserRole[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setRole(r)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold capitalize transition-all duration-200 ${
-                      role === r
-                        ? 'bg-card shadow-apple text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
 
               <div className="relative mb-6">
                 <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
@@ -137,10 +132,10 @@ export default function Login() {
 
               <Button
                 onClick={handleVerify}
-                disabled={otp.length !== 4}
+                disabled={otp.length !== 4 || isLoading}
                 className="w-full h-14 text-base font-semibold gradient-blue text-primary-foreground rounded-2xl shadow-blue disabled:opacity-50 transition-opacity"
               >
-                Verify & Continue
+                {isLoading ? 'Verifying...' : 'Verify & Continue'}
               </Button>
 
               <button onClick={() => { setStep('phone'); setOtp(''); }} className="w-full text-center text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors">
