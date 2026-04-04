@@ -103,55 +103,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const email = phoneToEmail(pendingPhone);
     const name = roleNames[pendingRole];
 
-    // Try sign in first
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: DEFAULT_PASSWORD,
-    });
+    try {
+      // Sign out any existing session first
+      await supabase.auth.signOut();
 
-    if (signInError) {
-      // Sign up if not exists
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Try sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: DEFAULT_PASSWORD,
-        options: {
-          data: {
-            name,
-            phone: pendingPhone,
-            role: pendingRole,
-          },
-        },
       });
 
-      if (signUpError) {
-        console.error('Auth error:', signUpError);
-        return false;
-      }
-
-      // If signup didn't auto-confirm, try signing in again after a brief wait
-      if (signUpData?.user && !signUpData.session) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const { error: retryError } = await supabase.auth.signInWithPassword({
+      if (signInError) {
+        // Sign up if not exists
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password: DEFAULT_PASSWORD,
+          options: {
+            data: {
+              name,
+              phone: pendingPhone,
+              role: pendingRole,
+            },
+          },
         });
-        if (retryError) {
-          console.error('Sign-in after signup failed:', retryError);
+
+        if (signUpError) {
+          console.error('Auth error:', signUpError);
           return false;
         }
+
+        // If signup didn't auto-confirm, try signing in again
+        if (signUpData?.user && !signUpData.session) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password: DEFAULT_PASSWORD,
+          });
+          if (retryError) {
+            console.error('Sign-in after signup failed:', retryError);
+            return false;
+          }
+        }
       }
-    }
 
-    // Update profile role if it changed
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      await supabase
-        .from('profiles')
-        .update({ role: pendingRole, phone: pendingPhone, name })
-        .eq('user_id', authUser.id);
-    }
+      // Update profile role if it changed
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        await supabase
+          .from('profiles')
+          .update({ role: pendingRole, phone: pendingPhone, name })
+          .eq('user_id', authUser.id);
+      }
 
-    return true;
+      return true;
+    } catch (err) {
+      console.error('verifyOtp unexpected error:', err);
+      return false;
+    }
   };
 
   const logout = async () => {
