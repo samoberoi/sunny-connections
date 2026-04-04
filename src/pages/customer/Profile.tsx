@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2, Share2 } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
+import ReferralCard from '@/components/ReferralCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -72,10 +73,11 @@ export default function CustomerProfile() {
             </div>
             <h2 className="text-xl font-display font-black text-foreground">{user?.name || 'Guest'}</h2>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-              <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '1111111111'}
+              <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '—'}
             </div>
           </div>
 
+          {/* Saved Addresses */}
           <div className="border border-border rounded-2xl p-5 mb-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display font-semibold text-foreground text-sm">Saved Addresses</h3>
@@ -116,12 +118,9 @@ export default function CustomerProfile() {
             )}
           </div>
 
-          <div className="border border-primary/20 bg-accent rounded-2xl p-5 mb-4 flex items-center gap-3">
-            <Share2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground text-sm">Refer a Mate</h3>
-              <p className="text-xs text-muted-foreground">Know someone who hates hoovering?</p>
-            </div>
+          {/* Referral */}
+          <div className="mb-4">
+            <ReferralCard />
           </div>
 
           <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/5 font-medium">
