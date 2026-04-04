@@ -42,7 +42,7 @@ export default function CleanerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-cleaner-record'] });
-      toast.success(cleanerRecord?.available ? 'Set to offline' : 'You\'re online! 🟢');
+      toast.success(cleanerRecord?.available ? 'Set to offline' : 'You\'re online!');
     },
   });
 
@@ -53,59 +53,64 @@ export default function CleanerDashboard() {
   return (
     <CleanerLayout>
       <PageTransition>
-        {/* Cyan header */}
-        <div className="gradient-cyan px-6 pt-8 pb-14 rounded-b-[2rem]">
-          <div className="flex items-center justify-between mb-1">
+        <div className="px-6 pt-8 pb-6">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-foreground/60 text-sm font-medium">Welcome back,</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Welcome back</p>
               <h1 className="text-2xl font-display font-black text-foreground">{user?.name || 'Cleaner'}</h1>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => toggleAvailability.mutate()}
-              className="flex items-center gap-2 bg-foreground/10 rounded-full px-4 py-2"
+              className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-muted transition-colors"
             >
               {cleanerRecord?.available ? (
                 <ToggleRight className="h-5 w-5 text-foreground" strokeWidth={1.5} />
               ) : (
-                <ToggleLeft className="h-5 w-5 text-foreground/50" strokeWidth={1.5} />
+                <ToggleLeft className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
               )}
-              <span className="text-xs font-bold text-foreground">
+              <span className="text-xs font-semibold text-foreground">
                 {cleanerRecord?.available ? 'Online' : 'Offline'}
               </span>
             </motion.button>
           </div>
-        </div>
 
-        <div className="px-5 -mt-8 space-y-5">
-          <div className="grid grid-cols-3 gap-3">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 mb-8">
             {[
-              { icon: CalendarDays, label: 'Today', value: todayBookings.length.toString(), color: 'gradient-neon' },
-              { icon: PoundSterling, label: 'This Week', value: `£${weekEarnings}`, color: 'gradient-pink' },
-              { icon: Clock, label: 'Jobs Done', value: completedBookings.length.toString(), color: 'bg-foreground' },
+              { icon: CalendarDays, label: 'Today', value: todayBookings.length.toString() },
+              { icon: PoundSterling, label: 'This Week', value: `£${weekEarnings}` },
+              { icon: Clock, label: 'Completed', value: completedBookings.length.toString() },
             ].map((stat, i) => (
-              <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }} className={`${stat.color} rounded-2xl p-4 text-center ${stat.color === 'bg-foreground' ? 'text-card' : 'text-foreground'}`}>
-                <stat.icon className="h-5 w-5 mx-auto mb-2" strokeWidth={1.5} />
-                <div className="text-lg font-display font-black">{stat.value}</div>
-                <div className="text-[10px] font-medium opacity-60">{stat.label}</div>
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.35 }}
+                className="border border-border rounded-2xl p-4 text-center"
+              >
+                <stat.icon className="h-4 w-4 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="text-lg font-display font-black text-foreground">{stat.value}</div>
+                <div className="text-[10px] font-medium text-muted-foreground">{stat.label}</div>
               </motion.div>
             ))}
           </div>
 
+          {/* Today's Jobs */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display font-bold text-foreground text-sm">Today's Jobs</h3>
-              <button onClick={() => navigate('/cleaner/jobs')} className="text-xs font-bold text-muted-foreground">View all →</button>
+              <h3 className="font-display font-semibold text-xs uppercase tracking-wider text-muted-foreground">Today's Jobs</h3>
+              <button onClick={() => navigate('/cleaner/jobs')} className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">View all →</button>
             </div>
             {todayBookings.length === 0 ? (
               <EmptyState icon={CalendarDays} title="No jobs today" description="No jobs today. Cuppa time! ☕" />
             ) : (
               <div className="space-y-3">
                 {todayBookings.map(b => (
-                  <motion.div key={b.id} whileTap={{ scale: 0.97 }} onClick={() => navigate('/cleaner/jobs')} className="bg-card rounded-2xl p-4 shadow-apple cursor-pointer">
+                  <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => navigate('/cleaner/jobs')} className="border border-border rounded-2xl p-4 cursor-pointer hover:bg-muted/30 transition-colors">
                     <div className="flex justify-between mb-2">
-                      <h4 className="font-bold text-foreground text-sm">{b.service_name}</h4>
-                      <Badge className="bg-primary/20 text-foreground text-xs rounded-lg font-bold">{b.status.replace('-', ' ')}</Badge>
+                      <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+                      <Badge className="bg-muted text-muted-foreground text-[10px] rounded-lg font-semibold border-0">{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{b.customer_name}</p>
                     <div className="flex gap-4 mt-2 text-xs text-muted-foreground">

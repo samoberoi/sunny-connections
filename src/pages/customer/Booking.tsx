@@ -58,7 +58,7 @@ export default function Booking() {
         total_cost: totalCost, property_type: propertyType, notes: notes || null,
       }).select().single();
       if (error) throw error;
-      navigate('/booking-confirmation', {
+      navigate('/searching-cleaner', {
         state: {
           bookingId: booking.id,
           service: { id: service.id, name: service.name, ratePerHour: service.rate_per_hour },
@@ -90,19 +90,20 @@ export default function Booking() {
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-2xl font-display font-black text-foreground">Book {service?.name}</h1>
+            <h1 className="text-xl font-display font-black text-foreground">Book {service?.name}</h1>
           </div>
 
           <div className="space-y-6">
+            {/* Property Type */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <Home className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Property Type
+              <h3 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <Home className="h-3.5 w-3.5" strokeWidth={1.5} /> Property Type
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {propertyTypes.map(pt => (
                   <motion.button key={pt.value} whileTap={{ scale: 0.97 }} onClick={() => setPropertyType(pt.value)}
-                    className={`py-4 rounded-xl text-sm font-bold transition-all duration-200 flex flex-col items-center gap-2 ${
-                      propertyType === pt.value ? 'gradient-neon text-foreground shadow-neon' : 'bg-muted text-muted-foreground'
+                    className={`py-4 rounded-xl text-sm font-semibold transition-all duration-200 flex flex-col items-center gap-2 border ${
+                      propertyType === pt.value ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
                     }`}>
                     <pt.icon className="h-5 w-5" strokeWidth={1.5} />
                     {pt.label}
@@ -111,24 +112,26 @@ export default function Booking() {
               </div>
             </section>
 
+            {/* Date */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <CalendarDays className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Select Date
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.5} /> Select Date
               </h3>
-              <div className="bg-card rounded-2xl p-3 shadow-apple">
+              <div className="border border-border rounded-2xl p-3">
                 <Calendar mode="single" selected={date} onSelect={setDate} className="mx-auto" />
               </div>
             </section>
 
+            {/* Time */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Select Time
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" strokeWidth={1.5} /> Select Time
               </h3>
               <div className="grid grid-cols-4 gap-2">
                 {['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'].map(t => (
                   <motion.button key={t} whileTap={{ scale: 0.97 }} onClick={() => setTime(t)}
-                    className={`py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-                      time === t ? 'gradient-neon text-foreground shadow-neon' : 'bg-muted text-muted-foreground hover:bg-accent'
+                    className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
+                      time === t ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
                     }`}>
                     {t}
                   </motion.button>
@@ -136,15 +139,16 @@ export default function Booking() {
               </div>
             </section>
 
+            {/* Duration */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Duration
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" strokeWidth={1.5} /> Duration
               </h3>
               <div className="flex gap-2">
                 {Array.from({ length: Math.min(maxDur - minDur + 1, 6) }, (_, i) => minDur + i).map(d => (
                   <motion.button key={d} whileTap={{ scale: 0.97 }} onClick={() => setDuration(d)}
-                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-                      duration === d ? 'gradient-neon text-foreground shadow-neon' : 'bg-muted text-muted-foreground'
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
+                      duration === d ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
                     }`}>
                     {d}h
                   </motion.button>
@@ -152,15 +156,16 @@ export default function Booking() {
               </div>
             </section>
 
+            {/* Frequency */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <Repeat className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Frequency
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <Repeat className="h-3.5 w-3.5" strokeWidth={1.5} /> Frequency
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 {([['none', 'One-time'], ['weekly', 'Weekly'], ['fortnightly', 'Fortnightly'], ['monthly', 'Monthly']] as const).map(([val, label]) => (
                   <motion.button key={val} whileTap={{ scale: 0.97 }} onClick={() => setRecurring(val)}
-                    className={`py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-                      recurring === val ? 'gradient-neon text-foreground shadow-neon' : 'bg-muted text-muted-foreground'
+                    className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
+                      recurring === val ? 'bg-foreground text-primary-foreground border-foreground' : 'border-border text-muted-foreground hover:border-foreground/20'
                     }`}>
                     {label}
                   </motion.button>
@@ -168,36 +173,39 @@ export default function Booking() {
               </div>
             </section>
 
+            {/* Address */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Address
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Address
               </h3>
               <div className="space-y-2">
-                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
-                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl bg-muted/50 border-0" />
+                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border" />
+                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border" />
               </div>
             </section>
 
+            {/* Notes */}
             <section>
-              <h3 className="font-display font-bold text-foreground mb-3 flex items-center gap-2 text-sm">
-                <StickyNote className="h-4 w-4 text-accent-foreground" strokeWidth={1.5} /> Special Instructions
+              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <StickyNote className="h-3.5 w-3.5" strokeWidth={1.5} /> Special Instructions
               </h3>
-              <Textarea placeholder="Leave key under mat, allergies, pet-friendly products..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl bg-muted/50 border-0 resize-none" />
+              <Textarea placeholder="Leave key under mat, allergies, pet-friendly products..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border resize-none" />
             </section>
 
-            <div className="bg-foreground rounded-2xl p-5 text-card">
+            {/* Total */}
+            <div className="bg-foreground rounded-2xl p-5 text-primary-foreground">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-card/60">{service?.name}</span>
+                <span className="text-primary-foreground/50">{service?.name}</span>
                 <span>£{ratePerHour}/hr × {duration}h</span>
               </div>
               <div className="flex justify-between font-display font-black text-xl">
                 <span>Total</span>
-                <span className="text-primary">£{totalCost}</span>
+                <span>£{totalCost}</span>
               </div>
             </div>
 
             <Button onClick={handleConfirm} disabled={submitting || !address || !postcode}
-              className="w-full h-14 text-base font-bold gradient-neon text-foreground rounded-2xl shadow-neon transition-opacity hover:opacity-95 disabled:opacity-50">
+              className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 transition-opacity">
               {submitting ? 'Creating booking...' : 'Confirm Booking'}
             </Button>
           </div>
