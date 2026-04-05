@@ -189,10 +189,10 @@ export default function ScheduleBooking() {
                         transition={{ delay: i * 0.05 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setCategory(cat.key)}
-                        className="w-full text-left border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/20 transition-all"
+                        className="w-full text-left bg-card border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/30 transition-all shadow-soft"
                       >
-                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <cat.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                        <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                          <cat.icon className="h-6 w-6 text-foreground" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-display font-bold text-foreground">{cat.label}</h4>
