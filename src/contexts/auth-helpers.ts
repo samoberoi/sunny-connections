@@ -1,5 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 
+export type AuthAppRole = 'customer' | 'cleaner' | 'admin';
+
 export type AuthProfileRecord = {
   avatar: string | null;
   created_at: string;
@@ -16,13 +18,13 @@ export const phoneToEmail = (phone: string) => {
 
 export const DEFAULT_PASSWORD = 'cleanfit-test-1111';
 
-export const roleNames = {
+export const roleNames: Record<AuthAppRole, string> = {
   customer: 'Alex Morgan',
   cleaner: 'Emma Thompson',
   admin: 'Admin User',
-} as const;
+};
 
-export const normalizeRole = (role?: string | null) => {
+export const normalizeRole = (role?: string | null): AuthAppRole => {
   if (role === 'customer' || role === 'cleaner' || role === 'admin') {
     return role;
   }
