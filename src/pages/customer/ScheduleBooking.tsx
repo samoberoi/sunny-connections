@@ -371,8 +371,8 @@ export default function ScheduleBooking() {
                     <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Your Address
                   </h3>
                   <div className="space-y-2">
-                    <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
-                    <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
+                    <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
+                    <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
                   </div>
                 </section>
 
