@@ -23,6 +23,7 @@ export default function CleanerJobs() {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
   const [notes, setNotes] = useState('');
+  const [hasArrived, setHasArrived] = useState(false);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
