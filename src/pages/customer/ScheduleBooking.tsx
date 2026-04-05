@@ -157,7 +157,7 @@ export default function ScheduleBooking() {
           {/* Header */}
           <div className="flex items-center gap-3 mb-2">
             {step === 1 ? <BackButton /> : (
-              <button onClick={() => setStep(s => s - 1)} className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
+              <button onClick={() => setStep(s => s - 1)} className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center shadow-soft">
                 <ChevronLeft className="h-4 w-4 text-foreground" strokeWidth={1.5} />
               </button>
             )}
@@ -167,7 +167,7 @@ export default function ScheduleBooking() {
           {/* Progress bar */}
           <div className="flex gap-1.5 mb-6 ml-12">
             {Array.from({ length: totalSteps }, (_, i) => (
-              <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-primary' : 'bg-border'}`} />
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-primary' : 'bg-border'}`} />
             ))}
           </div>
 
