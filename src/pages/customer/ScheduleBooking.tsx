@@ -335,8 +335,8 @@ export default function ScheduleBooking() {
                   <div className="grid grid-cols-4 gap-2">
                     {timeSlots.map(t => (
                       <motion.button key={t} whileTap={{ scale: 0.97 }} onClick={() => setTime(t)}
-                        className={`py-3 rounded-xl text-sm font-semibold transition-all border ${
-                          time === t ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`py-3 rounded-xl text-sm font-bold transition-all border ${
+                          time === t ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         {t}
                       </motion.button>
