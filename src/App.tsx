@@ -18,6 +18,7 @@ import CustomerHome from "./pages/customer/Home";
 import Services from "./pages/customer/Services";
 import Booking from "./pages/customer/Booking";
 import SearchingCleaner from "./pages/customer/SearchingCleaner";
+import ExpressBooking from "./pages/customer/ExpressBooking";
 import BookingConfirmation from "./pages/customer/BookingConfirmation";
 import ActiveBooking from "./pages/customer/ActiveBooking";
 import RateService from "./pages/customer/RateService";
@@ -72,6 +73,7 @@ const App = () => {
               <Route path="/home" element={<ProtectedRoute allowedRoles={['customer']}><CustomerHome /></ProtectedRoute>} />
               <Route path="/services" element={<ProtectedRoute allowedRoles={['customer']}><Services /></ProtectedRoute>} />
               <Route path="/booking" element={<ProtectedRoute allowedRoles={['customer']}><Booking /></ProtectedRoute>} />
+              <Route path="/express-booking" element={<ProtectedRoute allowedRoles={['customer']}><ExpressBooking /></ProtectedRoute>} />
               <Route path="/booking-confirmation" element={<ProtectedRoute allowedRoles={['customer']}><BookingConfirmation /></ProtectedRoute>} />
               <Route path="/searching-cleaner" element={<ProtectedRoute allowedRoles={['customer']}><SearchingCleaner /></ProtectedRoute>} />
               <Route path="/active-booking" element={<ProtectedRoute allowedRoles={['customer']}><ActiveBooking /></ProtectedRoute>} />
