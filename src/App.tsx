@@ -25,6 +25,7 @@ import RateService from "./pages/customer/RateService";
 import MyBookings from "./pages/customer/MyBookings";
 import CustomerProfile from "./pages/customer/Profile";
 import Notifications from "./pages/customer/Notifications";
+import Chat from "./pages/customer/Chat";
 
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
