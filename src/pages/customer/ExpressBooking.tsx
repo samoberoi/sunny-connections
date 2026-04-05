@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight } from 'lucide-react';
+import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight, Brush, WashingMachine, Bed, Wind, ShowerHead } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -11,24 +11,36 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const expressServices = [
-  { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Blitz', desc: 'Counters, hob, sink & floor', price: 45, duration: 1.5 },
-  { id: 'bathroom', icon: Sparkles, name: 'Bathroom Refresh', desc: 'Toilet, shower, tiles & mirrors', price: 40, duration: 1 },
-  { id: 'living', icon: Home, name: 'Living Room Tidy', desc: 'Vacuum, dust, surfaces & cushions', price: 35, duration: 1 },
-  { id: 'laundry', icon: Shirt, name: 'Laundry & Iron', desc: 'Wash, dry, fold & iron', price: 50, duration: 2 },
-  { id: 'full', icon: Zap, name: 'Full Express', desc: 'Kitchen + bathroom + living room', price: 85, duration: 2.5 },
-];
+type Category = 'cleaning' | 'housekeeping';
+
+const expressServices: Record<Category, { id: string; icon: any; name: string; desc: string; price: number; duration: number }[]> = {
+  cleaning: [
+    { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Blitz', desc: 'Counters, hob, sink & floor', price: 45, duration: 1.5 },
+    { id: 'bathroom', icon: ShowerHead, name: 'Bathroom Refresh', desc: 'Toilet, shower, tiles & mirrors', price: 40, duration: 1 },
+    { id: 'living', icon: Home, name: 'Living Room Tidy', desc: 'Vacuum, dust, surfaces & cushions', price: 35, duration: 1 },
+    { id: 'full', icon: Zap, name: 'Full Express Clean', desc: 'Kitchen + bathroom + living room', price: 85, duration: 2.5 },
+    { id: 'deep', icon: Sparkles, name: 'Deep Clean', desc: 'Intensive scrub, appliances & corners', price: 95, duration: 3 },
+  ],
+  housekeeping: [
+    { id: 'laundry', icon: WashingMachine, name: 'Laundry & Iron', desc: 'Wash, dry, fold & iron', price: 50, duration: 2 },
+    { id: 'bedmaking', icon: Bed, name: 'Bed Making & Linen', desc: 'Fresh sheets, pillows & duvet', price: 30, duration: 0.5 },
+    { id: 'organise', icon: Brush, name: 'Organise & Declutter', desc: 'Wardrobe, shelves & drawers', price: 55, duration: 2 },
+    { id: 'airing', icon: Wind, name: 'Air & Freshen', desc: 'Ventilate, deodorise & fragrance', price: 25, duration: 0.5 },
+  ],
+};
 
 export default function ExpressBooking() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [category, setCategory] = useState<Category | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const service = expressServices.find(s => s.id === selected);
+  const services = category ? expressServices[category] : [];
+  const service = services.find(s => s.id === selected);
 
   const handleBook = async () => {
     if (!service || !user || !address || !postcode) {
