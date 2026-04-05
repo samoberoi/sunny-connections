@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight } from 'lucide-react';
+import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight, Brush, WashingMachine, Bed, Wind, ShowerHead } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -11,24 +11,36 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const expressServices = [
-  { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Blitz', desc: 'Counters, hob, sink & floor', price: 45, duration: 1.5 },
-  { id: 'bathroom', icon: Sparkles, name: 'Bathroom Refresh', desc: 'Toilet, shower, tiles & mirrors', price: 40, duration: 1 },
-  { id: 'living', icon: Home, name: 'Living Room Tidy', desc: 'Vacuum, dust, surfaces & cushions', price: 35, duration: 1 },
-  { id: 'laundry', icon: Shirt, name: 'Laundry & Iron', desc: 'Wash, dry, fold & iron', price: 50, duration: 2 },
-  { id: 'full', icon: Zap, name: 'Full Express', desc: 'Kitchen + bathroom + living room', price: 85, duration: 2.5 },
-];
+type Category = 'cleaning' | 'housekeeping';
+
+const expressServices: Record<Category, { id: string; icon: any; name: string; desc: string; price: number; duration: number }[]> = {
+  cleaning: [
+    { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Blitz', desc: 'Counters, hob, sink & floor', price: 45, duration: 1.5 },
+    { id: 'bathroom', icon: ShowerHead, name: 'Bathroom Refresh', desc: 'Toilet, shower, tiles & mirrors', price: 40, duration: 1 },
+    { id: 'living', icon: Home, name: 'Living Room Tidy', desc: 'Vacuum, dust, surfaces & cushions', price: 35, duration: 1 },
+    { id: 'full', icon: Zap, name: 'Full Express Clean', desc: 'Kitchen + bathroom + living room', price: 85, duration: 2.5 },
+    { id: 'deep', icon: Sparkles, name: 'Deep Clean', desc: 'Intensive scrub, appliances & corners', price: 95, duration: 3 },
+  ],
+  housekeeping: [
+    { id: 'laundry', icon: WashingMachine, name: 'Laundry & Iron', desc: 'Wash, dry, fold & iron', price: 50, duration: 2 },
+    { id: 'bedmaking', icon: Bed, name: 'Bed Making & Linen', desc: 'Fresh sheets, pillows & duvet', price: 30, duration: 0.5 },
+    { id: 'organise', icon: Brush, name: 'Organise & Declutter', desc: 'Wardrobe, shelves & drawers', price: 55, duration: 2 },
+    { id: 'airing', icon: Wind, name: 'Air & Freshen', desc: 'Ventilate, deodorise & fragrance', price: 25, duration: 0.5 },
+  ],
+};
 
 export default function ExpressBooking() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [category, setCategory] = useState<Category | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const service = expressServices.find(s => s.id === selected);
+  const services = category ? expressServices[category] : [];
+  const service = services.find(s => s.id === selected);
 
   const handleBook = async () => {
     if (!service || !user || !address || !postcode) {
@@ -98,38 +110,76 @@ export default function ExpressBooking() {
             <span className="text-xs font-semibold text-primary">Express prices include priority surcharge</span>
           </div>
 
-          {/* Service selection */}
-          <section className="space-y-3 mb-6">
-            {expressServices.map((svc, i) => (
-              <motion.button
-                key={svc.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelected(svc.id)}
-                className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 ${
-                  selected === svc.id
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                    : 'border-border hover:border-primary/20'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                  selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
-                }`}>
-                  <svc.icon className="h-5 w-5" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{svc.desc}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">~{svc.duration}h</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-lg font-display font-black text-primary">£{svc.price}</span>
-                </div>
-              </motion.button>
-            ))}
-          </section>
+          {/* Category Selection */}
+          {!category && (
+            <section className="space-y-3 mb-6">
+              <p className="text-sm font-semibold text-foreground mb-2">What do you need?</p>
+              {([
+                { key: 'cleaning' as Category, icon: Sparkles, label: 'House Cleaning', desc: 'Kitchen, bathroom, living room & deep clean' },
+                { key: 'housekeeping' as Category, icon: Bed, label: 'Housekeeping', desc: 'Laundry, bed making, organising & freshening' },
+              ]).map((cat, i) => (
+                <motion.button
+                  key={cat.key}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setCategory(cat.key); setSelected(null); }}
+                  className="w-full text-left border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/20 transition-all"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <cat.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-display font-bold text-foreground">{cat.label}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">{cat.desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                </motion.button>
+              ))}
+            </section>
+          )}
+
+          {/* Service selection within category */}
+          {category && (
+            <section className="mb-6">
+              <button onClick={() => { setCategory(null); setSelected(null); }} className="text-xs text-primary font-semibold mb-3 flex items-center gap-1 hover:underline">
+                ← Back to categories
+              </button>
+              <p className="text-sm font-semibold text-foreground mb-3 capitalize">{category === 'cleaning' ? '🧹 House Cleaning' : '🏠 Housekeeping'}</p>
+              <div className="space-y-3">
+                {services.map((svc, i) => (
+                  <motion.button
+                    key={svc.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelected(svc.id)}
+                    className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 ${
+                      selected === svc.id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                        : 'border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                      selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
+                    }`}>
+                      <svc.icon className="h-5 w-5" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{svc.desc}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">~{svc.duration}h</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-lg font-display font-black text-primary">£{svc.price}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Address */}
           {selected && (
