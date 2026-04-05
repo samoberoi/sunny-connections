@@ -462,10 +462,10 @@ export default function ScheduleBooking() {
               <Button
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canAdvance()}
-                className="w-full h-14 text-base font-semibold rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40"
               >
                 Continue
-                <ChevronRight className="h-4 w-4 ml-1" strokeWidth={1.5} />
+                <ChevronRight className="h-4 w-4 ml-1" strokeWidth={2} />
               </Button>
             </div>
           )}
