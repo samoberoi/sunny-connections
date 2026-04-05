@@ -356,8 +356,8 @@ export default function ScheduleBooking() {
                   <div className="grid grid-cols-3 gap-2">
                     {propertyTypes.map(pt => (
                       <motion.button key={pt.value} whileTap={{ scale: 0.97 }} onClick={() => setPropertyType(pt.value)}
-                        className={`py-4 rounded-xl text-sm font-semibold flex flex-col items-center gap-2 border transition-all ${
-                          propertyType === pt.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`py-4 rounded-xl text-sm font-bold flex flex-col items-center gap-2 border transition-all ${
+                          propertyType === pt.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         <pt.icon className="h-5 w-5" strokeWidth={1.5} />
                         {pt.label}
