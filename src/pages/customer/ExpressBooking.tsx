@@ -26,6 +26,7 @@ export default function ExpressBooking() {
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const service = expressServices.find(s => s.id === selected);
 
