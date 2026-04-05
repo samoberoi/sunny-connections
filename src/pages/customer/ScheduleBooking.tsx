@@ -230,20 +230,20 @@ export default function ScheduleBooking() {
                             transition={{ delay: i * 0.04 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => toggleService(svc.id)}
-                            className={`w-full text-left border rounded-2xl p-4 flex items-center gap-3 transition-all duration-200 ${
-                              isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/20'
+                            className={`w-full text-left border rounded-2xl p-4 flex items-center gap-3 transition-all duration-200 shadow-soft ${
+                              isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/20'
                             }`}
                           >
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
+                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'
                             }`}>
                               <svc.icon className="h-4 w-4" strokeWidth={1.5} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
+                              <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
                               <p className="text-[10px] text-muted-foreground">£{svc.pricePerHour}/hr</p>
                             </div>
-                            {isSelected && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />}
+                            {isSelected && <CheckCircle2 className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />}
                           </motion.button>
                         );
                       })}
