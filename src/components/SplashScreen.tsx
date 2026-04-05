@@ -25,10 +25,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[200] bg-foreground flex flex-col items-center justify-center overflow-hidden"
         >
-          {/* Ambient glow */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-primary/15 blur-[100px]" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-primary/20 blur-[120px]" />
 
-          {/* Logo icon */}
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -38,7 +36,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             <div className="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-lg">
               <Sparkles className="h-10 w-10 text-primary-foreground" strokeWidth={1.5} />
             </div>
-            {/* Pulse ring */}
             <motion.div
               initial={{ scale: 1, opacity: 0.6 }}
               animate={{ scale: 2, opacity: 0 }}
@@ -47,17 +44,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             />
           </motion.div>
 
-          {/* Brand name */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl font-display font-black text-white tracking-tight"
+            className="text-4xl font-display font-black text-background tracking-tight"
           >
             Clean <span className="text-primary">Fit</span>
           </motion.h1>
 
-          {/* Tagline */}
           <AnimatePresence>
             {phase === 'tagline' && (
               <motion.p
@@ -65,14 +60,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="text-white/40 text-sm mt-3 font-medium tracking-wide"
+                className="text-background/40 text-sm mt-3 font-medium tracking-wide"
               >
                 Premium cleaning, sorted.
               </motion.p>
             )}
           </AnimatePresence>
 
-          {/* Bottom loading bar */}
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: '30%' }}

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, CalendarDays, User, Bell } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const navItems = [
   { to: '/home', icon: Home, label: 'Home' },
@@ -15,20 +16,26 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 pb-24">{children}</div>
       <nav className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="glass border-t border-border">
-          <div className="flex justify-around items-center h-18 max-w-lg mx-auto px-2 pb-safe">
+        <div className="bg-card/90 backdrop-blur-2xl border-t border-border/50">
+          <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2 pb-safe">
             {navItems.map(({ to, icon: Icon, label }) => {
               const active = pathname === to || pathname.startsWith(to + '/');
               return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`flex flex-col items-center gap-1 py-3 px-4 transition-all duration-200 ${
-                    active ? 'text-primary' : 'text-muted-foreground hover:text-foreground/70'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
-                  <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>{label}</span>
+                <Link key={to} to={to} className="relative flex flex-col items-center gap-0.5 py-2 px-4">
+                  {active && (
+                    <motion.div
+                      layoutId="customer-nav-pill"
+                      className="absolute -top-0.5 w-6 h-1 rounded-full bg-primary"
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <Icon
+                    className={`h-5 w-5 transition-colors duration-200 ${active ? 'text-foreground' : 'text-muted-foreground'}`}
+                    strokeWidth={active ? 2 : 1.5}
+                  />
+                  <span className={`text-[10px] transition-colors duration-200 ${active ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                    {label}
+                  </span>
                 </Link>
               );
             })}
