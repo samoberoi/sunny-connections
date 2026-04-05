@@ -5,7 +5,7 @@ import { MapPin, Navigation, MessageCircle, Phone, Copy, ShieldCheck, Star } fro
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
-import { useCleaners } from '@/hooks/useCleaners';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type Phase = 'searching' | 'found' | 'confirmed';
@@ -13,17 +13,74 @@ type Phase = 'searching' | 'found' | 'confirmed';
 export default function SearchingCleaner() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { data: cleaners } = useCleaners();
   const [phase, setPhase] = useState<Phase>('searching');
   const [dots, setDots] = useState('');
-  const cleaner = cleaners?.[0];
+  const [assignedCleaner, setAssignedCleaner] = useState<{ name: string; rating: number; review_count: number; experience: number; verified: boolean } | null>(null);
+
+  const bookingId = state?.bookingId;
   const otp = state?.otp || '1111';
 
+  // Persist state in sessionStorage so page revisit doesn't restart
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('found'), 4000);
-    const t2 = setTimeout(() => setPhase('confirmed'), 7000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+    if (bookingId) {
+      sessionStorage.setItem('searching_booking', JSON.stringify(state));
+    }
+  }, [bookingId, state]);
+
+  const savedState = bookingId ? state : (() => {
+    try { return JSON.parse(sessionStorage.getItem('searching_booking') || 'null'); } catch { return null; }
+  })();
+
+  const effectiveBookingId = bookingId || savedState?.bookingId;
+  const effectiveOtp = otp || savedState?.otp || '1111';
+
+  // Check if booking already has a cleaner assigned (on mount)
+  useEffect(() => {
+    if (!effectiveBookingId) return;
+    const checkStatus = async () => {
+      const { data } = await supabase.from('bookings').select('*, cleaners(*)').eq('id', effectiveBookingId).maybeSingle();
+      if (data?.cleaner_id && data?.cleaners) {
+        const c = data.cleaners as any;
+        setAssignedCleaner({ name: c.name, rating: c.rating, review_count: c.review_count, experience: c.experience, verified: c.verified });
+        setPhase('confirmed');
+      }
+    };
+    checkStatus();
+  }, [effectiveBookingId]);
+
+  // Listen for realtime updates on this booking
+  useEffect(() => {
+    if (!effectiveBookingId) return;
+    const channel = supabase
+      .channel(`booking-${effectiveBookingId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${effectiveBookingId}` }, async (payload) => {
+        const updated = payload.new as any;
+        if (updated.cleaner_id && !assignedCleaner) {
+          // Fetch cleaner details
+          const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', updated.cleaner_id).maybeSingle();
+          if (cleaner) {
+            setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+            setPhase('found');
+            setTimeout(() => setPhase('confirmed'), 3000);
+          }
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [effectiveBookingId, assignedCleaner]);
+
+  // Simulated search animation (only if still in searching phase after 8s, auto-assign mock)
+  useEffect(() => {
+    if (phase !== 'searching') return;
+    const fallbackTimer = setTimeout(() => {
+      if (!assignedCleaner) {
+        setAssignedCleaner({ name: 'Sarah M.', rating: 4.9, review_count: 127, experience: 5, verified: true });
+        setPhase('found');
+        setTimeout(() => setPhase('confirmed'), 3000);
+      }
+    }, 6000);
+    return () => clearTimeout(fallbackTimer);
+  }, [phase, assignedCleaner]);
 
   useEffect(() => {
     if (phase !== 'searching') return;
@@ -32,9 +89,11 @@ export default function SearchingCleaner() {
   }, [phase]);
 
   const copyOtp = () => {
-    navigator.clipboard.writeText(otp);
+    navigator.clipboard.writeText(effectiveOtp);
     toast.success('OTP copied!');
   };
+
+  const displayState = savedState || state || {};
 
   return (
     <CustomerLayout>
@@ -113,7 +172,7 @@ export default function SearchingCleaner() {
                   )}
                   {phase === 'found' && (
                     <motion.p key="found" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-semibold text-primary">
-                      {cleaner?.name || 'A cleaner'} accepted your request!
+                      {assignedCleaner?.name || 'A cleaner'} accepted your request!
                     </motion.p>
                   )}
                   {phase === 'confirmed' && (
@@ -136,21 +195,21 @@ export default function SearchingCleaner() {
                 </motion.div>
               )}
 
-              {(phase === 'found' || phase === 'confirmed') && cleaner && (
+              {(phase === 'found' || phase === 'confirmed') && assignedCleaner && (
                 <motion.div key="cleaner-info" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                   <div className="border border-border rounded-2xl p-5">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
-                        {cleaner.name[0]}
+                        {assignedCleaner.name[0]}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-display font-bold text-foreground">{cleaner.name}</h3>
-                          {cleaner.verified && <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />}
+                          <h3 className="font-display font-bold text-foreground">{assignedCleaner.name}</h3>
+                          {assignedCleaner.verified && <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Star className="h-3 w-3 text-primary" strokeWidth={1.5} />
-                          <span className="text-xs text-muted-foreground">{cleaner.rating} · {cleaner.review_count} reviews · {cleaner.experience} yrs</span>
+                          <span className="text-xs text-muted-foreground">{assignedCleaner.rating} · {assignedCleaner.review_count} reviews · {assignedCleaner.experience} yrs</span>
                         </div>
                       </div>
                     </div>
@@ -168,7 +227,7 @@ export default function SearchingCleaner() {
                   <div className="bg-primary rounded-2xl p-6 text-center">
                     <p className="text-xs text-primary-foreground/60 mb-3 font-medium uppercase tracking-wider">Share this code with your cleaner</p>
                     <div className="flex items-center justify-center gap-3">
-                      <div className="text-4xl font-display font-black tracking-[0.4em] text-primary-foreground">{otp}</div>
+                      <div className="text-4xl font-display font-black tracking-[0.4em] text-primary-foreground">{effectiveOtp}</div>
                       <button onClick={copyOtp} className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30 transition-colors">
                         <Copy className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
                       </button>
@@ -178,16 +237,16 @@ export default function SearchingCleaner() {
                   <div className="border border-border rounded-2xl p-5 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
-                      <span>{state?.address || '42 Baker Street'}, {state?.postcode || 'NW1 6XE'}</span>
+                      <span>{displayState?.address || '42 Baker Street'}, {displayState?.postcode || 'NW1 6XE'}</span>
                     </div>
                     <div className="border-t border-border pt-2 flex justify-between font-display font-black text-lg">
                       <span>Total</span>
-                      <span className="text-primary">£{state?.totalCost || 54}</span>
+                      <span className="text-primary">£{displayState?.totalCost || 54}</span>
                     </div>
                   </div>
 
                   <Button
-                    onClick={() => navigate('/active-booking', { state: { bookingId: state?.bookingId } })}
+                    onClick={() => navigate('/active-booking', { state: { bookingId: effectiveBookingId } })}
                     className="w-full h-14 font-semibold text-base rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Track Live
