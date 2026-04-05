@@ -50,7 +50,6 @@ export default function ExpressBooking() {
     setSubmitting(true);
     try {
       const now = new Date();
-      // Get a real service ID to satisfy FK
       const { data: services } = await supabase.from('services').select('id').limit(1);
       const serviceId = services?.[0]?.id;
       if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
@@ -98,6 +97,7 @@ export default function ExpressBooking() {
     <CustomerLayout>
       <PageTransition>
         <div className="px-5 pt-6 pb-28">
+          {/* Lime header */}
           <div className="flex items-center gap-3 mb-2">
             <BackButton />
             <h1 className="text-xl font-display font-black text-foreground">Express Clean</h1>
@@ -105,15 +105,15 @@ export default function ExpressBooking() {
           <p className="text-sm text-muted-foreground mb-6 ml-12">Instant booking — a cleaner heads to you now</p>
 
           {/* Express badge */}
-          <div className="flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2 w-fit mb-6">
-            <Zap className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            <span className="text-xs font-semibold text-primary">Express prices include priority surcharge</span>
+          <div className="flex items-center gap-2 bg-primary rounded-full px-4 py-2.5 w-fit mb-6">
+            <Zap className="h-4 w-4 text-primary-foreground" strokeWidth={2} />
+            <span className="text-xs font-bold text-primary-foreground">Express prices include priority surcharge</span>
           </div>
 
           {/* Category Selection */}
           {!category && (
             <section className="space-y-3 mb-6">
-              <p className="text-sm font-semibold text-foreground mb-2">What do you need?</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">What do you need?</p>
               {([
                 { key: 'cleaning' as Category, icon: Sparkles, label: 'House Cleaning', desc: 'Kitchen, bathroom, living room & deep clean' },
                 { key: 'housekeeping' as Category, icon: Bed, label: 'Housekeeping', desc: 'Laundry, bed making, organising & freshening' },
@@ -125,10 +125,10 @@ export default function ExpressBooking() {
                   transition={{ delay: i * 0.05 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { setCategory(cat.key); setSelected(null); }}
-                  className="w-full text-left border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/20 transition-all"
+                  className="w-full text-left bg-card border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/30 transition-all shadow-soft"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <cat.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <cat.icon className="h-6 w-6 text-foreground" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-display font-bold text-foreground">{cat.label}</h4>
@@ -143,11 +143,13 @@ export default function ExpressBooking() {
           {/* Service selection within category */}
           {category && (
             <section className="mb-6">
-              <button onClick={() => { setCategory(null); setSelected(null); }} className="text-xs text-primary font-semibold mb-3 flex items-center gap-1 hover:underline">
+              <button onClick={() => { setCategory(null); setSelected(null); }} className="text-xs text-foreground font-bold mb-3 flex items-center gap-1 hover:underline">
                 ← Back to categories
               </button>
-              <p className="text-sm font-semibold text-foreground mb-3 capitalize">{category === 'cleaning' ? '🧹 House Cleaning' : '🏠 Housekeeping'}</p>
-              <div className="space-y-3">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">
+                {category === 'cleaning' ? '🧹 House Cleaning' : '🏠 Housekeeping'}
+              </p>
+              <div className="space-y-2.5">
                 {services.map((svc, i) => (
                   <motion.button
                     key={svc.id}
@@ -156,24 +158,24 @@ export default function ExpressBooking() {
                     transition={{ delay: i * 0.05 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelected(svc.id)}
-                    className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 ${
+                    className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 shadow-soft ${
                       selected === svc.id
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                        : 'border-border hover:border-primary/20'
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                        : 'border-border bg-card hover:border-primary/20'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                      selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                      selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'
                     }`}>
                       <svc.icon className="h-5 w-5" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
+                      <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">{svc.desc}</p>
                       <p className="text-[10px] text-muted-foreground mt-1">~{svc.duration}h</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-lg font-display font-black text-primary">£{svc.price}</span>
+                      <span className="text-lg font-display font-black text-foreground">£{svc.price}</span>
                     </div>
                   </motion.button>
                 ))}
@@ -184,12 +186,12 @@ export default function ExpressBooking() {
           {/* Address */}
           {selected && (
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-6">
-              <h3 className="font-display font-semibold flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Your Address
               </h3>
               <div className="space-y-2">
-                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
-                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
+                <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
+                <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
               </div>
             </motion.section>
           )}
@@ -197,14 +199,14 @@ export default function ExpressBooking() {
           {/* Summary + CTA */}
           {selected && service && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="bg-primary rounded-2xl p-5 text-primary-foreground mb-4">
+              <div className="bg-foreground rounded-2xl p-5 mb-4">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-primary-foreground/60">{service.name}</span>
-                  <span>~{service.duration}h</span>
+                  <span className="text-background/60">{service.name}</span>
+                  <span className="text-background">~{service.duration}h</span>
                 </div>
                 <div className="flex justify-between font-display font-black text-xl">
-                  <span>Total</span>
-                  <span>£{service.price}</span>
+                  <span className="text-background">Total</span>
+                  <span className="text-primary">£{service.price}</span>
                 </div>
               </div>
 
@@ -212,17 +214,17 @@ export default function ExpressBooking() {
                 <Button
                   onClick={() => setShowConfirm(true)}
                   disabled={!address || !postcode}
-                  className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="w-full h-14 text-base font-bold rounded-full disabled:opacity-40 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Book Instant Clean ⚡
                 </Button>
               ) : (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-2xl p-5 text-center space-y-4">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-2xl p-5 text-center space-y-4 bg-card">
                   <p className="font-display font-bold text-foreground">Confirm Express Booking?</p>
                   <p className="text-sm text-muted-foreground">£{service.price} will be charged for {service.name}</p>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1 h-12 rounded-xl border-border">Cancel</Button>
-                    <Button onClick={handleBook} disabled={submitting} className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                    <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1 h-12 rounded-full border-2 border-border">Cancel</Button>
+                    <Button onClick={handleBook} disabled={submitting} className="flex-1 h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                       {submitting ? 'Booking...' : 'Confirm ⚡'}
                     </Button>
                   </div>
