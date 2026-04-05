@@ -110,38 +110,76 @@ export default function ExpressBooking() {
             <span className="text-xs font-semibold text-primary">Express prices include priority surcharge</span>
           </div>
 
-          {/* Service selection */}
-          <section className="space-y-3 mb-6">
-            {expressServices.map((svc, i) => (
-              <motion.button
-                key={svc.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelected(svc.id)}
-                className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 ${
-                  selected === svc.id
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                    : 'border-border hover:border-primary/20'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                  selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
-                }`}>
-                  <svc.icon className="h-5 w-5" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{svc.desc}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">~{svc.duration}h</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-lg font-display font-black text-primary">£{svc.price}</span>
-                </div>
-              </motion.button>
-            ))}
-          </section>
+          {/* Category Selection */}
+          {!category && (
+            <section className="space-y-3 mb-6">
+              <p className="text-sm font-semibold text-foreground mb-2">What do you need?</p>
+              {([
+                { key: 'cleaning' as Category, icon: Sparkles, label: 'House Cleaning', desc: 'Kitchen, bathroom, living room & deep clean' },
+                { key: 'housekeeping' as Category, icon: Bed, label: 'Housekeeping', desc: 'Laundry, bed making, organising & freshening' },
+              ]).map((cat, i) => (
+                <motion.button
+                  key={cat.key}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setCategory(cat.key); setSelected(null); }}
+                  className="w-full text-left border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/20 transition-all"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <cat.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-display font-bold text-foreground">{cat.label}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">{cat.desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                </motion.button>
+              ))}
+            </section>
+          )}
+
+          {/* Service selection within category */}
+          {category && (
+            <section className="mb-6">
+              <button onClick={() => { setCategory(null); setSelected(null); }} className="text-xs text-primary font-semibold mb-3 flex items-center gap-1 hover:underline">
+                ← Back to categories
+              </button>
+              <p className="text-sm font-semibold text-foreground mb-3 capitalize">{category === 'cleaning' ? '🧹 House Cleaning' : '🏠 Housekeeping'}</p>
+              <div className="space-y-3">
+                {services.map((svc, i) => (
+                  <motion.button
+                    key={svc.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelected(svc.id)}
+                    className={`w-full text-left border rounded-2xl p-5 flex items-center gap-4 transition-all duration-200 ${
+                      selected === svc.id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                        : 'border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                      selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
+                    }`}>
+                      <svc.icon className="h-5 w-5" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{svc.desc}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">~{svc.duration}h</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-lg font-display font-black text-primary">£{svc.price}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Address */}
           {selected && (
