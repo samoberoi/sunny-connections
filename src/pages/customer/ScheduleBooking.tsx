@@ -420,23 +420,23 @@ export default function ScheduleBooking() {
                 </div>
 
                 {/* Pricing breakdown */}
-                <div className="bg-primary rounded-2xl p-5 text-primary-foreground mb-4">
+                <div className="bg-foreground rounded-2xl p-5 mb-4">
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-primary-foreground/60">Base rate</span>
-                    <span>£{baseRate}/hr × {duration}h = £{baseRate * duration}</span>
+                    <span className="text-background/50">Base rate</span>
+                    <span className="text-background">£{baseRate}/hr × {duration}h = £{baseRate * duration}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-primary-foreground/60">{freq?.label} discount</span>
-                      <span className="text-green-300">-{discount}%</span>
+                      <span className="text-background/50">{freq?.label} discount</span>
+                      <span className="text-primary">-{discount}%</span>
                     </div>
                   )}
-                  <div className="border-t border-primary-foreground/20 mt-2 pt-2 flex justify-between font-display font-black text-xl">
-                    <span>Total</span>
-                    <span>£{totalCost}</span>
+                  <div className="border-t border-background/20 mt-2 pt-2 flex justify-between font-display font-black text-xl">
+                    <span className="text-background">Total</span>
+                    <span className="text-primary">£{totalCost}</span>
                   </div>
                   {recurring !== 'none' && (
-                    <p className="text-[10px] text-primary-foreground/50 mt-1">per session</p>
+                    <p className="text-[10px] text-background/40 mt-1">per session</p>
                   )}
                 </div>
 
