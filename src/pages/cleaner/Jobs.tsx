@@ -20,6 +20,7 @@ const propertyIcons: Record<string, any> = { flat: Building2, house: Home, offic
 
 export default function CleanerJobs() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
