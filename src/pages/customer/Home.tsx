@@ -96,12 +96,12 @@ export default function CustomerHome() {
               {[
                 { icon: Sparkles, label: 'Regular Clean', desc: 'Weekly or fortnightly', time: 'From 2hrs' },
                 { icon: Home, label: 'Deep Clean', desc: 'Top-to-bottom refresh', time: 'From 4hrs' },
-                { icon: Clock, label: 'Express', desc: 'Quick turnaround', time: '90 min' },
+                { icon: Clock, label: 'Express', desc: 'Instant cleaning now', time: '90 min' },
               ].map((item) => (
                 <motion.button
                   key={item.label}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate('/services')}
+                  onClick={() => item.label === 'Express' ? navigate('/express-booking') : navigate('/services')}
                   className="w-full border border-border rounded-2xl p-4 text-left flex items-center gap-4 hover:bg-accent/50 transition-colors"
                 >
                   <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0">
