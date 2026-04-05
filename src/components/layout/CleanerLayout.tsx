@@ -15,25 +15,25 @@ export default function CleanerLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 pb-24">{children}</div>
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-card/90 backdrop-blur-2xl border-t border-border/50">
-          <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-4 pb-safe">
+      <nav className="fixed bottom-4 left-4 right-4 z-50">
+        <div className="bg-foreground rounded-[2rem] shadow-elevated">
+          <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-3">
             {navItems.map(({ to, icon: Icon, label }) => {
               const active = pathname === to;
               return (
-                <Link key={to} to={to} className="relative flex flex-col items-center gap-0.5 py-2 px-3">
-                  {active && (
+                <Link key={to} to={to} className="relative flex flex-col items-center gap-0.5 py-2 px-4">
+                  {active ? (
                     <motion.div
                       layoutId="cleaner-nav-pill"
-                      className="absolute -top-0.5 w-6 h-1 rounded-full bg-primary"
+                      className="absolute inset-0 bg-primary rounded-2xl"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
-                  )}
+                  ) : null}
                   <Icon
-                    className={`h-5 w-5 transition-colors duration-200 ${active ? 'text-foreground' : 'text-muted-foreground'}`}
+                    className={`h-5 w-5 relative z-10 transition-colors duration-200 ${active ? 'text-primary-foreground' : 'text-background/50'}`}
                     strokeWidth={active ? 2 : 1.5}
                   />
-                  <span className={`text-[10px] transition-colors duration-200 ${active ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                  <span className={`text-[9px] relative z-10 transition-colors duration-200 ${active ? 'font-bold text-primary-foreground' : 'font-medium text-background/40'}`}>
                     {label}
                   </span>
                 </Link>
