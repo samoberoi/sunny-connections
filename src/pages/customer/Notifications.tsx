@@ -40,9 +40,7 @@ export default function Notifications() {
   });
 
   const markRead = useMutation({
-    mutationFn: async (id: string) => {
-      await supabase.from('notifications').update({ read: true }).eq('id', id);
-    },
+    mutationFn: async (id: string) => { await supabase.from('notifications').update({ read: true }).eq('id', id); },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
@@ -51,35 +49,32 @@ export default function Notifications() {
   return (
     <CustomerLayout>
       <PageTransition>
-        <div className="px-5 pt-6 pb-6">
+        <div className="px-5 pt-14 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton />
-            <h1 className="text-xl font-display font-black text-foreground">Notifications</h1>
+            <h1 className="text-2xl font-display font-black text-foreground">Notifications</h1>
           </div>
 
           {notifications.length === 0 ? (
-            <EmptyState icon={Bell} title="All caught up" description="No notifications right now. Lovely." />
+            <EmptyState icon={Bell} title="All caught up" description="No notifications right now." />
           ) : (
             <div className="space-y-5">
               {Object.entries(grouped).map(([label, items]) => (
                 <section key={label}>
-                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">{label}</h3>
-                  <div className="space-y-2">
+                  <h3 className="font-display font-bold text-foreground text-sm mb-3">{label}</h3>
+                  <div className="space-y-2.5">
                     {items.map((n: any) => {
                       const Icon = typeIcons[n.type as keyof typeof typeIcons] || Bell;
                       return (
-                        <button
-                          key={n.id}
-                          onClick={() => !n.read && markRead.mutate(n.id)}
-                          className={`w-full text-left bg-card border rounded-2xl p-4 flex gap-3 transition-all shadow-soft ${!n.read ? 'border-primary border-l-4' : 'border-border opacity-50'}`}
-                        >
-                          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <button key={n.id} onClick={() => !n.read && markRead.mutate(n.id)}
+                          className={`w-full text-left bg-card rounded-3xl p-4 flex gap-3 transition-all shadow-soft border ${!n.read ? 'border-primary border-l-4' : 'border-border opacity-50'}`}>
+                          <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
                             <Icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                           </div>
                           <div>
                             <h4 className="font-bold text-sm text-foreground">{n.title}</h4>
                             <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                            <p className="text-xs text-muted-foreground/50 mt-1">{new Date(n.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-[10px] text-muted-foreground/50 mt-1">{new Date(n.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                         </button>
                       );

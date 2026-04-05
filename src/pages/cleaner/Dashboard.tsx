@@ -46,13 +46,11 @@ export default function CleanerDashboard() {
   });
 
   useEffect(() => {
-    const channel = supabase
-      .channel('cleaner-dash-realtime')
+    const channel = supabase.channel('cleaner-dash-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
         queryClient.invalidateQueries({ queryKey: ['cleaner-my-bookings'] });
         queryClient.invalidateQueries({ queryKey: ['cleaner-pending-jobs'] });
-      })
-      .subscribe();
+      }).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
@@ -61,103 +59,83 @@ export default function CleanerDashboard() {
       if (!cleanerRecord) return;
       await supabase.from('cleaners').update({ available: !cleanerRecord.available }).eq('id', cleanerRecord.id);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-cleaner-record'] });
-      toast.success(cleanerRecord?.available ? 'You\'re offline' : 'You\'re online!');
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-cleaner-record'] }); toast.success(cleanerRecord?.available ? 'You\'re offline' : 'You\'re online!'); },
   });
 
   const activeJobs = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const upcomingJobs = bookings.filter(b => ['assigned', 'en-route'].includes(b.status));
   const completedCount = bookings.filter(b => b.status === 'completed').length;
   const weekEarnings = bookings.filter(b => b.status === 'completed').reduce((s, b) => s + Number(b.total_cost), 0);
-
   const isOnline = cleanerRecord?.available;
 
   return (
     <CleanerLayout>
       <PageTransition>
-        {/* Lime header */}
-        <div className="bg-primary rounded-b-[2.5rem] px-5 pt-8 pb-10">
-          <div className="flex items-center justify-between mb-6">
+        {/* Dark header */}
+        <div className="bg-foreground rounded-b-[2rem] px-5 pt-14 pb-20">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-[10px] text-primary-foreground/60 font-bold uppercase tracking-[0.2em]">Dashboard</p>
-              <h1 className="text-2xl font-display font-black text-primary-foreground tracking-tight">{user?.name || 'Cleaner'}</h1>
+              <h1 className="text-3xl font-display font-black text-background leading-none">{user?.name || 'Cleaner'}</h1>
+              <p className="text-[11px] text-background/40 font-medium mt-1">Dashboard</p>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.93 }}
-              onClick={() => toggleAvailability.mutate()}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all duration-300 ${
-                isOnline
-                  ? 'bg-primary-foreground text-primary shadow-md'
-                  : 'bg-primary-foreground/20 text-primary-foreground'
-              }`}
-            >
+            <motion.button whileTap={{ scale: 0.93 }} onClick={() => toggleAvailability.mutate()}
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all ${isOnline ? 'bg-primary text-primary-foreground' : 'bg-background/10 text-background/40'}`}>
               {isOnline ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
               {isOnline ? 'Online' : 'Offline'}
             </motion.button>
           </div>
+
+          {/* Balance card inside dark area */}
+          <div className="bg-background/5 rounded-3xl p-5 border border-background/10">
+            <p className="text-[10px] text-background/40 font-bold uppercase tracking-wider mb-1">Total Earned</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl font-display font-black text-primary">£{weekEarnings}</span>
+              <span className="text-xs text-background/30 font-medium">.00</span>
+            </div>
+          </div>
         </div>
 
-        <div className="px-5 -mt-6 space-y-5">
-          {/* Stats Row */}
+        <div className="px-5 -mt-8 space-y-5">
+          {/* Quick stats */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: Briefcase, label: 'Active', value: activeJobs.length },
-              { icon: PoundSterling, label: 'Earned', value: `£${weekEarnings}` },
               { icon: Clock, label: 'Done', value: completedCount },
+              { icon: PoundSterling, label: 'Pending', value: pendingJobs.length },
             ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-card rounded-2xl p-4 text-center shadow-soft border border-border"
-              >
-                <stat.icon className="h-4 w-4 text-muted-foreground mx-auto mb-1.5" strokeWidth={1.5} />
-                <div className="text-xl font-display font-black text-foreground">{stat.value}</div>
-                <div className="text-[10px] text-muted-foreground font-medium">{stat.label}</div>
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className="bg-card rounded-3xl p-4 text-center shadow-soft border border-border">
+                <stat.icon className="h-4 w-4 text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
+                <div className="text-2xl font-display font-black text-foreground">{stat.value}</div>
+                <div className="text-[9px] text-muted-foreground font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Upcoming Jobs */}
+          {/* Upcoming */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Upcoming Jobs</h3>
-              {upcomingJobs.length > 0 && (
-                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-foreground">
-                  View all →
-                </button>
-              )}
+              <h3 className="font-display font-bold text-foreground text-sm">Upcoming Jobs</h3>
+              {upcomingJobs.length > 0 && <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary">View all →</button>}
             </div>
             {upcomingJobs.length === 0 ? (
-              <div className="bg-card border border-border rounded-2xl p-6 text-center shadow-soft">
+              <div className="bg-card rounded-3xl p-6 text-center shadow-soft border border-border">
                 <CalendarDays className="h-5 w-5 text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
                 <p className="text-xs text-muted-foreground">No upcoming jobs</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {upcomingJobs.slice(0, 3).map(b => (
-                  <motion.div
-                    key={b.id}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/cleaner/jobs')}
-                    className="flex items-center gap-3 bg-card border border-border rounded-2xl p-4 cursor-pointer hover:border-primary/30 transition-colors shadow-soft"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                      <CalendarDays className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                  <motion.div key={b.id} whileTap={{ scale: 0.98 }} onClick={() => navigate('/cleaner/jobs')}
+                    className="flex items-center gap-3 bg-card rounded-3xl p-4 cursor-pointer border border-border shadow-soft">
+                    <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <CalendarDays className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-foreground truncate">{b.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
+                      <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <Badge className="bg-foreground text-background text-[9px] rounded-full font-bold border-0 capitalize mb-0.5">
-                        {b.status.replace('-', ' ')}
-                      </Badge>
-                      <p className="text-xs font-black text-foreground">£{b.total_cost}</p>
-                    </div>
+                    <span className="text-sm font-display font-black text-foreground">£{b.total_cost}</span>
                   </motion.div>
                 ))}
               </div>
@@ -169,40 +147,26 @@ export default function CleanerDashboard() {
             <section className="pb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">New Requests</h3>
+                  <h3 className="font-display font-bold text-foreground text-sm">New Requests</h3>
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 </div>
-                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-foreground">
-                  View all →
-                </button>
+                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary">View all →</button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {pendingJobs.slice(0, 3).map(b => {
                   const isExpress = b.service_name?.toLowerCase().includes('express');
                   return (
-                    <motion.div
-                      key={b.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate('/cleaner/jobs')}
-                      className="bg-foreground rounded-2xl p-4 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
+                    <motion.div key={b.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate('/cleaner/jobs')} className="bg-foreground rounded-3xl p-5 cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-background text-sm">{b.service_name}</h4>
-                          {isExpress && (
-                            <Badge className="bg-primary text-primary-foreground text-[9px] rounded-full font-bold border-0">
-                              <Zap className="h-2.5 w-2.5 mr-0.5" /> Express
-                            </Badge>
-                          )}
+                          {isExpress && <Badge className="bg-primary text-primary-foreground text-[9px] rounded-full font-bold border-0"><Zap className="h-2.5 w-2.5 mr-0.5" /> Express</Badge>}
                         </div>
-                        <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
+                        <span className="text-lg font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
-                      <p className="text-[11px] text-background/50 mb-2">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
-                      <div className="flex items-center justify-end text-[11px] text-primary font-bold">
-                        View & Accept <ChevronRight className="h-3 w-3 ml-0.5" />
-                      </div>
+                      <p className="text-[11px] text-background/40">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                      <div className="flex items-center justify-end text-[11px] text-primary font-bold mt-2">View & Accept <ChevronRight className="h-3 w-3 ml-0.5" /></div>
                     </motion.div>
                   );
                 })}
