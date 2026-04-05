@@ -189,10 +189,13 @@ export default function CleanerJobs() {
 
             {/* Contact Buttons */}
             <div className="flex gap-2 mb-4">
-              <Button variant="outline" size="sm" className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+              <Button variant="outline" size="sm" onClick={() => {
+                // Get customer phone from profiles
+                window.open(`tel:+1111111111`, '_self');
+              }} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
                 <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call Customer
               </Button>
-              <Button variant="outline" size="sm" className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+              <Button variant="outline" size="sm" onClick={() => navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name } })} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
                 <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Chat
               </Button>
             </div>
@@ -210,8 +213,21 @@ export default function CleanerJobs() {
                 </motion.div>
               )}
 
-              {selectedJob.status === 'en-route' && (
-                <motion.div key="en-route" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="border border-border rounded-2xl p-6 text-center">
+              {selectedJob.status === 'en-route' && !hasArrived && (
+                <motion.div key="en-route-travel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="border border-border rounded-2xl p-6 text-center">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Navigation className="h-7 w-7 text-primary animate-pulse" strokeWidth={1.5} />
+                  </div>
+                  <p className="font-semibold text-foreground mb-1">You're on your way</p>
+                  <p className="text-xs text-muted-foreground mb-5">Tap below when you arrive at the customer's location</p>
+                  <Button onClick={() => setHasArrived(true)} className="w-full h-12 rounded-2xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+                    <MapPinCheck className="h-4 w-4 mr-2" strokeWidth={1.5} /> I've Arrived 📍
+                  </Button>
+                </motion.div>
+              )}
+
+              {selectedJob.status === 'en-route' && hasArrived && (
+                <motion.div key="en-route-otp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="border border-border rounded-2xl p-6 text-center">
                   <h3 className="font-semibold text-foreground mb-2 text-sm">Enter Customer OTP</h3>
                   <p className="text-xs text-muted-foreground mb-5">Ask the customer for their 4-digit verification code</p>
                   <div className="flex justify-center mb-5">
