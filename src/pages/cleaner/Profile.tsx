@@ -45,8 +45,8 @@ export default function CleanerProfile() {
             <h2 className="text-xl font-display font-black text-foreground">{user?.name}</h2>
             {cleaner && (
               <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                <Star className="h-3.5 w-3.5 text-primary" strokeWidth={2} fill="hsl(var(--primary))" />
-                <span className="text-sm font-semibold text-foreground">{cleaner.rating}</span>
+                <Star className="h-3.5 w-3.5 text-primary" strokeWidth={2} fill="hsl(78, 85%, 65%)" />
+                <span className="text-sm font-bold text-foreground">{cleaner.rating}</span>
                 <span className="text-xs text-muted-foreground">({cleaner.review_count})</span>
               </div>
             )}
@@ -58,17 +58,21 @@ export default function CleanerProfile() {
           {/* Stats */}
           {cleaner && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-muted/30 rounded-2xl p-4 flex items-center gap-3">
-                <Shield className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-soft">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Verified</p>
+                  <p className="text-sm font-bold text-foreground">Verified</p>
                   <p className="text-[11px] text-muted-foreground">DBS Checked</p>
                 </div>
               </div>
-              <div className="bg-muted/30 rounded-2xl p-4 flex items-center gap-3">
-                <Award className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-soft">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <Award className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{cleaner.experience} yrs</p>
+                  <p className="text-sm font-bold text-foreground">{cleaner.experience} yrs</p>
                   <p className="text-[11px] text-muted-foreground">Experience</p>
                 </div>
               </div>
@@ -77,11 +81,11 @@ export default function CleanerProfile() {
 
           {/* Specialisations */}
           {cleaner && cleaner.specialisations.length > 0 && (
-            <div className="bg-muted/30 rounded-2xl p-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Specialisations</h3>
+            <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Specialisations</h3>
               <div className="flex flex-wrap gap-2">
                 {cleaner.specialisations.map((s: string) => (
-                  <Badge key={s} variant="secondary" className="rounded-lg px-3 py-1 text-xs font-medium border-0">{s}</Badge>
+                  <Badge key={s} className="rounded-full px-3 py-1 text-xs font-bold border-0 bg-primary/15 text-foreground">{s}</Badge>
                 ))}
               </div>
             </div>
@@ -90,7 +94,7 @@ export default function CleanerProfile() {
           <Button
             onClick={() => { logout(); navigate('/'); }}
             variant="outline"
-            className="w-full h-11 rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/5 font-medium text-sm"
+            className="w-full h-11 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold text-sm"
           >
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
           </Button>

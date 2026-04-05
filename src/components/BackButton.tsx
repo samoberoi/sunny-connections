@@ -26,7 +26,7 @@ const BackButton = forwardRef<HTMLButtonElement, BackButtonProps>(({ to, classNa
       ref={ref}
       type="button"
       onClick={handleClick}
-      className={`w-10 h-10 rounded-xl bg-muted/80 flex items-center justify-center hover:bg-muted transition-colors active:scale-95 ${className}`}
+      className={`w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 shadow-soft ${className}`}
     >
       <ChevronLeft className="h-5 w-5 text-foreground" strokeWidth={1.8} />
     </button>

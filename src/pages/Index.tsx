@@ -53,7 +53,9 @@ export default function Index() {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="absolute top-6 left-6 flex items-center gap-2"
         >
-          <Sparkles className="h-5 w-5 text-white" strokeWidth={1.5} />
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
+          </div>
           <span className="text-lg font-display font-bold text-white drop-shadow-lg">Clean Fit</span>
         </motion.div>
       </div>
@@ -70,7 +72,7 @@ export default function Index() {
             <br />
             don't clean
             <br />
-            <span className="text-primary">themselves.</span>
+            <span className="text-gradient">themselves.</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-3 max-w-[280px] leading-relaxed">
             Premium cleaning, sorted in seconds. Trusted by thousands across London.
@@ -89,7 +91,9 @@ export default function Index() {
             { icon: Clock, label: 'Same day' },
           ].map(badge => (
             <div key={badge.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <badge.icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+              <div className="w-5 h-5 rounded-md bg-primary/20 flex items-center justify-center">
+                <badge.icon className="h-3 w-3 text-foreground" strokeWidth={1.5} />
+              </div>
               <span className="font-medium">{badge.label}</span>
             </div>
           ))}
@@ -103,22 +107,22 @@ export default function Index() {
         >
           <Button
             onClick={() => navigate('/login')}
-            className="w-full h-14 text-base font-semibold bg-primary text-primary-foreground rounded-2xl hover:bg-primary/90 transition-colors"
+            className="w-full h-14 text-base font-bold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
           >
             Book a Clean
-            <ArrowRight className="h-4 w-4 ml-2" strokeWidth={1.5} />
+            <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
           </Button>
 
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/cleaner/login')}
-              className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
+              className="flex-1 h-12 rounded-full border-2 border-foreground/10 text-foreground text-sm font-semibold hover:bg-foreground hover:text-background transition-all"
             >
               Join as Cleaner
             </button>
             <button
               onClick={() => navigate('/admin/login')}
-              className="flex-1 h-12 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-foreground/20 transition-colors"
+              className="flex-1 h-12 rounded-full bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-colors"
             >
               Admin
             </button>

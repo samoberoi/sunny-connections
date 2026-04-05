@@ -157,7 +157,7 @@ export default function ScheduleBooking() {
           {/* Header */}
           <div className="flex items-center gap-3 mb-2">
             {step === 1 ? <BackButton /> : (
-              <button onClick={() => setStep(s => s - 1)} className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
+              <button onClick={() => setStep(s => s - 1)} className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center shadow-soft">
                 <ChevronLeft className="h-4 w-4 text-foreground" strokeWidth={1.5} />
               </button>
             )}
@@ -167,7 +167,7 @@ export default function ScheduleBooking() {
           {/* Progress bar */}
           <div className="flex gap-1.5 mb-6 ml-12">
             {Array.from({ length: totalSteps }, (_, i) => (
-              <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-primary' : 'bg-border'}`} />
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-primary' : 'bg-border'}`} />
             ))}
           </div>
 
@@ -189,10 +189,10 @@ export default function ScheduleBooking() {
                         transition={{ delay: i * 0.05 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setCategory(cat.key)}
-                        className="w-full text-left border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/20 transition-all"
+                        className="w-full text-left bg-card border border-border rounded-2xl p-5 flex items-center gap-4 hover:border-primary/30 transition-all shadow-soft"
                       >
-                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <cat.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                        <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                          <cat.icon className="h-6 w-6 text-foreground" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-display font-bold text-foreground">{cat.label}</h4>
@@ -230,20 +230,20 @@ export default function ScheduleBooking() {
                             transition={{ delay: i * 0.04 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => toggleService(svc.id)}
-                            className={`w-full text-left border rounded-2xl p-4 flex items-center gap-3 transition-all duration-200 ${
-                              isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/20'
+                            className={`w-full text-left border rounded-2xl p-4 flex items-center gap-3 transition-all duration-200 shadow-soft ${
+                              isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/20'
                             }`}
                           >
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary'
+                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'
                             }`}>
                               <svc.icon className="h-4 w-4" strokeWidth={1.5} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-foreground text-sm">{svc.name}</h4>
+                              <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
                               <p className="text-[10px] text-muted-foreground">£{svc.pricePerHour}/hr</p>
                             </div>
-                            {isSelected && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />}
+                            {isSelected && <CheckCircle2 className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />}
                           </motion.button>
                         );
                       })}
@@ -274,16 +274,16 @@ export default function ScheduleBooking() {
                         key={f.value}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setRecurring(f.value)}
-                        className={`w-full text-left border rounded-2xl p-4 flex items-center justify-between transition-all duration-200 ${
-                          recurring === f.value ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/20'
+                        className={`w-full text-left border rounded-2xl p-4 flex items-center justify-between transition-all duration-200 shadow-soft ${
+                          recurring === f.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/20'
                         }`}
                       >
                         <div>
-                          <h4 className="font-semibold text-foreground text-sm">{f.label}</h4>
+                          <h4 className="font-bold text-foreground text-sm">{f.label}</h4>
                           <p className="text-xs text-muted-foreground">{f.desc}</p>
                         </div>
                         {f.discount && (
-                          <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                          <span className="text-xs font-bold text-primary-foreground bg-foreground px-2.5 py-1 rounded-full">
                             {f.discount}% off
                           </span>
                         )}
@@ -299,8 +299,8 @@ export default function ScheduleBooking() {
                   <div className="flex gap-2">
                     {[2, 3, 4, 5, 6].map(d => (
                       <motion.button key={d} whileTap={{ scale: 0.97 }} onClick={() => setDuration(d)}
-                        className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all border ${
-                          duration === d ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${
+                          duration === d ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         {d}h
                       </motion.button>
@@ -335,8 +335,8 @@ export default function ScheduleBooking() {
                   <div className="grid grid-cols-4 gap-2">
                     {timeSlots.map(t => (
                       <motion.button key={t} whileTap={{ scale: 0.97 }} onClick={() => setTime(t)}
-                        className={`py-3 rounded-xl text-sm font-semibold transition-all border ${
-                          time === t ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`py-3 rounded-xl text-sm font-bold transition-all border ${
+                          time === t ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         {t}
                       </motion.button>
@@ -356,8 +356,8 @@ export default function ScheduleBooking() {
                   <div className="grid grid-cols-3 gap-2">
                     {propertyTypes.map(pt => (
                       <motion.button key={pt.value} whileTap={{ scale: 0.97 }} onClick={() => setPropertyType(pt.value)}
-                        className={`py-4 rounded-xl text-sm font-semibold flex flex-col items-center gap-2 border transition-all ${
-                          propertyType === pt.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`py-4 rounded-xl text-sm font-bold flex flex-col items-center gap-2 border transition-all ${
+                          propertyType === pt.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         <pt.icon className="h-5 w-5" strokeWidth={1.5} />
                         {pt.label}
@@ -371,8 +371,8 @@ export default function ScheduleBooking() {
                     <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Your Address
                   </h3>
                   <div className="space-y-2">
-                    <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
-                    <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-xl border-border focus-visible:ring-primary/30" />
+                    <Input placeholder="Postcode (e.g. SW1A 1AA)" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
+                    <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-12 rounded-2xl border-2 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary" />
                   </div>
                 </section>
 
@@ -388,7 +388,7 @@ export default function ScheduleBooking() {
             {/* Step 5: Review & Confirm */}
             {step === 5 && (
               <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                <div className="border border-border rounded-2xl p-5 mb-4 space-y-4">
+                <div className="bg-card border border-border rounded-2xl p-5 mb-4 space-y-4 shadow-soft">
                   <h3 className="font-display font-bold text-foreground text-sm">Booking Summary</h3>
 
                   <div className="space-y-3 text-sm">
@@ -420,23 +420,23 @@ export default function ScheduleBooking() {
                 </div>
 
                 {/* Pricing breakdown */}
-                <div className="bg-primary rounded-2xl p-5 text-primary-foreground mb-4">
+                <div className="bg-foreground rounded-2xl p-5 mb-4">
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-primary-foreground/60">Base rate</span>
-                    <span>£{baseRate}/hr × {duration}h = £{baseRate * duration}</span>
+                    <span className="text-background/50">Base rate</span>
+                    <span className="text-background">£{baseRate}/hr × {duration}h = £{baseRate * duration}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-primary-foreground/60">{freq?.label} discount</span>
-                      <span className="text-green-300">-{discount}%</span>
+                      <span className="text-background/50">{freq?.label} discount</span>
+                      <span className="text-primary">-{discount}%</span>
                     </div>
                   )}
-                  <div className="border-t border-primary-foreground/20 mt-2 pt-2 flex justify-between font-display font-black text-xl">
-                    <span>Total</span>
-                    <span>£{totalCost}</span>
+                  <div className="border-t border-background/20 mt-2 pt-2 flex justify-between font-display font-black text-xl">
+                    <span className="text-background">Total</span>
+                    <span className="text-primary">£{totalCost}</span>
                   </div>
                   {recurring !== 'none' && (
-                    <p className="text-[10px] text-primary-foreground/50 mt-1">per session</p>
+                    <p className="text-[10px] text-background/40 mt-1">per session</p>
                   )}
                 </div>
 
@@ -448,9 +448,9 @@ export default function ScheduleBooking() {
                 )}
 
                 <Button onClick={handleBook} disabled={submitting}
-                  className="w-full h-14 text-base font-semibold rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40">
+                  className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40">
                   {submitting ? 'Booking...' : 'Confirm & Find Cleaner'}
-                  <ArrowRight className="h-4 w-4 ml-2" strokeWidth={1.5} />
+                  <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
             )}
@@ -462,10 +462,10 @@ export default function ScheduleBooking() {
               <Button
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canAdvance()}
-                className="w-full h-14 text-base font-semibold rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40"
               >
                 Continue
-                <ChevronRight className="h-4 w-4 ml-1" strokeWidth={1.5} />
+                <ChevronRight className="h-4 w-4 ml-1" strokeWidth={2} />
               </Button>
             </div>
           )}

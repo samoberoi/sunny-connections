@@ -42,7 +42,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
     <div className="fixed inset-0 z-[150] bg-background flex flex-col">
       {/* Skip */}
       <div className="flex justify-end p-5">
-        <button onClick={skip} className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={skip} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
           Skip
         </button>
       </div>
@@ -57,7 +57,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1 flex flex-col items-center justify-center"
           >
-            <div className="w-56 h-56 rounded-3xl overflow-hidden mb-8 shadow-lg">
+            <div className="w-56 h-56 rounded-3xl overflow-hidden mb-8 shadow-lg border-4 border-primary/20">
               <img
                 src={slides[current].image}
                 alt={slides[current].title}
@@ -92,12 +92,12 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
 
         <Button
           onClick={next}
-          className="w-full h-14 text-base font-semibold rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+          className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background hover:bg-foreground/90"
         >
           {current < slides.length - 1 ? (
-            <>Continue <ChevronRight className="h-4 w-4 ml-1" strokeWidth={1.5} /></>
+            <>Continue <ChevronRight className="h-4 w-4 ml-1" strokeWidth={2} /></>
           ) : (
-            <>Get Started <ArrowRight className="h-4 w-4 ml-1" strokeWidth={1.5} /></>
+            <>Get Started <ArrowRight className="h-4 w-4 ml-1" strokeWidth={2} /></>
           )}
         </Button>
       </div>
