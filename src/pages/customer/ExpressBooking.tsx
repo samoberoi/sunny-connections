@@ -37,10 +37,15 @@ export default function ExpressBooking() {
     setSubmitting(true);
     try {
       const now = new Date();
+      // Get a real service ID to satisfy FK
+      const { data: services } = await supabase.from('services').select('id').limit(1);
+      const serviceId = services?.[0]?.id;
+      if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
+
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id,
         customer_name: user.name,
-        service_id: '00000000-0000-0000-0000-000000000000',
+        service_id: serviceId,
         service_name: `Express: ${service.name}`,
         date: now.toISOString().split('T')[0],
         time: now.toTimeString().slice(0, 5),

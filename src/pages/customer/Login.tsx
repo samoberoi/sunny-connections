@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import RoleOnboarding from '@/components/RoleOnboarding';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -13,11 +14,11 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const pathnameRole: UserRole | undefined = location.pathname.startsWith('/admin') ? 'admin' : location.pathname.startsWith('/cleaner') ? 'cleaner' : undefined;
   const roleParam = ((searchParams.get('role') as UserRole) || pathnameRole || 'customer') as UserRole;
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp' | 'onboarding'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, verifyOtp } = useAuth();
+  const { login, verifyOtp, user } = useAuth();
   const navigate = useNavigate();
 
   const role: UserRole = roleParam;
@@ -55,6 +56,12 @@ export default function Login() {
     toast.success('OTP sent! Use 1111 for testing.');
   };
 
+  const goToDashboard = () => {
+    if (role === 'customer') navigate('/home', { replace: true });
+    else if (role === 'cleaner') navigate('/cleaner', { replace: true });
+    else navigate('/admin', { replace: true });
+  };
+
   const handleVerify = async () => {
     if (otp.length !== 4) return;
     setIsLoading(true);
@@ -65,11 +72,20 @@ export default function Login() {
       return;
     }
     toast.success('Welcome to Clean Fit! 🎉');
-    setTimeout(() => {
-      if (role === 'customer') navigate('/home');
-      else if (role === 'cleaner') navigate('/cleaner');
-      else navigate('/admin');
-    }, 300);
+
+    // Check if user has seen onboarding for this role
+    const onboardingKey = `onboarding_${role}_complete`;
+    const seen = localStorage.getItem(onboardingKey);
+    if (!seen && role !== 'admin') {
+      setTimeout(() => setStep('onboarding'), 300);
+    } else {
+      setTimeout(goToDashboard, 300);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(`onboarding_${role}_complete`, '1');
+    goToDashboard();
   };
 
   const slideVariants = {
@@ -77,6 +93,16 @@ export default function Login() {
     center: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: -20 },
   };
+
+  if (step === 'onboarding') {
+    return (
+      <RoleOnboarding
+        role={role}
+        userName={user?.name || 'there'}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
