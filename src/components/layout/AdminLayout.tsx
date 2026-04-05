@@ -23,11 +23,11 @@ function AdminSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-foreground">
-        <div className="p-4 pb-2">
-          <h2 className={`font-display font-black text-background ${collapsed ? 'text-xs' : 'text-lg'}`}>
+        <div className="p-5 pb-2">
+          <h2 className={`font-display font-black text-background ${collapsed ? 'text-xs' : 'text-xl'}`}>
             {collapsed ? 'CF' : 'Clean Fit'}
           </h2>
-          {!collapsed && <p className="text-xs text-primary mt-0.5 font-bold">Super Admin</p>}
+          {!collapsed && <p className="text-[10px] text-primary mt-0.5 font-bold uppercase tracking-wider">Admin</p>}
         </div>
         <SidebarGroup>
           <SidebarGroupLabel className="text-background/20 text-[10px] uppercase tracking-[0.2em] font-bold">Management</SidebarGroupLabel>
@@ -38,7 +38,7 @@ function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild>
-                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active ? 'bg-primary text-primary-foreground font-bold' : 'text-background/40 hover:bg-background/5 hover:text-background/70'}`}>
+                      <RouterNavLink to={item.to} end className={`flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 ${active ? 'bg-primary text-primary-foreground font-bold' : 'text-background/40 hover:bg-background/5 hover:text-background/70'}`}>
                         <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                         {!collapsed && <span className="text-sm">{item.label}</span>}
                       </RouterNavLink>
@@ -60,9 +60,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b border-border px-4 bg-card">
+          <header className="h-16 flex items-center border-b border-border px-6 bg-card">
             <SidebarTrigger className="mr-4" />
-            <span className="font-display font-bold text-foreground text-sm">Admin Panel</span>
+            <span className="font-display font-black text-foreground">Admin Panel</span>
           </header>
           <main className="flex-1 p-6 overflow-auto bg-background">{children}</main>
         </div>

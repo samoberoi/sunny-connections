@@ -51,51 +51,40 @@ export default function CleanerEarnings() {
   const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + (b.rating || 0), 0) / rated.length).toFixed(1) : '—';
 
   const dayMap: Record<string, number> = {};
-  filteredBookings.forEach(b => {
-    const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short' });
-    dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost);
-  });
+  filteredBookings.forEach(b => { const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short' }); dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost); });
   const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => ({ day: d, amount: dayMap[d] || 0 }));
   const max = Math.max(...weeklyData.map(d => d.amount), 1);
 
-  const ranges: { key: DateRange; label: string }[] = [
-    { key: 'week', label: 'Week' },
-    { key: 'month', label: 'Month' },
-    { key: 'all', label: 'All' },
-  ];
+  const ranges: { key: DateRange; label: string }[] = [{ key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }, { key: 'all', label: 'All' }];
 
   return (
     <CleanerLayout>
       <PageTransition>
-        <div className="px-5 pt-6 pb-6 space-y-5">
+        <div className="px-5 pt-14 pb-6 space-y-5">
           <div className="flex items-center gap-3">
             <BackButton to="/cleaner" />
-            <h1 className="text-lg font-display font-black text-foreground">Earnings</h1>
+            <h1 className="text-2xl font-display font-black text-foreground">Earnings</h1>
           </div>
 
           {/* Range toggle */}
-          <div className="flex bg-card border border-border rounded-full p-1 shadow-soft">
+          <div className="flex bg-foreground rounded-full p-1">
             {ranges.map(r => (
-              <motion.button
-                key={r.key}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setRange(r.key)}
-                className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${
-                  range === r.key ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground'
-                }`}
-              >
+              <motion.button key={r.key} whileTap={{ scale: 0.97 }} onClick={() => setRange(r.key)}
+                className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all ${range === r.key ? 'bg-primary text-primary-foreground' : 'text-background/40'}`}>
                 {r.label}
               </motion.button>
             ))}
           </div>
 
-          {/* Total - dark card */}
-          <div className="bg-foreground rounded-2xl p-6 text-center">
-            <PoundSterling className="h-5 w-5 text-background/30 mx-auto mb-1" strokeWidth={1.5} />
-            <div className="text-3xl font-display font-black text-primary">£{totalEarnings}</div>
-            <p className="text-xs text-background/40 mt-0.5 font-medium">
+          {/* Balance */}
+          <div className="bg-foreground rounded-3xl p-6 text-center">
+            <p className="text-[10px] text-background/40 font-bold uppercase tracking-wider mb-1">
               {range === 'week' ? 'This Week' : range === 'month' ? 'This Month' : 'Total'}
             </p>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-5xl font-display font-black text-primary">£{totalEarnings}</span>
+              <span className="text-sm text-background/30">.00</span>
+            </div>
           </div>
 
           {/* Stats */}
@@ -105,27 +94,23 @@ export default function CleanerEarnings() {
               { icon: Clock, value: totalHours, label: 'Hours' },
               { icon: Star, value: avgRating, label: 'Rating' },
             ].map(stat => (
-              <div key={stat.label} className="bg-card border border-border rounded-2xl p-3 text-center shadow-soft">
-                <stat.icon className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" strokeWidth={1.5} />
-                <div className="text-lg font-display font-black text-foreground">{stat.value}</div>
-                <div className="text-[10px] text-muted-foreground font-medium">{stat.label}</div>
+              <div key={stat.label} className="bg-card rounded-3xl p-4 text-center shadow-soft border border-border">
+                <stat.icon className="h-4 w-4 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="text-xl font-display font-black text-foreground">{stat.value}</div>
+                <div className="text-[9px] text-muted-foreground font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
 
           {/* Chart */}
-          <div className="bg-foreground rounded-2xl p-5">
-            <h3 className="text-xs font-bold text-background/40 uppercase tracking-[0.15em] mb-4">Weekly</h3>
-            <div className="flex items-end gap-2 h-32">
+          <div className="bg-foreground rounded-3xl p-5">
+            <h3 className="text-xs font-bold text-background/40 uppercase tracking-wider mb-4">Weekly</h3>
+            <div className="flex items-end gap-2 h-36">
               {weeklyData.map(d => (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
                   <span className="text-[9px] font-bold text-background/40">£{d.amount}</span>
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%` }}
-                    className="w-full rounded-lg bg-primary"
-                    style={{ minHeight: '3px' }}
-                  />
+                  <motion.div initial={{ height: 0 }} animate={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%` }}
+                    className="w-full rounded-xl bg-primary" style={{ minHeight: '4px' }} />
                   <span className="text-[9px] font-bold text-background/40">{d.day}</span>
                 </div>
               ))}
@@ -134,16 +119,16 @@ export default function CleanerEarnings() {
 
           {/* Recent */}
           {filteredBookings.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
-              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Recent</h3>
-              <div className="space-y-2.5 max-h-56 overflow-y-auto scrollbar-hide">
+            <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
+              <h3 className="font-display font-bold text-foreground text-sm mb-3">Recent</h3>
+              <div className="space-y-3 max-h-56 overflow-y-auto scrollbar-hide">
                 {filteredBookings.slice(0, 20).map(b => (
-                  <div key={b.id} className="flex items-center justify-between py-1.5">
+                  <div key={b.id} className="flex items-center justify-between py-1">
                     <div>
                       <p className="text-sm font-bold text-foreground">{b.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.date} · {b.customer_name}</p>
+                      <p className="text-[11px] text-muted-foreground">{b.date}</p>
                     </div>
-                    <span className="font-display font-black text-foreground text-sm">£{b.total_cost}</span>
+                    <span className="font-display font-black text-foreground">£{b.total_cost}</span>
                   </div>
                 ))}
               </div>
