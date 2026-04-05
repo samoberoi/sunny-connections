@@ -232,6 +232,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           role,
         });
 
+        // Auto-create cleaner record for cleaner role
+        if (role === 'cleaner') {
+          void supabase.from('cleaners').select('id').eq('user_id', authUser.id).maybeSingle().then(({ data: existing }) => {
+            if (!existing) {
+              void supabase.from('cleaners').insert({
+                user_id: authUser!.id,
+                name,
+                available: true,
+                verified: false,
+                rating: 0,
+                review_count: 0,
+                experience: 0,
+                specialisations: [],
+              });
+            }
+          });
+        }
+
         return true;
       }
 
