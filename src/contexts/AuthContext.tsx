@@ -1,6 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
+import {
+  buildUserFromAuth,
+  buildUserFromProfile,
+  DEFAULT_PASSWORD,
+  normalizeRole,
+  phoneToEmail,
+  roleNames,
+} from './auth-helpers';
 
 export type UserRole = 'customer' | 'cleaner' | 'admin';
 
@@ -36,154 +44,195 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const phoneToEmail = (phone: string) => {
-  const clean = phone.replace(/[^0-9]/g, '');
-  return `${clean}@cleanfit.local`;
+type ProfilePayload = {
+  email?: string;
+  name: string;
+  phone: string;
+  role: UserRole;
 };
 
-const DEFAULT_PASSWORD = 'cleanfit-test-1111';
+const syncProfileRecord = async (userId: string, profile: ProfilePayload) => {
+  const payload = {
+    email: profile.email ?? null,
+    name: profile.name,
+    phone: profile.phone,
+    role: profile.role,
+    user_id: userId,
+  };
 
-const roleNames: Record<UserRole, string> = {
-  customer: 'Alex Morgan',
-  cleaner: 'Emma Thompson',
-  admin: 'Admin User',
+  const { data: updatedProfiles, error: updateError } = await supabase
+    .from('profiles')
+    .update(payload)
+    .eq('user_id', userId)
+    .select('id');
+
+  if (updateError) {
+    console.error('Profile update failed:', updateError);
+    return;
+  }
+
+  if ((updatedProfiles?.length ?? 0) > 0) {
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from('profiles')
+    .insert(payload);
+
+  if (insertError) {
+    console.error('Profile insert failed:', insertError);
+  }
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [pendingPhone, setPendingPhone] = useState('');
   const [pendingRole, setPendingRole] = useState<UserRole>('customer');
-  const skipAuthChangeRef = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      setSession(newSession);
-      if (skipAuthChangeRef.current) {
-        return;
-      }
-      if (newSession?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', newSession.user.id)
-          .maybeSingle();
+    let isMounted = true;
 
-        if (profile) {
-          setUser({
-            id: newSession.user.id,
-            phone: profile.phone,
-            name: profile.name,
-            email: profile.email || undefined,
-            role: profile.role as UserRole,
-            avatar: profile.avatar || undefined,
-            createdAt: profile.created_at,
-          });
-        }
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) return;
+      setSession(nextSession);
     });
 
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      if (!existingSession) {
-        setIsLoading(false);
-      }
+    void supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (!isMounted) return;
+      setSession(existingSession);
+      setIsAuthReady(true);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    let cancelled = false;
+
+    if (!session?.user) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setUser(buildUserFromAuth(session.user));
+    setIsLoading(false);
+
+    void supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+      .then(({ data: profile, error }) => {
+        if (cancelled) return;
+
+        if (error) {
+          console.error('Failed to load profile:', error);
+          return;
+        }
+
+        if (profile) {
+          setUser(buildUserFromProfile(session.user, profile));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthReady, session]);
+
   const login = async (phone: string, role: UserRole) => {
     setPendingPhone(phone);
-    setPendingRole(role);
+    setPendingRole(normalizeRole(role));
   };
 
   const verifyOtp = async (otp: string): Promise<boolean> => {
-    if (otp !== '1111') return false;
+    if (otp !== '1111' || !pendingPhone) return false;
 
     const email = phoneToEmail(pendingPhone);
-    const name = roleNames[pendingRole];
+    const role = normalizeRole(pendingRole) as UserRole;
+    const name = roleNames[role];
 
     try {
-      skipAuthChangeRef.current = true;
+      let authUser: Session['user'] | null = null;
+      let nextSession: Session | null = null;
 
-      // Try sign in first (don't sign out — just overwrite session)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const signInResult = await supabase.auth.signInWithPassword({
         email,
         password: DEFAULT_PASSWORD,
       });
 
-      if (signInError) {
-        // User doesn't exist yet — sign up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      if (signInResult.error) {
+        const signUpResult = await supabase.auth.signUp({
           email,
           password: DEFAULT_PASSWORD,
           options: {
-            data: { name, phone: pendingPhone, role: pendingRole },
+            emailRedirectTo: window.location.origin,
+            data: { name, phone: pendingPhone, role },
           },
         });
 
-        if (signUpError) {
-          console.error('Auth error:', signUpError);
-          skipAuthChangeRef.current = false;
+        if (signUpResult.error) {
+          console.error('Auth error:', signUpResult.error);
           return false;
         }
 
-        // If signup returned user but no session, wait and retry sign in
-        if (signUpData?.user && !signUpData.session) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          const { error: retryError } = await supabase.auth.signInWithPassword({
+        authUser = signUpResult.data.user;
+        nextSession = signUpResult.data.session;
+
+        if (authUser && !nextSession) {
+          const retryResult = await supabase.auth.signInWithPassword({
             email,
             password: DEFAULT_PASSWORD,
           });
-          if (retryError) {
-            console.error('Sign-in after signup failed:', retryError);
-            skipAuthChangeRef.current = false;
+
+          if (retryResult.error) {
+            console.error('Sign-in after signup failed:', retryResult.error);
             return false;
           }
+
+          authUser = retryResult.data.user;
+          nextSession = retryResult.data.session;
         }
+      } else {
+        authUser = signInResult.data.user;
+        nextSession = signInResult.data.session;
       }
 
-      const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', authUser.id)
-          .maybeSingle();
-
-        if (existingProfile) {
-          await supabase
-            .from('profiles')
-            .update({ role: pendingRole, phone: pendingPhone, name })
-            .eq('user_id', authUser.id);
-        } else {
-          await supabase
-            .from('profiles')
-            .insert({ user_id: authUser.id, role: pendingRole, phone: pendingPhone, name });
-        }
-
-        setUser({
+        const nextUser: AppUser = {
           id: authUser.id,
           phone: pendingPhone,
           name,
-          role: pendingRole,
-          createdAt: new Date().toISOString(),
+          email,
+          role,
+          createdAt: authUser.created_at ?? new Date().toISOString(),
+        };
+
+        setUser(nextUser);
+
+        if (nextSession) {
+          setSession(nextSession);
+        }
+
+        void syncProfileRecord(authUser.id, {
+          email,
+          name,
+          phone: pendingPhone,
+          role,
         });
 
-        const currentSession = await supabase.auth.getSession();
-        setSession(currentSession.data.session);
+        return true;
       }
 
-      skipAuthChangeRef.current = false;
-      setIsLoading(false);
-      return true;
+      return false;
     } catch (err) {
       console.error('verifyOtp unexpected error:', err);
-      skipAuthChangeRef.current = false;
       return false;
     }
   };
