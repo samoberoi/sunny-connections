@@ -274,16 +274,16 @@ export default function ScheduleBooking() {
                         key={f.value}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setRecurring(f.value)}
-                        className={`w-full text-left border rounded-2xl p-4 flex items-center justify-between transition-all duration-200 ${
-                          recurring === f.value ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/20'
+                        className={`w-full text-left border rounded-2xl p-4 flex items-center justify-between transition-all duration-200 shadow-soft ${
+                          recurring === f.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/20'
                         }`}
                       >
                         <div>
-                          <h4 className="font-semibold text-foreground text-sm">{f.label}</h4>
+                          <h4 className="font-bold text-foreground text-sm">{f.label}</h4>
                           <p className="text-xs text-muted-foreground">{f.desc}</p>
                         </div>
                         {f.discount && (
-                          <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                          <span className="text-xs font-bold text-primary-foreground bg-foreground px-2.5 py-1 rounded-full">
                             {f.discount}% off
                           </span>
                         )}
