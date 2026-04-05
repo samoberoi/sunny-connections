@@ -299,8 +299,8 @@ export default function ScheduleBooking() {
                   <div className="flex gap-2">
                     {[2, 3, 4, 5, 6].map(d => (
                       <motion.button key={d} whileTap={{ scale: 0.97 }} onClick={() => setDuration(d)}
-                        className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all border ${
-                          duration === d ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${
+                          duration === d ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground hover:border-foreground/30'
                         }`}>
                         {d}h
                       </motion.button>
