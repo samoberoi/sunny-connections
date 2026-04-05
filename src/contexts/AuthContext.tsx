@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
@@ -55,13 +55,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingPhone, setPendingPhone] = useState('');
   const [pendingRole, setPendingRole] = useState<UserRole>('customer');
-  const [skipAuthChange, setSkipAuthChange] = useState(false);
+  const skipAuthChangeRef = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
-      if (skipAuthChange) {
-        setIsLoading(false);
+      if (skipAuthChangeRef.current) {
         return;
       }
       if (newSession?.user) {
@@ -95,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [skipAuthChange]);
+  }, []);
 
   const login = async (phone: string, role: UserRole) => {
     setPendingPhone(phone);
@@ -109,15 +108,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const name = roleNames[pendingRole];
 
     try {
-      setSkipAuthChange(true);
-      await supabase.auth.signOut();
+      skipAuthChangeRef.current = true;
 
+      // Try sign in first (don't sign out — just overwrite session)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: DEFAULT_PASSWORD,
       });
 
       if (signInError) {
+        // User doesn't exist yet — sign up
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password: DEFAULT_PASSWORD,
@@ -128,19 +128,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (signUpError) {
           console.error('Auth error:', signUpError);
-          setSkipAuthChange(false);
+          skipAuthChangeRef.current = false;
           return false;
         }
 
+        // If signup returned user but no session, wait and retry sign in
         if (signUpData?.user && !signUpData.session) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
           const { error: retryError } = await supabase.auth.signInWithPassword({
             email,
             password: DEFAULT_PASSWORD,
           });
           if (retryError) {
             console.error('Sign-in after signup failed:', retryError);
-            setSkipAuthChange(false);
+            skipAuthChangeRef.current = false;
             return false;
           }
         }
@@ -177,12 +178,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(currentSession.data.session);
       }
 
-      setSkipAuthChange(false);
+      skipAuthChangeRef.current = false;
       setIsLoading(false);
       return true;
     } catch (err) {
       console.error('verifyOtp unexpected error:', err);
-      setSkipAuthChange(false);
+      skipAuthChangeRef.current = false;
       return false;
     }
   };
