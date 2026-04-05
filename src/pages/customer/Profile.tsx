@@ -99,60 +99,57 @@ export default function CustomerProfile() {
           </div>
 
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-primary mx-auto mb-4 flex items-center justify-center text-primary-foreground font-semibold text-2xl">
+            <div className="w-20 h-20 rounded-full bg-foreground mx-auto mb-4 flex items-center justify-center text-background font-bold text-2xl">
               {user?.name?.[0] || 'A'}
             </div>
 
-            {/* Editable name */}
             {editingName ? (
               <div className="flex items-center justify-center gap-2 mb-1">
-                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-9 w-48 text-center rounded-xl" autoFocus />
+                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-9 w-48 text-center rounded-full" autoFocus />
                 <button onClick={saveName} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><Check className="h-4 w-4 text-primary-foreground" /></button>
                 <button onClick={() => setEditingName(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4 text-foreground" /></button>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">
                 <h2 className="text-xl font-display font-black text-foreground">{user?.name || 'Guest'}</h2>
-                <button onClick={() => { setEditName(user?.name || ''); setEditingName(true); }} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors">
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                <button onClick={() => { setEditName(user?.name || ''); setEditingName(true); }} className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors">
+                  <Pencil className="h-3 w-3 text-foreground" />
                 </button>
               </div>
             )}
 
-            {/* Editable phone */}
             {editingPhone ? (
               <div className="flex items-center justify-center gap-2 mt-1">
-                <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="h-9 w-48 text-center rounded-xl" autoFocus />
+                <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="h-9 w-48 text-center rounded-full" autoFocus />
                 <button onClick={savePhone} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><Check className="h-4 w-4 text-primary-foreground" /></button>
                 <button onClick={() => setEditingPhone(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4 text-foreground" /></button>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-                <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '—'}
-                <button onClick={() => { setEditPhone(user?.phone || ''); setEditingPhone(true); }} className="w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors">
-                  <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone || '—'}
+                <button onClick={() => { setEditPhone(user?.phone || ''); setEditingPhone(true); }} className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors">
+                  <Pencil className="h-2.5 w-2.5 text-foreground" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Saved Addresses */}
-          <div className="border border-border rounded-2xl p-5 mb-4">
+          <div className="bg-card border border-border rounded-2xl p-5 mb-4 shadow-soft">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display font-semibold text-foreground text-sm">Saved Addresses</h3>
+              <h3 className="font-display font-bold text-foreground text-sm">Saved Addresses</h3>
               <Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
                 <DialogTrigger asChild>
-                  <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
-                    <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
+                  <button className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center hover:bg-foreground/90 transition-colors">
+                    <Plus className="h-4 w-4 text-background" strokeWidth={1.5} />
                   </button>
                 </DialogTrigger>
                 <DialogContent className="rounded-2xl">
                   <DialogHeader><DialogTitle>Add Address</DialogTitle></DialogHeader>
                   <div className="space-y-3 pt-2">
-                    <Input placeholder="Label (e.g. Home, Office)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
-                    <Input placeholder="Address line" value={newAddress.line1} onChange={e => setNewAddress({ ...newAddress, line1: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
-                    <Input placeholder="Postcode" value={newAddress.postcode} onChange={e => setNewAddress({ ...newAddress, postcode: e.target.value })} className="h-12 rounded-xl focus-visible:ring-primary/30" />
-                    <Button onClick={() => addAddress.mutate()} disabled={!newAddress.line1 || !newAddress.postcode} className="w-full rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90">Save Address</Button>
+                    <Input placeholder="Label (e.g. Home, Office)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} className="h-12 rounded-2xl focus-visible:ring-primary/30 focus-visible:border-primary" />
+                    <Input placeholder="Address line" value={newAddress.line1} onChange={e => setNewAddress({ ...newAddress, line1: e.target.value })} className="h-12 rounded-2xl focus-visible:ring-primary/30 focus-visible:border-primary" />
+                    <Input placeholder="Postcode" value={newAddress.postcode} onChange={e => setNewAddress({ ...newAddress, postcode: e.target.value })} className="h-12 rounded-2xl focus-visible:ring-primary/30 focus-visible:border-primary" />
+                    <Button onClick={() => addAddress.mutate()} disabled={!newAddress.line1 || !newAddress.postcode} className="w-full rounded-full font-bold bg-foreground text-background hover:bg-foreground/90">Save Address</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -163,9 +160,11 @@ export default function CustomerProfile() {
               <div className="space-y-3">
                 {addresses.map((addr: any) => (
                   <div key={addr.id} className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                    </div>
                     <div className="flex-1">
-                      <p className="text-xs font-semibold text-foreground">{addr.label}</p>
+                      <p className="text-xs font-bold text-foreground">{addr.label}</p>
                       <p className="text-sm text-muted-foreground">{addr.line1}, {addr.postcode}</p>
                     </div>
                     <button onClick={() => deleteAddress.mutate(addr.id)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-destructive/10 transition-colors">
@@ -177,12 +176,11 @@ export default function CustomerProfile() {
             )}
           </div>
 
-          {/* Referral */}
           <div className="mb-4">
             <ReferralCard />
           </div>
 
-          <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/5 font-medium">
+          <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
           </Button>
         </div>
