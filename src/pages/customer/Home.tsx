@@ -94,14 +94,13 @@ export default function CustomerHome() {
             </div>
             <div className="space-y-2">
               {[
-                { icon: Sparkles, label: 'Regular Clean', desc: 'Weekly or fortnightly', time: 'From 2hrs' },
-                { icon: Home, label: 'Deep Clean', desc: 'Top-to-bottom refresh', time: 'From 4hrs' },
-                { icon: Clock, label: 'Express', desc: 'Instant cleaning now', time: '90 min' },
+                { icon: CalendarDays, label: 'Schedule Cleaning', desc: 'Plan your cleaning service', time: 'Custom', route: '/schedule-booking' },
+                { icon: Clock, label: 'Express Clean', desc: 'Instant cleaning now', time: '90 min', route: '/express-booking' },
               ].map((item) => (
                 <motion.button
                   key={item.label}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => item.label === 'Express' ? navigate('/express-booking') : navigate('/services')}
+                  onClick={() => navigate(item.route)}
                   className="w-full border border-border rounded-2xl p-4 text-left flex items-center gap-4 hover:bg-accent/50 transition-colors"
                 >
                   <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0">
