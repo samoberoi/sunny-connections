@@ -112,10 +112,10 @@ export default function ActiveBooking() {
                   </div>
                 </div>
                 <div className="flex gap-1.5">
-                  <button className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                  <button onClick={() => window.open('tel:+2222222222', '_self')} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
                     <Phone className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
-                  <button className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                  <button onClick={() => navigate('/chat', { state: { bookingId: booking?.id, otherName: booking?.cleaner_name } })} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
                     <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
                 </div>

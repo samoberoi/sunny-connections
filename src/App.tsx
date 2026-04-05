@@ -25,6 +25,7 @@ import RateService from "./pages/customer/RateService";
 import MyBookings from "./pages/customer/MyBookings";
 import CustomerProfile from "./pages/customer/Profile";
 import Notifications from "./pages/customer/Notifications";
+import Chat from "./pages/customer/Chat";
 
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
@@ -84,6 +85,7 @@ const App = () => {
               <Route path="/my-bookings" element={<ProtectedRoute allowedRoles={['customer']}><MyBookings /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute allowedRoles={['customer']}><CustomerProfile /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute allowedRoles={['customer']}><Notifications /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute allowedRoles={['customer', 'cleaner']}><Chat /></ProtectedRoute>} />
 
               {/* Cleaner */}
               <Route path="/cleaner" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerDashboard /></ProtectedRoute>} />
