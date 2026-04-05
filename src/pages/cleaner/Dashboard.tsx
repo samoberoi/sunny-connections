@@ -147,6 +147,32 @@ export default function CleanerDashboard() {
               </div>
             )}
           </section>
+          {/* Incoming Requests */}
+          {pendingJobs.length > 0 && (
+            <section className="mt-8">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-display font-semibold text-xs uppercase tracking-wider text-muted-foreground">New Requests</h3>
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                </div>
+                <button onClick={() => navigate('/cleaner/jobs')} className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">View all →</button>
+              </div>
+              <div className="space-y-3">
+                {pendingJobs.slice(0, 3).map(b => (
+                  <motion.div key={b.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="border border-primary/20 bg-primary/5 rounded-2xl p-4">
+                    <div className="flex justify-between mb-2">
+                      <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+                      <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                    <Button size="sm" onClick={() => navigate('/cleaner/jobs')} className="w-full rounded-xl text-xs font-semibold h-9 bg-primary text-primary-foreground hover:bg-primary/90">
+                      <Briefcase className="h-3 w-3 mr-1.5" strokeWidth={1.5} /> View & Accept
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </PageTransition>
     </CleanerLayout>
