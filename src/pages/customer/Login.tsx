@@ -94,6 +94,16 @@ export default function Login() {
     exit: { opacity: 0, x: -20 },
   };
 
+  if (step === 'onboarding') {
+    return (
+      <RoleOnboarding
+        role={role}
+        userName={user?.name || 'there'}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="px-8 pt-14 pb-16">
