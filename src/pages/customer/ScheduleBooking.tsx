@@ -388,7 +388,7 @@ export default function ScheduleBooking() {
             {/* Step 5: Review & Confirm */}
             {step === 5 && (
               <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                <div className="border border-border rounded-2xl p-5 mb-4 space-y-4">
+                <div className="bg-card border border-border rounded-2xl p-5 mb-4 space-y-4 shadow-soft">
                   <h3 className="font-display font-bold text-foreground text-sm">Booking Summary</h3>
 
                   <div className="space-y-3 text-sm">
