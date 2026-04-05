@@ -77,27 +77,29 @@ export default function CleanerDashboard() {
   return (
     <CleanerLayout>
       <PageTransition>
-        <div className="px-5 pt-8 pb-6 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
+        {/* Lime header */}
+        <div className="bg-primary rounded-b-[2.5rem] px-5 pt-8 pb-10">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest">Dashboard</p>
-              <h1 className="text-2xl font-display font-black text-foreground tracking-tight">{user?.name || 'Cleaner'}</h1>
+              <p className="text-[10px] text-primary-foreground/60 font-bold uppercase tracking-[0.2em]">Dashboard</p>
+              <h1 className="text-2xl font-display font-black text-primary-foreground tracking-tight">{user?.name || 'Cleaner'}</h1>
             </div>
             <motion.button
               whileTap={{ scale: 0.93 }}
               onClick={() => toggleAvailability.mutate()}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all duration-300 ${
                 isOnline
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-primary-foreground text-primary shadow-md'
+                  : 'bg-primary-foreground/20 text-primary-foreground'
               }`}
             >
               {isOnline ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
               {isOnline ? 'Online' : 'Offline'}
             </motion.button>
           </div>
+        </div>
 
+        <div className="px-5 -mt-6 space-y-5">
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -110,7 +112,7 @@ export default function CleanerDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-muted/50 rounded-2xl p-4 text-center"
+                className="bg-card rounded-2xl p-4 text-center shadow-soft border border-border"
               >
                 <stat.icon className="h-4 w-4 text-muted-foreground mx-auto mb-1.5" strokeWidth={1.5} />
                 <div className="text-xl font-display font-black text-foreground">{stat.value}</div>
@@ -122,15 +124,15 @@ export default function CleanerDashboard() {
           {/* Upcoming Jobs */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Upcoming Jobs</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Upcoming Jobs</h3>
               {upcomingJobs.length > 0 && (
-                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-medium text-primary">
-                  View all
+                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-foreground">
+                  View all →
                 </button>
               )}
             </div>
             {upcomingJobs.length === 0 ? (
-              <div className="bg-muted/30 rounded-2xl p-6 text-center">
+              <div className="bg-card border border-border rounded-2xl p-6 text-center shadow-soft">
                 <CalendarDays className="h-5 w-5 text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
                 <p className="text-xs text-muted-foreground">No upcoming jobs</p>
               </div>
@@ -141,20 +143,20 @@ export default function CleanerDashboard() {
                     key={b.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/cleaner/jobs')}
-                    className="flex items-center gap-3 bg-muted/30 rounded-2xl p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-3 bg-card border border-border rounded-2xl p-4 cursor-pointer hover:border-primary/30 transition-colors shadow-soft"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <CalendarDays className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <CalendarDays className="h-4 w-4 text-foreground" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{b.service_name}</p>
+                      <p className="text-sm font-bold text-foreground truncate">{b.service_name}</p>
                       <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <Badge className="bg-primary/10 text-primary text-[9px] rounded-lg font-medium border-0 capitalize mb-0.5">
+                      <Badge className="bg-foreground text-background text-[9px] rounded-full font-bold border-0 capitalize mb-0.5">
                         {b.status.replace('-', ' ')}
                       </Badge>
-                      <p className="text-xs font-bold text-foreground">£{b.total_cost}</p>
+                      <p className="text-xs font-black text-foreground">£{b.total_cost}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -164,14 +166,14 @@ export default function CleanerDashboard() {
 
           {/* New Requests */}
           {pendingJobs.length > 0 && (
-            <section>
+            <section className="pb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">New Requests</h3>
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">New Requests</h3>
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 </div>
-                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-medium text-primary">
-                  View all
+                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-foreground">
+                  View all →
                 </button>
               </div>
               <div className="space-y-2">
@@ -184,21 +186,21 @@ export default function CleanerDashboard() {
                       animate={{ opacity: 1, x: 0 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => navigate('/cleaner/jobs')}
-                      className="border border-primary/15 bg-primary/[0.03] rounded-2xl p-4 cursor-pointer"
+                      className="bg-foreground rounded-2xl p-4 cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+                          <h4 className="font-bold text-background text-sm">{b.service_name}</h4>
                           {isExpress && (
-                            <Badge className="bg-amber-500/10 text-amber-600 text-[9px] rounded-lg font-semibold border-0">
+                            <Badge className="bg-primary text-primary-foreground text-[9px] rounded-full font-bold border-0">
                               <Zap className="h-2.5 w-2.5 mr-0.5" /> Express
                             </Badge>
                           )}
                         </div>
                         <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mb-2">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
-                      <div className="flex items-center justify-end text-[11px] text-primary font-medium">
+                      <p className="text-[11px] text-background/50 mb-2">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                      <div className="flex items-center justify-end text-[11px] text-primary font-bold">
                         View & Accept <ChevronRight className="h-3 w-3 ml-0.5" />
                       </div>
                     </motion.div>
