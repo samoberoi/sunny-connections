@@ -55,7 +55,7 @@ export default function SearchingCleaner() {
       .channel(`booking-${effectiveBookingId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${effectiveBookingId}` }, async (payload) => {
         const updated = payload.new as any;
-        if (updated.cleaner_id && !assignedCleaner) {
+        if (updated.cleaner_id) {
           // Fetch cleaner details
           const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', updated.cleaner_id).maybeSingle();
           if (cleaner) {
@@ -67,20 +67,23 @@ export default function SearchingCleaner() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [effectiveBookingId, assignedCleaner]);
+  }, [effectiveBookingId]);
 
-  // Simulated search animation (only if still in searching phase after 8s, auto-assign mock)
+  // Also poll every 5s as a fallback in case realtime misses an update
   useEffect(() => {
-    if (phase !== 'searching') return;
-    const fallbackTimer = setTimeout(() => {
-      if (!assignedCleaner) {
-        setAssignedCleaner({ name: 'Sarah M.', rating: 4.9, review_count: 127, experience: 5, verified: true });
+    if (phase !== 'searching' || !effectiveBookingId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from('bookings').select('*, cleaners(*)').eq('id', effectiveBookingId).maybeSingle();
+      if (data?.cleaner_id && data?.cleaners) {
+        const c = data.cleaners as any;
+        setAssignedCleaner({ name: c.name, rating: Number(c.rating), review_count: c.review_count, experience: c.experience, verified: c.verified });
         setPhase('found');
         setTimeout(() => setPhase('confirmed'), 3000);
+        clearInterval(interval);
       }
-    }, 6000);
-    return () => clearTimeout(fallbackTimer);
-  }, [phase, assignedCleaner]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [phase, effectiveBookingId]);
 
   useEffect(() => {
     if (phase !== 'searching') return;
