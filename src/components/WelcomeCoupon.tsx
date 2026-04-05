@@ -24,14 +24,14 @@ export default function WelcomeCoupon({ open, onClose, onClaim }: WelcomeCouponP
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-            className="relative w-full max-w-lg bg-background rounded-t-[2rem] overflow-hidden"
+            className="relative w-full max-w-lg bg-card rounded-t-[2rem] overflow-hidden"
           >
             <div className="px-8 pt-8 pb-10">
               <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors">
                 <X className="h-4 w-4 text-foreground" strokeWidth={1.8} />
               </button>
 
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Welcome offer</p>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2">Welcome offer</p>
               <h2 className="text-2xl font-display font-black text-foreground mb-2">
                 First 3 visits for £100
               </h2>
@@ -39,7 +39,7 @@ export default function WelcomeCoupon({ open, onClose, onClaim }: WelcomeCouponP
 
               <Button
                 onClick={onClaim}
-                className="w-full h-14 text-base font-semibold rounded-2xl transition-opacity"
+                className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
               >
                 Claim Now
               </Button>

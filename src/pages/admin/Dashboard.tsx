@@ -35,7 +35,6 @@ export default function AdminDashboard() {
   const completedBookings = bookings.filter(b => b.status === 'completed');
   const activeCleaners = cleaners.filter((c: any) => c.available);
 
-  // Real revenue data grouped by month
   const { revenueData, totalRevenue, growthPercent } = useMemo(() => {
     const monthMap: Record<string, number> = {};
     completedBookings.forEach(b => {
@@ -44,7 +43,6 @@ export default function AdminDashboard() {
       monthMap[key] = (monthMap[key] || 0) + Number(b.total_cost);
     });
 
-    // Also include pending/in-progress bookings for projected revenue
     bookings.filter(b => !['cancelled'].includes(b.status)).forEach(b => {
       if (b.status !== 'completed') {
         const d = new Date(b.date);
@@ -63,7 +61,6 @@ export default function AdminDashboard() {
 
     const total = completedBookings.reduce((s, b) => s + Number(b.total_cost), 0);
 
-    // Calculate MoM growth
     let growth = 0;
     if (data.length >= 2) {
       const curr = data[data.length - 1].revenue;
@@ -91,9 +88,9 @@ export default function AdminDashboard() {
           <p className="text-sm text-muted-foreground mt-1">Overview of your cleaning empire</p>
         </div>
         {totalRevenue > 0 && (
-          <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 ${growthPercent >= 0 ? 'bg-primary/10' : 'bg-destructive/10'}`}>
-            <GrowthIcon className={`h-3.5 w-3.5 ${growthPercent >= 0 ? 'text-primary' : 'text-destructive'}`} strokeWidth={1.5} />
-            <span className={`text-xs font-semibold ${growthPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>{growthPercent >= 0 ? '+' : ''}{growthPercent}%</span>
+          <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 ${growthPercent >= 0 ? 'bg-primary' : 'bg-destructive/10'}`}>
+            <GrowthIcon className={`h-3.5 w-3.5 ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`} strokeWidth={1.5} />
+            <span className={`text-xs font-bold ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`}>{growthPercent >= 0 ? '+' : ''}{growthPercent}%</span>
           </div>
         )}
       </div>
@@ -105,25 +102,25 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, duration: 0.35 }}
-            className="border border-border rounded-2xl p-5"
+            className="bg-card border border-border rounded-2xl p-5 shadow-soft"
           >
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3">
-              <stat.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
+              <stat.icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
             </div>
-            <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+            <p className="text-xs text-muted-foreground font-bold">{stat.label}</p>
             <p className="text-2xl font-display font-black text-foreground mt-1">{stat.value}</p>
           </motion.div>
         ))}
       </div>
 
-      <div className="border border-border rounded-2xl p-6">
-        <h3 className="font-display font-semibold text-foreground mb-4 text-sm">Revenue Overview</h3>
+      <div className="bg-foreground rounded-2xl p-6">
+        <h3 className="font-display font-bold text-background/60 mb-4 text-sm">Revenue Overview</h3>
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={revenueData}>
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(0, 0%, 70%)" />
-            <YAxis tick={{ fontSize: 12 }} stroke="hsl(0, 0%, 70%)" />
-            <Tooltip formatter={(value: number) => [`£${value}`, 'Revenue']} />
-            <Bar dataKey="revenue" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
+            <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
+            <Tooltip formatter={(value: number) => [`£${value}`, 'Revenue']} contentStyle={{ background: '#1a1a1a', border: 'none', borderRadius: '12px', color: '#fff' }} />
+            <Bar dataKey="revenue" fill="hsl(78, 85%, 65%)" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
