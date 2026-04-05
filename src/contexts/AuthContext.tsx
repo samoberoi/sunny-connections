@@ -120,8 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    setUser(buildUserFromAuth(session.user));
-    setIsLoading(false);
+    setIsLoading(true);
 
     void supabase
       .from('profiles')
@@ -133,12 +132,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
           console.error('Failed to load profile:', error);
+          setUser(buildUserFromAuth(session.user));
+          setIsLoading(false);
           return;
         }
 
         if (profile) {
           setUser(buildUserFromProfile(session.user, profile));
+        } else {
+          setUser(buildUserFromAuth(session.user));
         }
+
+        setIsLoading(false);
       });
 
     return () => {
