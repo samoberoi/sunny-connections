@@ -74,7 +74,7 @@ export default function CustomerHome() {
                 Your home, <span className="text-primary">sorted.</span>
               </h2>
               <Button
-                onClick={() => navigate('/services')}
+                onClick={() => navigate('/schedule-booking')}
                 size="sm"
                 className="bg-primary text-primary-foreground rounded-xl font-semibold text-xs h-9 px-5 hover:bg-primary/90"
               >
@@ -84,18 +84,13 @@ export default function CustomerHome() {
             </div>
           </motion.div>
 
-          {/* Services */}
+          {/* Two booking paths */}
           <motion.div variants={fadeUp} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-display font-bold text-foreground uppercase tracking-wide">Services</h3>
-              <button onClick={() => navigate('/services')} className="text-xs font-medium text-primary flex items-center gap-1 hover:text-primary/80 transition-colors">
-                View all <ChevronRight className="h-3 w-3" strokeWidth={2} />
-              </button>
-            </div>
+            <h3 className="text-sm font-display font-bold text-foreground uppercase tracking-wide">Book a Service</h3>
             <div className="space-y-2">
               {[
-                { icon: CalendarDays, label: 'Schedule Cleaning', desc: 'Plan your cleaning service', time: 'Custom', route: '/schedule-booking' },
-                { icon: Clock, label: 'Express Clean', desc: 'Instant cleaning now', time: '90 min', route: '/express-booking' },
+                { icon: CalendarDays, label: 'Schedule Cleaning', desc: 'Pick services, date, time & frequency', tag: 'From £12/hr', route: '/schedule-booking' },
+                { icon: Sparkles, label: 'Express Clean', desc: 'Instant booking — cleaner heads to you now', tag: 'Premium', route: '/express-booking' },
               ].map((item) => (
                 <motion.button
                   key={item.label}
@@ -110,7 +105,7 @@ export default function CustomerHome() {
                     <h4 className="font-semibold text-foreground text-sm">{item.label}</h4>
                     <p className="text-xs text-muted-foreground">{item.desc}</p>
                   </div>
-                  <span className="text-[10px] font-medium text-primary bg-accent px-2.5 py-1 rounded-full shrink-0">{item.time}</span>
+                  <span className="text-[10px] font-medium text-primary bg-accent px-2.5 py-1 rounded-full shrink-0">{item.tag}</span>
                 </motion.button>
               ))}
             </div>
