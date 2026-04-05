@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/EmptyState';
-import { CalendarDays, MapPin } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarDays, MapPin, MoreHorizontal, XCircle, UserCheck } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -28,7 +31,6 @@ export default function AdminBookings() {
     },
   });
 
-  // Realtime updates
   useEffect(() => {
     const channel = supabase
       .channel('admin-bookings-realtime')
@@ -38,6 +40,30 @@ export default function AdminBookings() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
+
+  const cancelBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-all-bookings'] });
+      toast.success('Booking cancelled');
+    },
+  });
+
+  const unassignCleaner = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bookings').update({
+        cleaner_id: null, cleaner_name: null, cleaner_avatar: null, status: 'pending' as any,
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-all-bookings'] });
+      toast.success('Cleaner unassigned — booking is back in the pool');
+    },
+  });
 
   return (
     <AdminLayout>
@@ -66,6 +92,7 @@ export default function AdminBookings() {
                 <TableHead className="font-semibold">Date</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold text-right">Total</TableHead>
+                <TableHead className="font-semibold w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,6 +119,27 @@ export default function AdminBookings() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-display font-black text-primary">£{b.total_cost}</TableCell>
+                  <TableCell>
+                    {!['completed', 'cancelled'].includes(b.status) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          {b.cleaner_id && (
+                            <DropdownMenuItem onClick={() => unassignCleaner.mutate(b.id)} className="text-xs">
+                              <UserCheck className="h-3.5 w-3.5 mr-2" /> Reassign Cleaner
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => cancelBooking.mutate(b.id)} className="text-xs text-destructive focus:text-destructive">
+                            <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel Booking
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
