@@ -37,6 +37,27 @@ export default function CleanerDashboard() {
     enabled: !!cleanerRecord?.id,
   });
 
+  const { data: pendingJobs = [] } = useQuery({
+    queryKey: ['cleaner-pending-jobs'],
+    queryFn: async () => {
+      const { data } = await supabase.from('bookings').select('*').is('cleaner_id', null).eq('status', 'pending').order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!cleanerRecord,
+  });
+
+  // Realtime for new bookings
+  useEffect(() => {
+    const channel = supabase
+      .channel('cleaner-dash-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['cleaner-my-bookings'] });
+        queryClient.invalidateQueries({ queryKey: ['cleaner-pending-jobs'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   const toggleAvailability = useMutation({
     mutationFn: async () => {
       if (!cleanerRecord) return;
