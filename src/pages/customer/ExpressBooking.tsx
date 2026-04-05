@@ -85,7 +85,7 @@ export default function ExpressBooking() {
   return (
     <CustomerLayout>
       <PageTransition>
-        <div className="px-5 pt-6 pb-6">
+        <div className="px-5 pt-6 pb-28">
           <div className="flex items-center gap-3 mb-2">
             <BackButton />
             <h1 className="text-xl font-display font-black text-foreground">Express Clean</h1>

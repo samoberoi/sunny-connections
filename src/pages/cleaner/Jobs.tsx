@@ -29,7 +29,14 @@ export default function CleanerJobs() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase.from('cleaners').select('*').eq('user_id', user.id).maybeSingle();
-      return data;
+      if (data) return data;
+      // Auto-create cleaner record if missing
+      const { data: created, error } = await supabase.from('cleaners').insert({
+        user_id: user.id,
+        name: user.name || 'Cleaner',
+      }).select().single();
+      if (error) { console.error('Failed to create cleaner record', error); return null; }
+      return created;
     },
     enabled: !!user?.id,
   });
