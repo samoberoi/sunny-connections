@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2 } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +19,10 @@ export default function CustomerProfile() {
   const queryClient = useQueryClient();
   const [newAddress, setNewAddress] = useState({ label: 'Home', line1: '', postcode: '', city: 'London' });
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [editPhone, setEditPhone] = useState(user?.phone || '');
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['my-addresses', user?.id],
@@ -28,6 +32,19 @@ export default function CustomerProfile() {
       return data || [];
     },
     enabled: !!user?.id,
+  });
+
+  const updateProfile = useMutation({
+    mutationFn: async (updates: { name?: string; phone?: string }) => {
+      if (!user?.id) return;
+      const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Profile updated!');
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: () => toast.error('Failed to update profile'),
   });
 
   const addAddress = useMutation({
@@ -58,12 +75,26 @@ export default function CustomerProfile() {
     },
   });
 
+  const saveName = () => {
+    if (editName.trim()) {
+      updateProfile.mutate({ name: editName.trim() });
+      setEditingName(false);
+    }
+  };
+
+  const savePhone = () => {
+    if (editPhone.trim()) {
+      updateProfile.mutate({ phone: editPhone.trim() });
+      setEditingPhone(false);
+    }
+  };
+
   return (
     <CustomerLayout>
       <PageTransition>
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
-            <BackButton />
+            <BackButton to="/home" />
             <h1 className="text-xl font-display font-black text-foreground">Profile</h1>
           </div>
 
@@ -71,10 +102,38 @@ export default function CustomerProfile() {
             <div className="w-20 h-20 rounded-full bg-primary mx-auto mb-4 flex items-center justify-center text-primary-foreground font-semibold text-2xl">
               {user?.name?.[0] || 'A'}
             </div>
-            <h2 className="text-xl font-display font-black text-foreground">{user?.name || 'Guest'}</h2>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-              <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '—'}
-            </div>
+
+            {/* Editable name */}
+            {editingName ? (
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-9 w-48 text-center rounded-xl" autoFocus />
+                <button onClick={saveName} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><Check className="h-4 w-4 text-primary-foreground" /></button>
+                <button onClick={() => setEditingName(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4 text-foreground" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <h2 className="text-xl font-display font-black text-foreground">{user?.name || 'Guest'}</h2>
+                <button onClick={() => { setEditName(user?.name || ''); setEditingName(true); }} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </div>
+            )}
+
+            {/* Editable phone */}
+            {editingPhone ? (
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="h-9 w-48 text-center rounded-xl" autoFocus />
+                <button onClick={savePhone} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><Check className="h-4 w-4 text-primary-foreground" /></button>
+                <button onClick={() => setEditingPhone(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4 text-foreground" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
+                <Smartphone className="h-3 w-3 text-primary" strokeWidth={1.5} /> {user?.phone || '—'}
+                <button onClick={() => { setEditPhone(user?.phone || ''); setEditingPhone(true); }} className="w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+                  <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Saved Addresses */}

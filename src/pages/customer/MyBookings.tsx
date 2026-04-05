@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
@@ -8,7 +10,8 @@ import EmptyState from '@/components/EmptyState';
 import StarRating from '@/components/StarRating';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const statusStyles: Record<string, string> = {
   pending: 'bg-accent text-accent-foreground',
@@ -23,6 +26,7 @@ const statusStyles: Record<string, string> = {
 export default function MyBookings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['my-bookings', user?.id],
@@ -34,6 +38,18 @@ export default function MyBookings() {
     enabled: !!user?.id,
   });
 
+  const cancelBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      toast.success('Booking cancelled');
+    },
+    onError: () => toast.error('Failed to cancel booking'),
+  });
+
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const past = bookings.filter(b => ['completed', 'cancelled'].includes(b.status));
 
@@ -42,7 +58,7 @@ export default function MyBookings() {
       <PageTransition>
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
-            <BackButton />
+            <BackButton to="/home" />
             <h1 className="text-xl font-display font-black text-foreground">My Bookings</h1>
           </div>
 
@@ -67,6 +83,36 @@ export default function MyBookings() {
                       <MapPin className="h-3 w-3 text-primary" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}
                     </div>
                     {b.cleaner_name && <p className="text-xs text-primary mt-2 font-medium">Cleaner: {b.cleaner_name}</p>}
+
+                    {/* Cancel button for pending/assigned bookings */}
+                    {['pending', 'assigned'].includes(b.status) && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="mt-3 w-full rounded-xl text-xs h-9 border-destructive/20 text-destructive hover:bg-destructive/5">
+                            <XCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Cancel Booking
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="rounded-2xl">
+                          <DialogHeader><DialogTitle>Cancel this booking?</DialogTitle></DialogHeader>
+                          <p className="text-sm text-muted-foreground">This action cannot be undone. The cleaner will be notified.</p>
+                          <div className="flex gap-3 mt-4">
+                            <DialogClose asChild>
+                              <Button variant="outline" className="flex-1 rounded-xl">Keep</Button>
+                            </DialogClose>
+                            <Button onClick={() => cancelBooking.mutate(b.id)} variant="destructive" className="flex-1 rounded-xl">
+                              Cancel Booking
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+
+                    {/* Track button for active bookings */}
+                    {['en-route', 'in-progress', 'otp-verified'].includes(b.status) && (
+                      <Button size="sm" onClick={() => navigate('/active-booking', { state: { bookingId: b.id } })} className="mt-3 w-full rounded-xl text-xs h-9 bg-primary text-primary-foreground hover:bg-primary/90">
+                        Track Live
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -86,6 +132,12 @@ export default function MyBookings() {
                     <p className="text-xs text-muted-foreground">{b.date} · {b.cleaner_name}</p>
                     {b.rating && <div className="mt-2"><StarRating rating={b.rating} readonly size="sm" /></div>}
                     {b.review && <p className="text-xs text-muted-foreground mt-1 italic">"{b.review}"</p>}
+
+                    {b.status === 'completed' && !b.rating && (
+                      <Button size="sm" onClick={() => navigate('/rate-service', { state: { bookingId: b.id } })} variant="outline" className="mt-3 w-full rounded-xl text-xs h-9 border-primary/20 text-primary hover:bg-accent">
+                        Rate Service
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>

@@ -26,6 +26,7 @@ export default function ExpressBooking() {
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const service = expressServices.find(s => s.id === selected);
 
@@ -157,13 +158,26 @@ export default function ExpressBooking() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleBook}
-                disabled={submitting || !address || !postcode}
-                className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {submitting ? 'Booking...' : 'Book Instant Clean ⚡'}
-              </Button>
+              {!showConfirm ? (
+                <Button
+                  onClick={() => setShowConfirm(true)}
+                  disabled={!address || !postcode}
+                  className="w-full h-14 text-base font-semibold rounded-2xl disabled:opacity-40 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Book Instant Clean ⚡
+                </Button>
+              ) : (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-2xl p-5 text-center space-y-4">
+                  <p className="font-display font-bold text-foreground">Confirm Express Booking?</p>
+                  <p className="text-sm text-muted-foreground">£{service.price} will be charged for {service.name}</p>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1 h-12 rounded-xl border-border">Cancel</Button>
+                    <Button onClick={handleBook} disabled={submitting} className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                      {submitting ? 'Booking...' : 'Confirm ⚡'}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </div>

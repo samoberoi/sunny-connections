@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CircleCheck, Circle, MapPin, Clock, Phone, MessageCircle, Navigation } from 'lucide-react';
+import { CircleCheck, Circle, MapPin, Clock, Phone, MessageCircle, Navigation, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
@@ -24,6 +24,7 @@ export default function ActiveBooking() {
   const { state } = useLocation();
   const { user } = useAuth();
   const [liveStatus, setLiveStatus] = useState<string>('pending');
+  const [eta, setEta] = useState(12); // minutes
 
   const { data: booking } = useQuery({
     queryKey: ['active-booking', state?.bookingId, user?.id],
@@ -55,6 +56,19 @@ export default function ActiveBooking() {
     return () => { supabase.removeChannel(channel); };
   }, [booking?.id]);
 
+  // ETA countdown when en-route
+  useEffect(() => {
+    if (liveStatus !== 'en-route') return;
+    setEta(12);
+    const interval = setInterval(() => {
+      setEta(prev => {
+        if (prev <= 1) { clearInterval(interval); return 1; }
+        return prev - 1;
+      });
+    }, 30000); // decrement every 30s for realism
+    return () => clearInterval(interval);
+  }, [liveStatus]);
+
   const currentIdx = statuses.findIndex(s => s.key === liveStatus);
 
   return (
@@ -62,7 +76,7 @@ export default function ActiveBooking() {
       <PageTransition>
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
-            <BackButton />
+            <BackButton to="/home" />
             <h1 className="text-xl font-display font-black text-foreground">Booking Status</h1>
           </div>
 
@@ -93,7 +107,7 @@ export default function ActiveBooking() {
                   <div>
                     <p className="font-semibold text-foreground text-xs">{booking.cleaner_name}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {liveStatus === 'en-route' ? 'Arriving in ~12 min' : liveStatus === 'in-progress' ? 'Cleaning' : 'Assigned'}
+                      {liveStatus === 'en-route' ? `Arriving in ~${eta} min` : liveStatus === 'in-progress' ? 'Cleaning' : 'Assigned'}
                     </p>
                   </div>
                 </div>
@@ -108,6 +122,19 @@ export default function ActiveBooking() {
               </div>
             )}
           </div>
+
+          {/* ETA banner for en-route */}
+          {liveStatus === 'en-route' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-accent border border-primary/20 rounded-2xl p-4 mb-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Timer className="h-5 w-5 text-primary" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="font-display font-bold text-foreground text-sm">ETA: ~{eta} minutes</p>
+                <p className="text-xs text-muted-foreground">Your cleaner is on the way</p>
+              </div>
+            </motion.div>
+          )}
 
           {(liveStatus === 'en-route' || liveStatus === 'assigned') && booking?.otp && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary rounded-2xl p-5 mb-5 text-center">

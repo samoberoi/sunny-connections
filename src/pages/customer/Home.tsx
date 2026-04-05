@@ -44,7 +44,7 @@ export default function CustomerHome() {
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Good morning</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}</p>
             <h1 className="text-2xl font-display font-black text-foreground">{firstName}</h1>
           </div>
           <div className="flex gap-2">
