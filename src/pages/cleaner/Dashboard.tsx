@@ -1,6 +1,8 @@
-import { PoundSterling, CalendarDays, Clock, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { PoundSterling, CalendarDays, Clock, ToggleLeft, ToggleRight, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
 import EmptyState from '@/components/EmptyState';
