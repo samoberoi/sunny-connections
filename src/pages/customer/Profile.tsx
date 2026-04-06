@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
@@ -23,6 +24,17 @@ export default function CustomerProfile() {
   const [editName, setEditName] = useState(user?.name || '');
   const [editingPhone, setEditingPhone] = useState(false);
   const [editPhone, setEditPhone] = useState(user?.phone || '');
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['my-addresses', user?.id],
@@ -136,6 +148,22 @@ export default function CustomerProfile() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Appearance */}
+          <div className="bg-card rounded-3xl p-5 mb-5 shadow-soft border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                  {isDark ? <Moon className="h-4 w-4 text-foreground" strokeWidth={1.5} /> : <Sun className="h-4 w-4 text-foreground" strokeWidth={1.5} />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">Dark Mode</p>
+                  <p className="text-[11px] text-muted-foreground">{isDark ? 'On' : 'Off'}</p>
+                </div>
+              </div>
+              <Switch checked={isDark} onCheckedChange={setIsDark} />
+            </div>
           </div>
 
           <div className="mb-5"><ReferralCard /></div>
