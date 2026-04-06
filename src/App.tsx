@@ -31,6 +31,7 @@ import Chat from "./pages/customer/Chat";
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
 import CleanerJobs from "./pages/cleaner/Jobs";
+import CleanerSchedule from "./pages/cleaner/Schedule";
 import CleanerEarnings from "./pages/cleaner/Earnings";
 import CleanerProfile from "./pages/cleaner/Profile";
 
@@ -48,6 +49,7 @@ import AdminEnrolments from "./pages/admin/Enrolments";
 import AdminTrainingProgress from "./pages/admin/TrainingProgress";
 import AdminServices from "./pages/admin/Services";
 import AdminCoupons from "./pages/admin/Coupons";
+import AdminLeaves from "./pages/admin/Leaves";
 import AdminReports from "./pages/admin/Reports";
 
 const queryClient = new QueryClient();
@@ -92,6 +94,7 @@ const App = () => {
               {/* Cleaner */}
               <Route path="/cleaner" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerDashboard /></ProtectedRoute>} />
               <Route path="/cleaner/jobs" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerJobs /></ProtectedRoute>} />
+              <Route path="/cleaner/schedule" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerSchedule /></ProtectedRoute>} />
               <Route path="/cleaner/earnings" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerEarnings /></ProtectedRoute>} />
               <Route path="/cleaner/profile" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerProfile /></ProtectedRoute>} />
 
@@ -109,6 +112,7 @@ const App = () => {
               <Route path="/admin/training" element={<ProtectedRoute allowedRoles={['admin']}><AdminTrainingProgress /></ProtectedRoute>} />
               <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['admin']}><AdminServices /></ProtectedRoute>} />
               <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={['admin']}><AdminCoupons /></ProtectedRoute>} />
+              <Route path="/admin/leaves" element={<ProtectedRoute allowedRoles={['admin']}><AdminLeaves /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />

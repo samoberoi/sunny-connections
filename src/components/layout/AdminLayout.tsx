@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Settings, Tag, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Settings, Tag, BarChart3, CalendarOff } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/admin/bookings', icon: CalendarDays, label: 'Bookings' },
   { to: '/admin/customers', icon: Users, label: 'Customers' },
   { to: '/admin/cleaners', icon: UserCheck, label: 'Cleaners' },
+  { to: '/admin/leaves', icon: CalendarOff, label: 'Leaves' },
   { to: '/admin/enrolments', icon: GraduationCap, label: 'Enrolments' },
   { to: '/admin/training', icon: GraduationCap, label: 'Training' },
   { to: '/admin/services', icon: Settings, label: 'Services' },

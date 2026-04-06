@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Home, Clock, MapPin, CalendarDays, Repeat, ChevronLeft, ChevronRight,
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
-  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight
+  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Leaf, Check, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,12 @@ const propertyTypes = [
   { value: 'house', label: 'House', icon: Home },
   { value: 'office', label: 'Office', icon: Landmark },
 ];
+const propertySizes = [
+  { value: 'small', label: 'Small', desc: '<500 sqft', multiplier: 1.0 },
+  { value: 'medium', label: 'Medium', desc: '500-1000', multiplier: 1.2 },
+  { value: 'large', label: 'Large', desc: '1000-2000', multiplier: 1.5 },
+  { value: 'xl', label: 'XL', desc: '2000+', multiplier: 2.0 },
+];
 
 export default function ScheduleBooking() {
   const navigate = useNavigate();
@@ -64,11 +70,15 @@ export default function ScheduleBooking() {
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(2);
   const [propertyType, setPropertyType] = useState('house');
+  const [bedrooms, setBedrooms] = useState(2);
+  const [bathrooms, setBathrooms] = useState(1);
+  const [propertySize, setPropertySize] = useState('medium');
+  const [tier, setTier] = useState<'standard' | 'premium'>('standard');
   const [postcode, setPostcode] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const toggleService = (id: string) => setSelectedServices(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   const allServices = [...serviceOptions.cleaning, ...serviceOptions.housekeeping];
@@ -76,11 +86,23 @@ export default function ScheduleBooking() {
   const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.pricePerHour, 0);
   const freq = frequencies.find(f => f.value === recurring);
   const discount = freq?.discount || 0;
-  const totalCost = Math.round(baseRate * duration * (1 - discount / 100));
+  const sizeMultiplier = propertySizes.find(s => s.value === propertySize)?.multiplier || 1;
+  const bathroomSurcharge = Math.max(0, bathrooms - 1) * 5;
+  const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
+  const subtotal = baseRate * duration * sizeMultiplier * tierMultiplier + bathroomSurcharge * duration;
+  const totalCost = Math.round(subtotal * (1 - discount / 100));
   const selectedNames = selectedServiceDetails.map(s => s.name).join(', ');
 
   const canAdvance = () => {
-    switch (step) { case 1: return category !== null && selectedServices.length > 0; case 2: return !!recurring; case 3: return !!date && !!time; case 4: return !!address && !!postcode; case 5: return true; default: return false; }
+    switch (step) {
+      case 1: return category !== null && selectedServices.length > 0;
+      case 2: return true; // property details always have defaults
+      case 3: return !!recurring;
+      case 4: return !!date && !!time;
+      case 5: return !!address && !!postcode;
+      case 6: return true;
+      default: return false;
+    }
   };
 
   const handleBook = async () => {
@@ -94,6 +116,7 @@ export default function ScheduleBooking() {
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
         address_city: 'London', total_cost: totalCost, property_type: propertyType, notes: notes || null,
+        tier, bedrooms, bathrooms,
       }).select().single();
       if (error) throw error;
       navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp } });
@@ -123,6 +146,7 @@ export default function ScheduleBooking() {
           </div>
 
           <AnimatePresence mode="wait">
+            {/* Step 1: Category & Service Selection */}
             {step === 1 && (
               <motion.div key="step1" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 {!category ? (
@@ -189,8 +213,74 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
+            {/* Step 2: Property Details & Tier */}
             {step === 2 && (
-              <motion.div key="step2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <motion.div key="step2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5">
+                <h3 className="font-display font-bold text-foreground text-sm flex items-center gap-2"><Home className="h-4 w-4" strokeWidth={1.5} /> Tell us about your home</h3>
+                
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bedrooms</p>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button key={n} onClick={() => setBedrooms(n)}
+                        className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
+                          bedrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                        }`}>{n}{n === 5 ? '+' : ''}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bathrooms</p>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4].map(n => (
+                      <button key={n} onClick={() => setBathrooms(n)}
+                        className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
+                          bathrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                        }`}>{n}{n === 4 ? '+' : ''}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Size</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {propertySizes.map(ps => (
+                      <button key={ps.value} onClick={() => setPropertySize(ps.value)}
+                        className={`py-3 rounded-2xl text-sm font-bold border transition-all ${
+                          propertySize === ps.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                        }`}>
+                        {ps.label} <span className="text-[10px] opacity-60 block">{ps.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tier selection */}
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Service Tier</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setTier('standard')}
+                      className={`p-4 rounded-2xl text-left border-2 transition-all ${tier === 'standard' ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}>
+                      <Check className={`h-5 w-5 mb-2 ${tier === 'standard' ? 'text-foreground' : 'text-muted-foreground'}`} strokeWidth={1.5} />
+                      <h4 className="font-bold text-foreground text-sm">Standard</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Great value cleaning</p>
+                    </button>
+                    <button onClick={() => setTier('premium')}
+                      className={`p-4 rounded-2xl text-left border-2 transition-all relative overflow-hidden ${tier === 'premium' ? 'border-amber-400 bg-amber-50' : 'border-border bg-card'}`}>
+                      <Crown className={`h-5 w-5 mb-2 ${tier === 'premium' ? 'text-amber-600' : 'text-muted-foreground'}`} strokeWidth={1.5} />
+                      <h4 className="font-bold text-foreground text-sm">Premium</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Top cleaners, eco products</p>
+                      <span className="text-[9px] font-bold text-amber-600 mt-1 block">+30%</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Frequency & Duration */}
+            {step === 3 && (
+              <motion.div key="step3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Repeat className="h-4 w-4" strokeWidth={1.5} /> How Often?</h3>
                   <div className="space-y-2">
@@ -222,8 +312,9 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {step === 3 && (
-              <motion.div key="step3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+            {/* Step 4: Date & Time */}
+            {step === 4 && (
+              <motion.div key="step4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" strokeWidth={1.5} /> Date</h3>
                   <div className="border border-border rounded-3xl p-3 bg-card">
@@ -244,8 +335,9 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {step === 4 && (
-              <motion.div key="step4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+            {/* Step 5: Address */}
+            {step === 5 && (
+              <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Home className="h-4 w-4" strokeWidth={1.5} /> Property</h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -273,17 +365,19 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {step === 5 && (
-              <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+            {/* Step 6: Review */}
+            {step === 6 && (
+              <motion.div key="step6" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <div className="bg-card rounded-3xl p-5 mb-4 space-y-3 shadow-soft border border-border">
                   <h3 className="font-display font-bold text-foreground">Summary</h3>
                   <div className="space-y-2.5 text-sm">
                     {[
                       ['Services', selectedNames],
+                      ['Tier', tier === 'premium' ? '👑 Premium' : 'Standard'],
+                      ['Property', `${propertyType} · ${bedrooms} bed · ${bathrooms} bath · ${propertySize}`],
                       ['Frequency', freq?.label],
                       ['Date', date?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' at ' + time],
                       ['Duration', `${duration} hours`],
-                      ['Property', propertyType],
                       ['Address', `${address}, ${postcode}`],
                     ].map(([l, v]) => (
                       <div key={l} className="flex justify-between">
@@ -296,9 +390,27 @@ export default function ScheduleBooking() {
 
                 <div className="bg-foreground rounded-3xl p-5 mb-4">
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-background/50">Base</span>
-                    <span className="text-background">£{baseRate}/hr × {duration}h = £{baseRate * duration}</span>
+                    <span className="text-background/50">Base rate</span>
+                    <span className="text-background">£{baseRate}/hr × {duration}h</span>
                   </div>
+                  {sizeMultiplier !== 1 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Size ({propertySize})</span>
+                      <span className="text-background">×{sizeMultiplier}</span>
+                    </div>
+                  )}
+                  {bathroomSurcharge > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Extra bathrooms</span>
+                      <span className="text-background">+£{bathroomSurcharge * duration}</span>
+                    </div>
+                  )}
+                  {tier === 'premium' && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Premium tier</span>
+                      <span className="text-amber-400">+30%</span>
+                    </div>
+                  )}
                   {discount > 0 && (
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-background/50">{freq?.label}</span>
@@ -318,7 +430,7 @@ export default function ScheduleBooking() {
             )}
           </AnimatePresence>
 
-          {step < 5 && (
+          {step < 6 && (
             <div className="mt-6">
               <Button onClick={() => setStep(s => s + 1)} disabled={!canAdvance()}
                 className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background disabled:opacity-40">

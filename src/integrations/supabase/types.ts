@@ -52,6 +52,8 @@ export type Database = {
           address_city: string
           address_line1: string
           address_postcode: string
+          bathrooms: number | null
+          bedrooms: number | null
           cleaner_avatar: string | null
           cleaner_id: string | null
           cleaner_name: string | null
@@ -70,6 +72,7 @@ export type Database = {
           service_id: string
           service_name: string
           status: Database["public"]["Enums"]["booking_status"]
+          tier: string | null
           time: string
           total_cost: number
           updated_at: string
@@ -78,6 +81,8 @@ export type Database = {
           address_city?: string
           address_line1: string
           address_postcode: string
+          bathrooms?: number | null
+          bedrooms?: number | null
           cleaner_avatar?: string | null
           cleaner_id?: string | null
           cleaner_name?: string | null
@@ -96,6 +101,7 @@ export type Database = {
           service_id: string
           service_name: string
           status?: Database["public"]["Enums"]["booking_status"]
+          tier?: string | null
           time: string
           total_cost: number
           updated_at?: string
@@ -104,6 +110,8 @@ export type Database = {
           address_city?: string
           address_line1?: string
           address_postcode?: string
+          bathrooms?: number | null
+          bedrooms?: number | null
           cleaner_avatar?: string | null
           cleaner_id?: string | null
           cleaner_name?: string | null
@@ -122,6 +130,7 @@ export type Database = {
           service_id?: string
           service_name?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          tier?: string | null
           time?: string
           total_cost?: number
           updated_at?: string
@@ -139,6 +148,79 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cleaner_availability: {
+        Row: {
+          available: boolean
+          cleaner_id: string
+          day_of_week: number
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          available?: boolean
+          cleaner_id: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Update: {
+          available?: boolean
+          cleaner_id?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cleaner_availability_cleaner_id_fkey"
+            columns: ["cleaner_id"]
+            isOneToOne: false
+            referencedRelation: "cleaners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cleaner_leaves: {
+        Row: {
+          cleaner_id: string
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          cleaner_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          cleaner_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cleaner_leaves_cleaner_id_fkey"
+            columns: ["cleaner_id"]
+            isOneToOne: false
+            referencedRelation: "cleaners"
             referencedColumns: ["id"]
           },
         ]
@@ -296,6 +378,35 @@ export type Database = {
         }
         Relationships: []
       }
+      favourite_cleaners: {
+        Row: {
+          cleaner_id: string
+          created_at: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          cleaner_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          cleaner_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favourite_cleaners_cleaner_id_fkey"
+            columns: ["cleaner_id"]
+            isOneToOne: false
+            referencedRelation: "cleaners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           booking_id: string
@@ -353,33 +464,54 @@ export type Database = {
       profiles: {
         Row: {
           avatar: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          budget_preference: string | null
           created_at: string
           email: string | null
           id: string
           name: string
+          onboarding_completed: boolean | null
+          pet_info: string | null
           phone: string
+          preferred_day: string | null
+          property_size: string | null
           role: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
           avatar?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          budget_preference?: string | null
           created_at?: string
           email?: string | null
           id?: string
           name: string
+          onboarding_completed?: boolean | null
+          pet_info?: string | null
           phone: string
+          preferred_day?: string | null
+          property_size?: string | null
           role?: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           avatar?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          budget_preference?: string | null
           created_at?: string
           email?: string | null
           id?: string
           name?: string
+          onboarding_completed?: boolean | null
+          pet_info?: string | null
           phone?: string
+          preferred_day?: string | null
+          property_size?: string | null
           role?: string
           updated_at?: string
           user_id?: string | null
