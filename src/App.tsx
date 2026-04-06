@@ -94,6 +94,7 @@ const App = () => {
               {/* Cleaner */}
               <Route path="/cleaner" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerDashboard /></ProtectedRoute>} />
               <Route path="/cleaner/jobs" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerJobs /></ProtectedRoute>} />
+              <Route path="/cleaner/schedule" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerSchedule /></ProtectedRoute>} />
               <Route path="/cleaner/earnings" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerEarnings /></ProtectedRoute>} />
               <Route path="/cleaner/profile" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerProfile /></ProtectedRoute>} />
 
