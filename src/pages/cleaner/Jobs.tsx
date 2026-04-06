@@ -227,7 +227,7 @@ export default function CleanerJobs() {
               {selectedJob.status === 'en-route' && !hasArrived && (
                 <motion.div key="en-route-travel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Navigation className="h-5 w-5 text-primary animate-pulse" strokeWidth={1.5} />
+                    <Navigation className="h-5 w-5 text-primary-ink animate-pulse" strokeWidth={1.5} />
                   </div>
                   <p className="font-semibold text-foreground text-sm mb-1">On your way</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap when you arrive</p>
