@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 const navItems = [
   { to: '/cleaner', icon: LayoutDashboard, label: 'Home' },
   { to: '/cleaner/jobs', icon: Briefcase, label: 'Jobs' },
+  { to: '/cleaner/schedule', icon: Calendar, label: 'Schedule' },
   { to: '/cleaner/earnings', icon: PoundSterling, label: 'Earnings' },
   { to: '/cleaner/profile', icon: User, label: 'Profile' },
 ];

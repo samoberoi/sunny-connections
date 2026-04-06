@@ -8,6 +8,7 @@ const navItems = [
   { to: '/admin/bookings', icon: CalendarDays, label: 'Bookings' },
   { to: '/admin/customers', icon: Users, label: 'Customers' },
   { to: '/admin/cleaners', icon: UserCheck, label: 'Cleaners' },
+  { to: '/admin/leaves', icon: CalendarOff, label: 'Leaves' },
   { to: '/admin/enrolments', icon: GraduationCap, label: 'Enrolments' },
   { to: '/admin/training', icon: GraduationCap, label: 'Training' },
   { to: '/admin/services', icon: Settings, label: 'Services' },
