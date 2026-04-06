@@ -169,7 +169,7 @@ export default function CleanerJobs() {
                   <p className="text-[11px] text-muted-foreground">{selectedJob.service_name}</p>
                 </div>
                 <Badge className={`text-[9px] rounded-lg font-medium border-0 capitalize ${
-                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary-ink' : 'bg-muted text-muted-foreground'
                 }`}>
                   {selectedJob.status.replace('-', ' ')}
                 </Badge>
@@ -182,7 +182,7 @@ export default function CleanerJobs() {
                   { icon: Clock, text: `${selectedJob.date} at ${selectedJob.time} · ${selectedJob.duration}h` },
                 ].map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                    <Ic className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={1.5} />
+                    <Ic className="h-3.5 w-3.5 text-primary-ink shrink-0" strokeWidth={1.5} />
                     <span className="capitalize">{text}</span>
                   </div>
                 ))}
@@ -197,7 +197,7 @@ export default function CleanerJobs() {
 
               <div className="mt-4 pt-3 border-t border-border/50 flex justify-between items-center">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Earnings</span>
-                <span className="text-xl font-display font-black text-primary">£{selectedJob.total_cost}</span>
+                <span className="text-xl font-display font-black text-primary-ink">£{selectedJob.total_cost}</span>
               </div>
             </div>
 
@@ -215,7 +215,7 @@ export default function CleanerJobs() {
             <AnimatePresence mode="wait">
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
-                  <Navigation className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
+                  <Navigation className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
                   <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
                   <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm">
@@ -227,7 +227,7 @@ export default function CleanerJobs() {
               {selectedJob.status === 'en-route' && !hasArrived && (
                 <motion.div key="en-route-travel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Navigation className="h-5 w-5 text-primary animate-pulse" strokeWidth={1.5} />
+                    <Navigation className="h-5 w-5 text-primary-ink animate-pulse" strokeWidth={1.5} />
                   </div>
                   <p className="font-semibold text-foreground text-sm mb-1">On your way</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap when you arrive</p>
@@ -258,7 +258,7 @@ export default function CleanerJobs() {
 
               {selectedJob.status === 'otp-verified' && (
                 <motion.div key="verified" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
-                  <CircleCheck className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
+                  <CircleCheck className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
                   <p className="font-semibold text-foreground text-sm mb-1">OTP Verified!</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Ready to start</p>
                   <Button onClick={startJob} className="w-full h-11 rounded-2xl font-semibold text-sm">
