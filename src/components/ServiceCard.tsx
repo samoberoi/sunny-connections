@@ -35,7 +35,7 @@ export default function ServiceCard({ service, onBook, index = 0 }: ServiceCardP
       className="border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-primary/20 transition-colors"
     >
       <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0">
-        <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        <Icon className="h-5 w-5 text-primary-ink" strokeWidth={1.5} />
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-foreground text-sm">{service.name}</h3>
