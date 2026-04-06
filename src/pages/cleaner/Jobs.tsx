@@ -156,6 +156,11 @@ export default function CleanerJobs() {
                   <Zap className="h-2.5 w-2.5 mr-0.5" /> Express
                 </Badge>
               )}
+              {(selectedJob as any).tier === 'premium' && (
+                <Badge className="bg-amber-100 text-amber-700 text-[9px] rounded-lg font-semibold border-0">
+                  👑 Premium
+                </Badge>
+              )}
             </div>
 
             {/* Customer Card */}
