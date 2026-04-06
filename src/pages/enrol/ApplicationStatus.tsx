@@ -87,7 +87,7 @@ export default function ApplicationStatus() {
         </div>
 
         <div className="mt-6">
-          <Button onClick={() => navigate('/enrol/training')} variant="outline" className="w-full h-12 rounded-2xl border-primary/20 text-primary font-medium hover:bg-accent">
+          <Button onClick={() => navigate('/enrol/training')} variant="outline" className="w-full h-12 rounded-2xl border-primary-ink/20 text-primary-ink font-medium hover:bg-accent">
             Preview Training Programme
           </Button>
         </div>

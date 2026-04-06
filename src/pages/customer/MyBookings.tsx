@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const statusStyles: Record<string, string> = {
-  pending: 'bg-primary/15 text-foreground',
+  pending: 'bg-primary/15 text-primary-ink',
   assigned: 'bg-foreground text-background',
   'en-route': 'bg-foreground text-background',
   'otp-verified': 'bg-foreground text-background',
