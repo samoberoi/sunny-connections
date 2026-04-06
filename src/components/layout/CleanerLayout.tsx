@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Calendar } from 'lucide-react';
 import { LayoutDashboard, Briefcase, PoundSterling, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
