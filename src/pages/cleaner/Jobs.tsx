@@ -169,7 +169,7 @@ export default function CleanerJobs() {
                   <p className="text-[11px] text-muted-foreground">{selectedJob.service_name}</p>
                 </div>
                 <Badge className={`text-[9px] rounded-lg font-medium border-0 capitalize ${
-                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary-ink' : 'bg-muted text-muted-foreground'
                 }`}>
                   {selectedJob.status.replace('-', ' ')}
                 </Badge>
