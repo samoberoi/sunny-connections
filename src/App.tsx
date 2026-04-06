@@ -49,6 +49,7 @@ import AdminEnrolments from "./pages/admin/Enrolments";
 import AdminTrainingProgress from "./pages/admin/TrainingProgress";
 import AdminServices from "./pages/admin/Services";
 import AdminCoupons from "./pages/admin/Coupons";
+import AdminLeaves from "./pages/admin/Leaves";
 import AdminReports from "./pages/admin/Reports";
 
 const queryClient = new QueryClient();
