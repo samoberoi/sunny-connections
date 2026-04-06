@@ -215,7 +215,7 @@ export default function CleanerJobs() {
             <AnimatePresence mode="wait">
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
-                  <Navigation className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
+                  <Navigation className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
                   <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
                   <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm">
