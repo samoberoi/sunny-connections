@@ -4,6 +4,7 @@ import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Sun, Moon }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
