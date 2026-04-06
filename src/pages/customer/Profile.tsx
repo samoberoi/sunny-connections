@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
@@ -21,8 +22,16 @@ export default function CustomerProfile() {
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
-  const [editingPhone, setEditingPhone] = useState(false);
-  const [editPhone, setEditPhone] = useState(user?.phone || '');
+
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['my-addresses', user?.id],
@@ -34,48 +43,65 @@ export default function CustomerProfile() {
     enabled: !!user?.id,
   });
 
+  const { data: bookingStats } = useQuery({
+    queryKey: ['my-booking-stats', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { total: 0, spent: 0 };
+      const { data } = await supabase.from('bookings').select('total_cost, status').eq('customer_id', user.id).eq('status', 'completed');
+      const completed = data || [];
+      return { total: completed.length, spent: completed.reduce((s, b) => s + Number(b.total_cost), 0) };
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: favCount = 0 } = useQuery({
+    queryKey: ['my-fav-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { data } = await supabase.from('favourite_cleaners').select('id').eq('customer_id', user.id);
+      return data?.length || 0;
+    },
+    enabled: !!user?.id,
+  });
+
   const updateProfile = useMutation({
-    mutationFn: async (updates: { name?: string; phone?: string }) => {
+    mutationFn: async (updates: { name?: string }) => {
       if (!user?.id) return;
       const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success('Profile updated!'); queryClient.invalidateQueries({ queryKey: ['profile'] }); },
-    onError: () => toast.error('Failed to update profile'),
+    onSuccess: () => { toast.success('Profile updated!'); queryClient.invalidateQueries({ queryKey: ['my-profile'] }); },
   });
 
   const addAddress = useMutation({
     mutationFn: async () => {
       if (!user?.id) return;
-      const { error } = await supabase.from('addresses').insert({ user_id: user.id, label: newAddress.label, line1: newAddress.line1, postcode: newAddress.postcode, city: newAddress.city });
-      if (error) throw error;
+      await supabase.from('addresses').insert({ user_id: user.id, ...newAddress });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-addresses'] }); setNewAddress({ label: 'Home', line1: '', postcode: '', city: 'London' }); setAddressDialogOpen(false); toast.success('Address added!'); },
   });
 
   const deleteAddress = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from('addresses').delete().eq('id', id); if (error) throw error; },
+    mutationFn: async (id: string) => { await supabase.from('addresses').delete().eq('id', id); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-addresses'] }); toast.success('Address removed'); },
   });
 
   const saveName = () => { if (editName.trim()) { updateProfile.mutate({ name: editName.trim() }); setEditingName(false); } };
-  const savePhone = () => { if (editPhone.trim()) { updateProfile.mutate({ phone: editPhone.trim() }); setEditingPhone(false); } };
 
   return (
     <CustomerLayout>
       <PageTransition>
-        <div className="px-5 pt-14 pb-6">
-          <div className="flex items-center gap-3 mb-8">
+        <div className="px-5 pt-14 pb-6 space-y-5">
+          <div className="flex items-center gap-3 mb-4">
             <BackButton to="/home" />
             <h1 className="text-2xl font-display font-black text-foreground">Profile</h1>
           </div>
 
           {/* Avatar card */}
-          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center mb-5">
+          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center">
             <div className="w-20 h-20 rounded-full bg-foreground mx-auto mb-4 flex items-center justify-center text-background font-bold text-2xl">
               {user?.name?.[0] || 'A'}
             </div>
-
             {editingName ? (
               <div className="flex items-center justify-center gap-2 mb-1">
                 <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-9 w-48 text-center rounded-full" autoFocus />
@@ -88,23 +114,64 @@ export default function CustomerProfile() {
                 <button onClick={() => { setEditName(user?.name || ''); setEditingName(true); }} className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center"><Pencil className="h-3 w-3 text-foreground" /></button>
               </div>
             )}
-
-            {editingPhone ? (
-              <div className="flex items-center justify-center gap-2 mt-1">
-                <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="h-9 w-48 text-center rounded-full" autoFocus />
-                <button onClick={savePhone} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><Check className="h-4 w-4 text-primary-foreground" /></button>
-                <button onClick={() => setEditingPhone(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4 text-foreground" /></button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-1">
-                <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone || '—'}
-                <button onClick={() => { setEditPhone(user?.phone || ''); setEditingPhone(true); }} className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center"><Pencil className="h-2.5 w-2.5 text-foreground" /></button>
-              </div>
-            )}
+            <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mt-1">
+              <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone || '—'}
+            </div>
+            {profile?.email && <p className="text-xs text-muted-foreground mt-0.5">{profile.email}</p>}
           </div>
 
+          {/* Quick stats */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Cleans', value: bookingStats?.total || 0, icon: Home },
+              { label: 'Spent', value: `£${bookingStats?.spent || 0}`, icon: Crown },
+              { label: 'Favourites', value: favCount, icon: Heart },
+            ].map(stat => (
+              <div key={stat.label} className="bg-card rounded-3xl p-4 text-center shadow-soft border border-border">
+                <stat.icon className="h-4 w-4 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="text-xl font-display font-black text-foreground">{stat.value}</div>
+                <div className="text-[9px] text-muted-foreground font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Property Details from onboarding */}
+          {profile && profile.onboarding_completed && (
+            <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
+              <h3 className="font-display font-bold text-foreground text-sm mb-3">Property Details</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {profile.bedrooms && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Bed className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                    <span>{profile.bedrooms} bedroom{profile.bedrooms > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                {profile.bathrooms && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ShowerHead className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                    <span>{profile.bathrooms} bathroom{profile.bathrooms > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                {profile.property_size && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Home className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                    <span className="capitalize">{profile.property_size}</span>
+                  </div>
+                )}
+                {profile.budget_preference && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Crown className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} />
+                    <span className="capitalize">{profile.budget_preference}</span>
+                  </div>
+                )}
+              </div>
+              {profile.preferred_day && <p className="text-xs text-muted-foreground mt-2">Preferred day: <span className="font-bold text-foreground">{profile.preferred_day}</span></p>}
+              {profile.pet_info && <p className="text-xs text-muted-foreground mt-1">Pets/Allergies: {profile.pet_info}</p>}
+            </div>
+          )}
+
           {/* Addresses */}
-          <div className="bg-card rounded-3xl p-5 mb-5 shadow-soft border border-border">
+          <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-bold text-foreground">Addresses</h3>
               <Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
@@ -138,7 +205,7 @@ export default function CustomerProfile() {
             )}
           </div>
 
-          <div className="mb-5"><ReferralCard /></div>
+          <div className="mb-2"><ReferralCard /></div>
 
           <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
