@@ -64,11 +64,11 @@ export default function ApplicationStatus() {
                   {done ? (
                     current ? (
                       <div className="relative">
-                        <Clock className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                        <Clock className="h-6 w-6 text-primary-ink" strokeWidth={1.5} />
                         <div className="absolute inset-0 h-6 w-6 rounded-full bg-primary/20 animate-ping" />
                       </div>
                     ) : (
-                      <CircleCheck className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                      <CircleCheck className="h-6 w-6 text-primary-ink" strokeWidth={1.5} />
                     )
                   ) : (
                     <Circle className="h-6 w-6 text-border" strokeWidth={1.5} />
