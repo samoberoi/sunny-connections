@@ -182,7 +182,7 @@ export default function CleanerJobs() {
                   { icon: Clock, text: `${selectedJob.date} at ${selectedJob.time} · ${selectedJob.duration}h` },
                 ].map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                    <Ic className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={1.5} />
+                    <Ic className="h-3.5 w-3.5 text-primary-ink shrink-0" strokeWidth={1.5} />
                     <span className="capitalize">{text}</span>
                   </div>
                 ))}
