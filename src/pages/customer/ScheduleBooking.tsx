@@ -154,7 +154,7 @@ export default function ScheduleBooking() {
                   </div>
                 ) : (
                   <div>
-                    <button onClick={() => setCategory(null)} className="text-xs text-primary font-bold mb-3 flex items-center gap-1">← Categories</button>
+                    <button onClick={() => setCategory(null)} className="text-xs text-primary-ink font-bold mb-3 flex items-center gap-1">← Categories</button>
                     <p className="font-display font-bold text-foreground text-sm mb-3">{category === 'cleaning' ? '🧹 Cleaning' : '🏠 Housekeeping'}</p>
                     <div className="space-y-2">
                       {serviceOptions[category].map((svc, i) => {
