@@ -31,6 +31,7 @@ import Chat from "./pages/customer/Chat";
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
 import CleanerJobs from "./pages/cleaner/Jobs";
+import CleanerSchedule from "./pages/cleaner/Schedule";
 import CleanerEarnings from "./pages/cleaner/Earnings";
 import CleanerProfile from "./pages/cleaner/Profile";
 
