@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, PoundSterling, Navigation, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, PoundSterling, Navigation, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -223,9 +224,31 @@ export default function CleanerJobs() {
                   <Navigation className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
                   <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
-                  <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm">
+                  <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm mb-2">
                     I'm On My Way 🚗
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full text-xs text-destructive font-bold h-9">
+                        <XCircle className="h-3.5 w-3.5 mr-1" /> Can't Take This Job
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="rounded-3xl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="font-display font-bold">Decline this job?</AlertDialogTitle>
+                        <AlertDialogDescription>The job will be returned to the available pool for other cleaners.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-full">Keep</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground" onClick={() => {
+                          updateStatus.mutate({ id: selectedJob.id, status: 'pending' });
+                          supabase.from('bookings').update({ cleaner_id: null, cleaner_name: null, cleaner_avatar: null }).eq('id', selectedJob.id);
+                          setSelectedBooking(null);
+                          toast.success('Job returned to pool');
+                        }}>Decline</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </motion.div>
               )}
 
