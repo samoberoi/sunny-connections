@@ -38,6 +38,33 @@ export default function MyBookings() {
     enabled: !!user?.id,
   });
 
+  const { data: favourites = [] } = useQuery({
+    queryKey: ['my-favourites', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('favourite_cleaners').select('cleaner_id').eq('customer_id', user.id);
+      return (data || []).map((f: any) => f.cleaner_id);
+    },
+    enabled: !!user?.id,
+  });
+
+  const toggleFavourite = useMutation({
+    mutationFn: async (cleanerId: string) => {
+      if (!user?.id) return;
+      if (favourites.includes(cleanerId)) {
+        await supabase.from('favourite_cleaners').delete().eq('customer_id', user.id).eq('cleaner_id', cleanerId);
+      } else {
+        await supabase.from('favourite_cleaners').insert({ customer_id: user.id, cleaner_id: cleanerId });
+      }
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-favourites'] }); },
+  });
+
+  const rebook = (b: any) => {
+    navigate('/schedule-booking', { state: { rebook: true, serviceName: b.service_name, address: b.address_line1, postcode: b.address_postcode } });
+    toast.success('Re-booking with previous details!');
+  };
+
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', id);
