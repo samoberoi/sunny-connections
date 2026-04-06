@@ -42,7 +42,7 @@ export default function ServiceCard({ service, onBook, index = 0 }: ServiceCardP
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{service.description}</p>
         <div className="flex items-center justify-between mt-3">
           <div>
-            <span className="text-lg font-display font-black text-primary">£{service.ratePerHour}</span>
+            <span className="text-lg font-display font-black text-primary-ink">£{service.ratePerHour}</span>
             <span className="text-xs text-muted-foreground">/hr</span>
           </div>
           <Button size="sm" onClick={onBook} className="rounded-xl font-semibold text-xs h-8 px-4 bg-primary text-primary-foreground hover:bg-primary/90">

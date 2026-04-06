@@ -181,7 +181,7 @@ export default function ScheduleBooking() {
                       <div className="mt-4 p-3 bg-primary/10 rounded-2xl">
                         <p className="text-xs text-muted-foreground mb-1">Selected ({selectedServices.length})</p>
                         <p className="text-sm font-bold text-foreground">{selectedNames}</p>
-                        <p className="text-xs text-primary font-bold mt-1">Base: £{baseRate}/hr</p>
+                        <p className="text-xs text-primary-ink font-bold mt-1">Base: £{baseRate}/hr</p>
                       </div>
                     )}
                   </div>

@@ -100,7 +100,7 @@ export default function Chat() {
           <p className="text-[10px] text-muted-foreground">Active booking</p>
         </div>
         <button onClick={handleCall} className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-          <Phone className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <Phone className="h-4 w-4 text-primary-ink" strokeWidth={1.5} />
         </button>
       </div>
 

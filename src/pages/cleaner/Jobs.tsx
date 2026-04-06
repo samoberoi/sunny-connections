@@ -197,7 +197,7 @@ export default function CleanerJobs() {
 
               <div className="mt-4 pt-3 border-t border-border/50 flex justify-between items-center">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Earnings</span>
-                <span className="text-xl font-display font-black text-primary">£{selectedJob.total_cost}</span>
+                <span className="text-xl font-display font-black text-primary-ink">£{selectedJob.total_cost}</span>
               </div>
             </div>
 
