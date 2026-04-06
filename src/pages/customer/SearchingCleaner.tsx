@@ -98,11 +98,50 @@ export default function SearchingCleaner() {
     toast.success('OTP copied!');
   };
 
+  // Intercept browser back button during searching phase
+  useEffect(() => {
+    if (phase !== 'searching') return;
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setShowCancelDialog(true);
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [phase]);
+
+  const handleCancelBooking = async () => {
+    if (effectiveBookingId) {
+      await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', effectiveBookingId);
+      sessionStorage.removeItem('searching_booking');
+    }
+    toast.success('Booking cancelled');
+    navigate('/home', { replace: true });
+  };
+
   const displayState = savedState || state || {};
 
   return (
     <CustomerLayout>
       <PageTransition>
+        {/* Cancel confirmation dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent className="rounded-3xl mx-4 max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display font-bold text-lg">Cancel this booking?</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-muted-foreground">
+                If you go back now, your booking request will be cancelled and you'll need to book again.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex gap-2">
+              <AlertDialogCancel className="flex-1 rounded-full h-12 font-bold">Stay</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCancelBooking} className="flex-1 rounded-full h-12 font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Cancel Booking
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <div className="px-5 pt-6 pb-6 min-h-[80vh] flex flex-col">
           {/* Simulated map area */}
           <div className="relative bg-accent rounded-2xl overflow-hidden mb-6 flex-shrink-0" style={{ height: 280 }}>
