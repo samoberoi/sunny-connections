@@ -148,10 +148,24 @@ export default function MyBookings() {
                     {b.rating && <div className="mt-2"><StarRating rating={b.rating} readonly size="sm" /></div>}
                     {b.review && <p className="text-xs text-muted-foreground mt-1 italic">"{b.review}"</p>}
                     {b.status === 'completed' && !b.rating && (
-                      <Button size="sm" onClick={() => navigate('/rate-service', { state: { bookingId: b.id } })} variant="outline"
+                      <Button size="sm" onClick={() => navigate('/rate-service', { state: { bookingId: b.id, cleanerId: b.cleaner_id } })} variant="outline"
                         className="mt-3 w-full rounded-full text-xs h-10 border-2 border-foreground/20 text-foreground hover:bg-primary/10 font-bold">
                         Rate Service
                       </Button>
+                    )}
+                    {b.status === 'completed' && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" onClick={() => rebook(b)} variant="outline"
+                          className="flex-1 rounded-full text-xs h-10 border-2 border-foreground/20 text-foreground font-bold">
+                          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Re-book
+                        </Button>
+                        {b.cleaner_id && (
+                          <Button size="sm" onClick={() => toggleFavourite.mutate(b.cleaner_id)} variant="outline"
+                            className={`rounded-full text-xs h-10 px-4 border-2 font-bold ${favourites.includes(b.cleaner_id) ? 'border-destructive/30 text-destructive' : 'border-foreground/20 text-foreground'}`}>
+                            <Heart className="h-3.5 w-3.5" fill={favourites.includes(b.cleaner_id) ? 'currentColor' : 'none'} />
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}
