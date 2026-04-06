@@ -150,6 +150,22 @@ export default function CustomerProfile() {
             )}
           </div>
 
+          {/* Appearance */}
+          <div className="bg-card rounded-3xl p-5 mb-5 shadow-soft border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                  {isDark ? <Moon className="h-4 w-4 text-foreground" strokeWidth={1.5} /> : <Sun className="h-4 w-4 text-foreground" strokeWidth={1.5} />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">Dark Mode</p>
+                  <p className="text-[11px] text-muted-foreground">{isDark ? 'On' : 'Off'}</p>
+                </div>
+              </div>
+              <Switch checked={isDark} onCheckedChange={setIsDark} />
+            </div>
+          </div>
+
           <div className="mb-5"><ReferralCard /></div>
 
           <Button onClick={() => { logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
