@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, MessageCircle, Phone, Copy, ShieldCheck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,7 @@ export default function SearchingCleaner() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('searching');
   const [dots, setDots] = useState('');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [assignedCleaner, setAssignedCleaner] = useState<{ name: string; rating: number; review_count: number; experience: number; verified: boolean } | null>(null);
 
   const bookingId = state?.bookingId;
@@ -96,11 +98,50 @@ export default function SearchingCleaner() {
     toast.success('OTP copied!');
   };
 
+  // Intercept browser back button during searching phase
+  useEffect(() => {
+    if (phase !== 'searching') return;
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setShowCancelDialog(true);
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [phase]);
+
+  const handleCancelBooking = async () => {
+    if (effectiveBookingId) {
+      await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', effectiveBookingId);
+      sessionStorage.removeItem('searching_booking');
+    }
+    toast.success('Booking cancelled');
+    navigate('/home', { replace: true });
+  };
+
   const displayState = savedState || state || {};
 
   return (
     <CustomerLayout>
       <PageTransition>
+        {/* Cancel confirmation dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent className="rounded-3xl mx-4 max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display font-bold text-lg">Cancel this booking?</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-muted-foreground">
+                If you go back now, your booking request will be cancelled and you'll need to book again.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex gap-2">
+              <AlertDialogCancel className="flex-1 rounded-full h-12 font-bold">Stay</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCancelBooking} className="flex-1 rounded-full h-12 font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Cancel Booking
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <div className="px-5 pt-6 pb-6 min-h-[80vh] flex flex-col">
           {/* Simulated map area */}
           <div className="relative bg-accent rounded-2xl overflow-hidden mb-6 flex-shrink-0" style={{ height: 280 }}>
