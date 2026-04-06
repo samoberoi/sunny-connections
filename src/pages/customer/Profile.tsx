@@ -24,6 +24,17 @@ export default function CustomerProfile() {
   const [editName, setEditName] = useState(user?.name || '');
   const [editingPhone, setEditingPhone] = useState(false);
   const [editPhone, setEditPhone] = useState(user?.phone || '');
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['my-addresses', user?.id],
