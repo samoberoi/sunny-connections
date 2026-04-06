@@ -23,7 +23,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           key="splash"
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[200] bg-foreground flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center overflow-hidden"
         >
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-primary/20 blur-[120px]" />
 
@@ -48,9 +48,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl font-display font-black text-background tracking-tight"
+            className="text-4xl font-display font-black text-foreground tracking-tight"
           >
-            Clean <span className="text-primary">Fit</span>
+            Clean <span className="text-primary-ink">Fit</span>
           </motion.h1>
 
           <AnimatePresence>
@@ -60,7 +60,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="text-background/40 text-sm mt-3 font-medium tracking-wide"
+                className="text-muted-foreground text-sm mt-3 font-medium tracking-wide"
               >
                 Premium cleaning, sorted.
               </motion.p>
@@ -80,7 +80,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           initial={{ opacity: 1 }}
           animate={{ opacity: 0, scale: 1.1 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[200] bg-foreground"
+          className="fixed inset-0 z-[200] bg-background"
         />
       )}
     </AnimatePresence>
