@@ -48,7 +48,7 @@ export default function Index() {
       <div className="relative z-10 px-7 -mt-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}>
           <h1 className="text-4xl font-display font-black text-foreground leading-[1.1]">
-            London's<br />homes don't<br />clean <span className="text-gradient">themselves.</span>
+            London's<br />homes don't<br />clean <span className="text-primary-ink font-black">themselves.</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-3 max-w-[280px]">Premium cleaning, sorted in seconds.</p>
         </motion.div>
