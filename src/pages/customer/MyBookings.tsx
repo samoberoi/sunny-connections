@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays, XCircle } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
