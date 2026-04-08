@@ -55,10 +55,9 @@ import AdminReports from "./pages/admin/Reports";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splash_shown'));
+  const [showSplash, setShowSplash] = useState(true);
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
-    sessionStorage.setItem('splash_shown', '1');
   }, []);
 
   return (
