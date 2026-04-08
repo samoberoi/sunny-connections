@@ -51,10 +51,17 @@ export default function ActiveBooking() {
     const channel = supabase
       .channel(`booking-${booking.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${booking.id}` },
-        (payload) => setLiveStatus((payload.new as any).status))
+        (payload) => {
+          const newStatus = (payload.new as any).status;
+          setLiveStatus(newStatus);
+          // Auto-navigate to rating when cleaner marks complete
+          if (newStatus === 'completed') {
+            navigate('/rate-service', { state: { bookingId: booking.id } });
+          }
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [booking?.id]);
+  }, [booking?.id, navigate]);
 
   // ETA countdown when en-route
   useEffect(() => {
