@@ -9,23 +9,32 @@ import heroCleaning from '@/assets/hero-cleaning.jpg';
 
 export default function Index() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Redirect authenticated users immediately after splash
   useEffect(() => {
+    if (isLoading) return;
     if (isAuthenticated && user) {
       if (user.role === 'customer') navigate('/home', { replace: true });
       else if (user.role === 'cleaner') navigate('/cleaner', { replace: true });
       else navigate('/admin', { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, isLoading]);
 
   useEffect(() => {
-    const seen = localStorage.getItem('onboarding_complete');
-    if (!seen) setShowOnboarding(true);
-  }, []);
+    if (isLoading) return;
+    // Only show onboarding slides for non-authenticated users who haven't seen them
+    if (!isAuthenticated) {
+      const seen = localStorage.getItem('onboarding_complete');
+      if (!seen) setShowOnboarding(true);
+    }
+  }, [isAuthenticated, isLoading]);
 
   const handleOnboardingComplete = () => { localStorage.setItem('onboarding_complete', '1'); setShowOnboarding(false); };
+
+  // Don't render landing page if authenticated (will redirect)
+  if (isAuthenticated && user) return null;
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">

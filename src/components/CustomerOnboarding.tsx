@@ -1,26 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Home, MapPin, Heart, ChevronRight, ChevronLeft, Building2, Landmark, Check, Dog, Leaf } from 'lucide-react';
+import { User, MapPin, ChevronRight, ChevronLeft, Locate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-const propertyTypes = [
-  { value: 'flat', label: 'Flat', icon: Building2 },
-  { value: 'house', label: 'House', icon: Home },
-  { value: 'office', label: 'Office', icon: Landmark },
-];
-
-const propertySizes = [
-  { value: 'small', label: 'Small', desc: '< 500 sqft' },
-  { value: 'medium', label: 'Medium', desc: '500–1000 sqft' },
-  { value: 'large', label: 'Large', desc: '1000–2000 sqft' },
-  { value: 'xl', label: 'XL', desc: '2000+ sqft' },
-];
-
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 interface CustomerOnboardingProps {
   onComplete: () => void;
@@ -30,19 +15,38 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [propertyType, setPropertyType] = useState('house');
-  const [bedrooms, setBedrooms] = useState(2);
-  const [bathrooms, setBathrooms] = useState(1);
-  const [propertySize, setPropertySize] = useState('medium');
   const [postcode, setPostcode] = useState('');
   const [addressLine, setAddressLine] = useState('');
-  const [preferredDay, setPreferredDay] = useState('');
-  const [petInfo, setPetInfo] = useState('');
-  const [budget, setBudget] = useState<'standard' | 'premium'>('standard');
+  const [houseNumber, setHouseNumber] = useState('');
   const [saving, setSaving] = useState(false);
+  const [detecting, setDetecting] = useState(false);
 
-  const totalSteps = 4;
+  const totalSteps = 2;
+
+  const autoDetectAddress = async () => {
+    setDetecting(true);
+    try {
+      if ('geolocation' in navigator) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+        );
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+        const data = await res.json();
+        if (data?.address) {
+          const addr = data.address;
+          setPostcode(addr.postcode || '');
+          setAddressLine([addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean).join(', '));
+          setHouseNumber(addr.house_number || '');
+          toast.success('Address detected!');
+        }
+      }
+    } catch {
+      toast.error('Could not detect location. Please enter manually.');
+    } finally {
+      setDetecting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -50,21 +54,15 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
     try {
       await supabase.from('profiles').update({
         name: name.trim() || user.name,
-        email: email.trim() || null,
         onboarding_completed: true,
-        bedrooms,
-        bathrooms,
-        property_size: propertySize,
-        preferred_day: preferredDay || null,
-        pet_info: petInfo || null,
-        budget_preference: budget,
       }).eq('user_id', user.id);
 
-      if (addressLine && postcode) {
+      const fullAddress = houseNumber ? `${houseNumber} ${addressLine}` : addressLine;
+      if (fullAddress && postcode) {
         await supabase.from('addresses').insert({
           user_id: user.id,
           label: 'Home',
-          line1: addressLine,
+          line1: fullAddress,
           postcode,
           city: 'London',
         });
@@ -83,7 +81,6 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
 
   return (
     <div className="fixed inset-0 z-[140] bg-background flex flex-col">
-      {/* Header */}
       <div className="px-6 pt-14 pb-4">
         <div className="flex items-center gap-3 mb-4">
           {step > 1 && (
@@ -93,7 +90,7 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
           )}
           <div>
             <h1 className="text-2xl font-display font-black text-foreground">Welcome!</h1>
-            <p className="text-xs text-muted-foreground">Let's set up your profile</p>
+            <p className="text-xs text-muted-foreground">Quick setup — takes 30 seconds</p>
           </div>
         </div>
         <div className="flex gap-1.5">
@@ -112,12 +109,11 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
                   <User className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">About You</h3>
+                  <h3 className="font-display font-bold text-foreground">Your Name</h3>
                   <p className="text-xs text-muted-foreground">What should we call you?</p>
                 </div>
               </div>
-              <Input placeholder="Full name" value={name} onChange={e => setName(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
-              <Input placeholder="Email (optional)" value={email} onChange={e => setEmail(e.target.value)} type="email" className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+              <Input placeholder="Full name *" value={name} onChange={e => setName(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
             </motion.div>
           )}
 
@@ -125,139 +121,29 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
             <motion.div key="s2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Home className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">Your Property</h3>
-                  <p className="text-xs text-muted-foreground">Helps us price accurately</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Type</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {propertyTypes.map(pt => (
-                    <button key={pt.value} onClick={() => setPropertyType(pt.value)}
-                      className={`py-4 rounded-2xl text-sm font-bold flex flex-col items-center gap-2 border transition-all ${
-                        propertyType === pt.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>
-                      <pt.icon className="h-5 w-5" strokeWidth={1.5} />{pt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bedrooms</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button key={n} onClick={() => setBedrooms(n)}
-                      className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
-                        bedrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{n}{n === 5 ? '+' : ''}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bathrooms</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map(n => (
-                    <button key={n} onClick={() => setBathrooms(n)}
-                      className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
-                        bathrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{n}{n === 4 ? '+' : ''}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Size</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {propertySizes.map(ps => (
-                    <button key={ps.value} onClick={() => setPropertySize(ps.value)}
-                      className={`py-3 rounded-2xl text-sm font-bold border transition-all ${
-                        propertySize === ps.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>
-                      {ps.label} <span className="text-[10px] opacity-60 block">{ps.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 3 && (
-            <motion.div key="s3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
                   <MapPin className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">Default Address</h3>
-                  <p className="text-xs text-muted-foreground">We'll save this for future bookings</p>
+                  <h3 className="font-display font-bold text-foreground">Home Address</h3>
+                  <p className="text-xs text-muted-foreground">Optional — you can skip this</p>
                 </div>
               </div>
+
+              <Button variant="outline" onClick={autoDetectAddress} disabled={detecting}
+                className="w-full h-12 rounded-2xl border-2 border-dashed border-primary/30 text-sm font-bold">
+                <Locate className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                {detecting ? 'Detecting...' : 'Auto-detect my location'}
+              </Button>
+
               <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
-              <Input placeholder="Address line" value={addressLine} onChange={e => setAddressLine(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
-            </motion.div>
-          )}
-
-          {step === 4 && (
-            <motion.div key="s4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Heart className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">Preferences</h3>
-                  <p className="text-xs text-muted-foreground">Customise your experience</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Preferred Day</p>
-                <div className="flex flex-wrap gap-2">
-                  {days.map(d => (
-                    <button key={d} onClick={() => setPreferredDay(d)}
-                      className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all ${
-                        preferredDay === d ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{d.slice(0, 3)}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider flex items-center gap-1"><Dog className="h-3 w-3" /> Pets or Allergies</p>
-                <Input placeholder="e.g. 1 cat, no bleach products" value={petInfo} onChange={e => setPetInfo(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Service Tier</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'standard' as const, label: 'Standard', desc: 'Vetted cleaners, great value', icon: Check },
-                    { value: 'premium' as const, label: 'Premium', desc: 'Top-rated, eco products', icon: Leaf },
-                  ].map(tier => (
-                    <button key={tier.value} onClick={() => setBudget(tier.value)}
-                      className={`p-4 rounded-2xl text-left border-2 transition-all ${
-                        budget === tier.value ? 'border-primary bg-primary/10' : 'border-border bg-card'
-                      }`}>
-                      <tier.icon className={`h-5 w-5 mb-2 ${budget === tier.value ? 'text-foreground' : 'text-muted-foreground'}`} strokeWidth={1.5} />
-                      <h4 className="font-bold text-foreground text-sm">{tier.label}</h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{tier.desc}</p>
-                      {tier.value === 'premium' && <span className="text-[9px] font-bold text-primary-ink mt-1 block">+30% pricing</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <Input placeholder="Street address" value={addressLine} onChange={e => setAddressLine(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+              <Input placeholder="House / flat number" value={houseNumber} onChange={e => setHouseNumber(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom CTA */}
-      <div className="px-6 pb-10 pt-4 bg-background">
+      <div className="px-6 pb-10 pt-4 bg-background space-y-2">
         <Button
           onClick={() => { if (step < totalSteps) setStep(s => s + 1); else handleSave(); }}
           disabled={step === 1 && !name.trim() || saving}
@@ -269,6 +155,12 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
             <>Let's Go! 🎉</>
           )}
         </Button>
+        {step === 2 && (
+          <Button variant="ghost" onClick={handleSave} disabled={saving}
+            className="w-full h-10 text-sm font-medium text-muted-foreground">
+            Skip for now
+          </Button>
+        )}
       </div>
     </div>
   );
