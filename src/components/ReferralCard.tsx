@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Gift, Copy, Share2, CircleCheck } from 'lucide-react';
+import { Gift, Copy, Share2, CircleCheck, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -9,21 +9,26 @@ export default function ReferralCard() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
 
-  // Generate a deterministic referral code from user id
   const referralCode = user?.id
     ? `CLEAN${user.id.slice(0, 6).toUpperCase()}`
     : 'CLEANFIT20';
 
-  const referralLink = `https://cleanfit.co.uk/r/${referralCode}`;
+  const referralLink = `${window.location.origin}/login?ref=${referralCode}`;
+  const shareText = `Use my referral code ${referralCode} to get 20% off your first clean with Clean Fit! 🧹✨ ${referralLink}`;
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(referralCode);
+  const copyLink = () => {
+    navigator.clipboard.writeText(referralLink);
     setCopied(true);
-    toast.success('Referral code copied!');
+    toast.success('Link copied!');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const share = async () => {
+  const shareWhatsApp = () => {
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(url, '_blank');
+  };
+
+  const shareNative = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -32,10 +37,10 @@ export default function ReferralCard() {
           url: referralLink,
         });
       } catch {
-        copyCode();
+        copyLink();
       }
     } else {
-      copyCode();
+      copyLink();
     }
   };
 
@@ -55,15 +60,20 @@ export default function ReferralCard() {
         {/* Code display */}
         <div className="bg-background border border-border rounded-xl p-3 flex items-center justify-between mb-3">
           <span className="font-mono font-bold text-foreground text-sm tracking-wider">{referralCode}</span>
-          <button onClick={copyCode} className="flex items-center gap-1 text-primary text-xs font-medium hover:text-primary/80 transition-colors">
+          <button onClick={copyLink} className="flex items-center gap-1 text-primary text-xs font-medium hover:text-primary/80 transition-colors">
             {copied ? <CircleCheck className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? 'Copied!' : 'Copy Link'}
           </button>
         </div>
 
-        <Button onClick={share} className="w-full h-10 rounded-xl font-semibold text-xs bg-primary text-primary-foreground hover:bg-primary/90">
-          <Share2 className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Share with Friends
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={shareWhatsApp} className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#25D366] text-white hover:bg-[#25D366]/90">
+            <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> WhatsApp
+          </Button>
+          <Button onClick={shareNative} variant="outline" className="flex-1 h-10 rounded-xl font-semibold text-xs">
+            <Share2 className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Share
+          </Button>
+        </div>
       </div>
 
       <div className="bg-primary/5 border-t border-primary/10 px-5 py-3">
