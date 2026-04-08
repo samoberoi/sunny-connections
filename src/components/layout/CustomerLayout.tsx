@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, CalendarDays, User, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ActiveBookingFloater from '@/components/ActiveBookingFloater';
 
 const navItems = [
   { to: '/home', icon: Home, label: 'Home' },
@@ -12,9 +13,11 @@ const navItems = [
 
 export default function CustomerLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const hideFloater = ['/active-booking', '/searching-cleaner', '/rate-service'].some(p => pathname.startsWith(p));
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 pb-24">{children}</div>
+      {!hideFloater && <ActiveBookingFloater />}
       <nav className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-foreground rounded-[2rem] shadow-elevated">
           <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-3">

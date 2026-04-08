@@ -79,7 +79,7 @@ export default function CleanerDashboard() {
           {/* Fixed map background */}
           <div className="sticky top-0 z-0">
             <SimulatedMap markers={mapMarkers} height={420} className="">
-              <div className="absolute inset-0 bg-gradient-to-b from-foreground/70 via-foreground/30 to-background pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-foreground/40 via-transparent to-background pointer-events-none" />
             </SimulatedMap>
 
             {/* Header on map */}

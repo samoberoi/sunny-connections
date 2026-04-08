@@ -65,8 +65,7 @@ export default function SimulatedMap({ markers, height = 200, className = '', ch
         ))}
       </div>
 
-      {/* Slight tint overlay to match app theme */}
-      <div className="absolute inset-0 bg-background/10" />
+      {/* Minimal tint - no gray overlay */}
 
       {/* Markers */}
       <AnimatePresence>

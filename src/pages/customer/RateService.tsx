@@ -30,7 +30,17 @@ export default function RateService() {
     setSubmitting(true);
     const fullReview = [review, ...selectedTags.map(t => `#${t}`)].filter(Boolean).join(' ');
     if (state?.bookingId) {
-      await supabase.from('bookings').update({ rating, review: fullReview || null }).eq('id', state.bookingId);
+      // Update booking with rating
+      const { data: booking } = await supabase.from('bookings').update({ rating, review: fullReview || null }).eq('id', state.bookingId).select('cleaner_id').single();
+      
+      // Update cleaner's average rating
+      if (booking?.cleaner_id) {
+        const { data: allRatings } = await supabase.from('bookings').select('rating').eq('cleaner_id', booking.cleaner_id).not('rating', 'is', null);
+        if (allRatings && allRatings.length > 0) {
+          const avg = allRatings.reduce((s, r) => s + (r.rating || 0), 0) / allRatings.length;
+          await supabase.from('cleaners').update({ rating: Math.round(avg * 10) / 10, review_count: allRatings.length }).eq('id', booking.cleaner_id);
+        }
+      }
     }
     setSubmitting(false);
     setSubmitted(true);
