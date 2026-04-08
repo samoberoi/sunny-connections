@@ -41,8 +41,10 @@ export default function CustomerHome() {
           {/* Fixed map background - top half */}
           <div className="sticky top-0 z-0">
             <SimulatedMap markers={mapMarkers} height={420} className="">
-              {/* Gradient fade at bottom for smooth content transition */}
-              <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-transparent to-background pointer-events-none" />
+              {/* Top white blur for header readability */}
+              <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-white/90 via-white/60 to-transparent pointer-events-none z-10" />
+              {/* Bottom fade */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60 pointer-events-none" />
             </SimulatedMap>
 
             {/* Header overlay on map */}
@@ -75,7 +77,7 @@ export default function CustomerHome() {
 
           {/* Scrollable content over map */}
           <motion.div variants={stagger} initial="hidden" animate="show"
-            className="relative z-10 bg-background rounded-t-[2rem] -mt-8 px-5 pt-6 pb-4 space-y-5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+            className="relative z-10 bg-muted/60 rounded-t-[2rem] -mt-8 px-5 pt-6 pb-4 space-y-5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
 
             {/* Two booking paths */}
             <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
