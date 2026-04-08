@@ -18,6 +18,7 @@ export default function CustomerProfile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const addressLabels = ['Home', 'Home 2', 'Office', 'Office 2', 'Other'];
   const [newAddress, setNewAddress] = useState({ label: 'Home', line1: '', postcode: '', city: 'London' });
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -181,7 +182,15 @@ export default function CustomerProfile() {
                 <DialogContent className="rounded-3xl">
                   <DialogHeader><DialogTitle>Add Address</DialogTitle></DialogHeader>
                   <div className="space-y-3 pt-2">
-                    <Input placeholder="Label (e.g. Home)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} className="h-12 rounded-2xl" />
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">Label</p>
+                      <div className="flex flex-wrap gap-2">
+                        {addressLabels.map(l => (
+                          <button key={l} onClick={() => setNewAddress({ ...newAddress, label: l })}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${newAddress.label === l ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'}`}>{l}</button>
+                        ))}
+                      </div>
+                    </div>
                     <Input placeholder="Address line" value={newAddress.line1} onChange={e => setNewAddress({ ...newAddress, line1: e.target.value })} className="h-12 rounded-2xl" />
                     <Input placeholder="Postcode" value={newAddress.postcode} onChange={e => setNewAddress({ ...newAddress, postcode: e.target.value })} className="h-12 rounded-2xl" />
                     <Button onClick={() => addAddress.mutate()} disabled={!newAddress.line1 || !newAddress.postcode} className="w-full rounded-full font-bold bg-foreground text-background">Save</Button>
