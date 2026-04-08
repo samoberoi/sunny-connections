@@ -79,8 +79,7 @@ export default function CleanerDashboard() {
           {/* Fixed map background */}
           <div className="sticky top-0 z-0">
             <SimulatedMap markers={mapMarkers} height={420} className="">
-              <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-foreground/80 via-foreground/50 to-transparent pointer-events-none z-10" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-foreground/70 via-foreground/30 to-background pointer-events-none" />
             </SimulatedMap>
 
             {/* Header on map */}
@@ -111,7 +110,7 @@ export default function CleanerDashboard() {
           </div>
 
           {/* Scrollable content */}
-          <div className="relative z-10 bg-muted/60 rounded-t-[2rem] -mt-8 px-5 pt-6 pb-4 space-y-5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+          <div className="relative z-10 bg-background rounded-t-[2rem] -mt-8 px-5 pt-6 pb-4 space-y-5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
