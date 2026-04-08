@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight, Brush, WashingMachine, Bed, Wind, ShowerHead } from 'lucide-react';
+import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight, Brush, WashingMachine, Bed, Wind, ShowerHead, Locate, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -10,6 +10,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -38,9 +39,57 @@ export default function ExpressBooking() {
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
 
   const services = category ? expressServices[category] : [];
   const service = services.find(s => s.id === selected);
+
+  // Fetch saved addresses
+  const { data: savedAddresses = [] } = useQuery({
+    queryKey: ['my-addresses', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at');
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Auto-fill first saved address
+  useEffect(() => {
+    if (savedAddresses.length > 0 && !address && !postcode) {
+      const home = savedAddresses.find((a: any) => a.label === 'Home') || savedAddresses[0];
+      setAddress((home as any).line1);
+      setPostcode((home as any).postcode);
+      setSelectedAddressId((home as any).id);
+    }
+  }, [savedAddresses]);
+
+  const autoDetectAddress = async () => {
+    setDetecting(true);
+    try {
+      if ('geolocation' in navigator) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+        );
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+        const data = await res.json();
+        if (data?.address) {
+          const addr = data.address;
+          setPostcode(addr.postcode || '');
+          setAddress([addr.house_number, addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean).join(', '));
+          setSelectedAddressId(null);
+          toast.success('Address detected!');
+        }
+      }
+    } catch {
+      toast.error('Could not detect location');
+    } finally {
+      setDetecting(false);
+    }
+  };
 
   const handleBook = async () => {
     if (!service || !user || !address || !postcode) { toast.error('Please complete all fields'); return; }
@@ -69,7 +118,6 @@ export default function ExpressBooking() {
             <h1 className="text-2xl font-display font-black text-foreground">Express Clean</h1>
           </div>
 
-          {/* Express pill */}
           <div className="flex items-center gap-2 bg-primary rounded-full px-4 py-2.5 w-fit mb-6 ml-12">
             <Zap className="h-4 w-4 text-primary-foreground" strokeWidth={2} />
             <span className="text-xs font-bold text-primary-foreground">Priority surcharge included</span>
@@ -124,12 +172,45 @@ export default function ExpressBooking() {
             </section>
           )}
 
-          {/* Address */}
+          {/* Address with saved addresses */}
           {selected && (
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 mb-6">
               <h3 className="font-display font-bold text-foreground text-sm flex items-center gap-2"><MapPin className="h-4 w-4" strokeWidth={1.5} /> Address</h3>
-              <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
-              <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
+
+              {savedAddresses.length > 0 && (
+                <div className="space-y-2">
+                  {savedAddresses.map((addr: any) => (
+                    <button key={addr.id} onClick={() => { setAddress(addr.line1); setPostcode(addr.postcode); setSelectedAddressId(addr.id); }}
+                      className={`w-full text-left border rounded-2xl p-3 flex items-center gap-3 transition-all ${
+                        selectedAddressId === addr.id ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                      }`}>
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground">{addr.label}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{addr.line1}, {addr.postcode}</p>
+                      </div>
+                      {selectedAddressId === addr.id && <CheckCircle2 className="h-4 w-4 text-foreground shrink-0" strokeWidth={1.5} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <button onClick={() => { setSelectedAddressId(null); setAddress(''); setPostcode(''); }}
+                className={`w-full text-left border rounded-2xl p-3 text-xs font-bold text-foreground flex items-center gap-2 ${!selectedAddressId ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}>
+                <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} /> Different address
+              </button>
+
+              {!selectedAddressId && (
+                <div className="space-y-2">
+                  <Button variant="outline" onClick={autoDetectAddress} disabled={detecting}
+                    className="w-full h-10 rounded-2xl border-dashed border-primary/30 text-xs font-bold">
+                    <Locate className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                    {detecting ? 'Detecting...' : 'Auto-detect location'}
+                  </Button>
+                  <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
+                  <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
+                </div>
+              )}
             </motion.section>
           )}
 

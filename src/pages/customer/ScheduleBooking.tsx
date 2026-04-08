@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Home, Clock, MapPin, CalendarDays, Repeat, ChevronLeft, ChevronRight,
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
-  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Leaf, Check, Crown
+  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,23 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 type Category = 'cleaning' | 'housekeeping';
+
+// Service-specific follow-up question config
+const serviceQuestions: Record<string, { label: string; question: string; options: number[]; pricePerUnit: number }> = {
+  bathroom: { label: 'Bathrooms', question: 'How many bathrooms?', options: [1, 2, 3, 4], pricePerUnit: 5 },
+  bedroom: { label: 'Bedrooms', question: 'How many bedrooms?', options: [1, 2, 3, 4, 5], pricePerUnit: 3 },
+  living: { label: 'Living Rooms', question: 'How many living rooms?', options: [1, 2, 3], pricePerUnit: 3 },
+  kitchen: { label: 'Kitchens', question: 'How many kitchens?', options: [1, 2], pricePerUnit: 4 },
+  dusting: { label: 'Rooms', question: 'How many rooms to dust?', options: [2, 3, 4, 5, 6], pricePerUnit: 2 },
+  deep: { label: 'Rooms', question: 'How many rooms for deep scrub?', options: [1, 2, 3, 4, 5], pricePerUnit: 5 },
+  laundry: { label: 'Loads', question: 'How many loads of laundry?', options: [1, 2, 3, 4], pricePerUnit: 4 },
+  ironing: { label: 'Items (approx)', question: 'Approx how many items?', options: [10, 20, 30, 40], pricePerUnit: 0.3 },
+  bedmaking: { label: 'Beds', question: 'How many beds?', options: [1, 2, 3, 4, 5], pricePerUnit: 2 },
+  organise: { label: 'Rooms', question: 'How many rooms to organise?', options: [1, 2, 3, 4], pricePerUnit: 4 },
+};
 
 const serviceOptions: Record<Category, { id: string; icon: any; name: string; pricePerHour: number }[]> = {
   cleaning: [
@@ -65,6 +80,7 @@ export default function ScheduleBooking() {
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState<Category | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [serviceQuantities, setServiceQuantities] = useState<Record<string, number>>({});
   const [recurring, setRecurring] = useState<'none' | 'weekly' | 'fortnightly' | 'monthly'>('none');
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState('');
@@ -78,30 +94,105 @@ export default function ScheduleBooking() {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
   const totalSteps = 6;
 
-  const toggleService = (id: string) => setSelectedServices(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  // Fetch saved addresses
+  const { data: savedAddresses = [] } = useQuery({
+    queryKey: ['my-addresses', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at');
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Auto-fill address from saved addresses on mount
+  useEffect(() => {
+    if (savedAddresses.length > 0 && !address && !postcode) {
+      const home = savedAddresses.find((a: any) => a.label === 'Home') || savedAddresses[0];
+      setAddress((home as any).line1);
+      setPostcode((home as any).postcode);
+      setSelectedAddressId((home as any).id);
+    }
+  }, [savedAddresses]);
+
+  const toggleService = (id: string) => {
+    setSelectedServices(prev => {
+      if (prev.includes(id)) {
+        const newQuantities = { ...serviceQuantities };
+        delete newQuantities[id];
+        setServiceQuantities(newQuantities);
+        return prev.filter(s => s !== id);
+      }
+      // Set default quantity
+      const q = serviceQuestions[id];
+      if (q) setServiceQuantities(prev2 => ({ ...prev2, [id]: q.options[0] }));
+      return [...prev, id];
+    });
+  };
+
   const allServices = [...serviceOptions.cleaning, ...serviceOptions.housekeeping];
   const selectedServiceDetails = allServices.filter(s => selectedServices.includes(s.id));
   const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.pricePerHour, 0);
+
+  // Calculate service-specific surcharges
+  const serviceSurcharge = selectedServices.reduce((sum, svcId) => {
+    const q = serviceQuestions[svcId];
+    if (!q) return sum;
+    const qty = serviceQuantities[svcId] || q.options[0];
+    return sum + (Math.max(0, qty - 1) * q.pricePerUnit);
+  }, 0);
+
   const freq = frequencies.find(f => f.value === recurring);
   const discount = freq?.discount || 0;
   const sizeMultiplier = propertySizes.find(s => s.value === propertySize)?.multiplier || 1;
   const bathroomSurcharge = Math.max(0, bathrooms - 1) * 5;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
-  const subtotal = baseRate * duration * sizeMultiplier * tierMultiplier + bathroomSurcharge * duration;
+  const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (bathroomSurcharge * duration) + (serviceSurcharge * duration);
   const totalCost = Math.round(subtotal * (1 - discount / 100));
   const selectedNames = selectedServiceDetails.map(s => s.name).join(', ');
+
+  // Service-specific questions for selected services
+  const serviceQuestionsToShow = selectedServices.filter(id => serviceQuestions[id]);
 
   const canAdvance = () => {
     switch (step) {
       case 1: return category !== null && selectedServices.length > 0;
-      case 2: return true; // property details always have defaults
+      case 2: return true;
       case 3: return !!recurring;
       case 4: return !!date && !!time;
       case 5: return !!address && !!postcode;
       case 6: return true;
       default: return false;
+    }
+  };
+
+  const autoDetectAddress = async () => {
+    setDetecting(true);
+    try {
+      if ('geolocation' in navigator) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+        );
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+        const data = await res.json();
+        if (data?.address) {
+          const addr = data.address;
+          setPostcode(addr.postcode || '');
+          const parts = [addr.house_number, addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean);
+          setAddress(parts.join(', '));
+          setSelectedAddressId(null);
+          toast.success('Address detected!');
+        }
+      }
+    } catch {
+      toast.error('Could not detect location');
+    } finally {
+      setDetecting(false);
     }
   };
 
@@ -119,6 +210,14 @@ export default function ScheduleBooking() {
         tier, bedrooms, bathrooms,
       }).select().single();
       if (error) throw error;
+
+      // Save address if new
+      if (!selectedAddressId && address && postcode) {
+        await supabase.from('addresses').upsert({
+          user_id: user.id, label: 'Home', line1: address, postcode, city: 'London',
+        }, { onConflict: 'user_id,label' }).select();
+      }
+
       navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
@@ -146,7 +245,7 @@ export default function ScheduleBooking() {
           </div>
 
           <AnimatePresence mode="wait">
-            {/* Step 1: Category & Service Selection */}
+            {/* Step 1: Category & Service Selection + Service-specific questions */}
             {step === 1 && (
               <motion.div key="step1" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 {!category ? (
@@ -201,11 +300,38 @@ export default function ScheduleBooking() {
                         );
                       })}
                     </div>
+
+                    {/* Service-specific follow-up questions */}
+                    {serviceQuestionsToShow.length > 0 && (
+                      <div className="mt-5 space-y-4">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quick Details</p>
+                        {serviceQuestionsToShow.map(svcId => {
+                          const q = serviceQuestions[svcId];
+                          const svc = allServices.find(s => s.id === svcId);
+                          return (
+                            <div key={svcId} className="bg-card border border-border rounded-2xl p-4">
+                              <p className="text-xs font-bold text-foreground mb-2">{svc?.name}: {q.question}</p>
+                              <div className="flex gap-2">
+                                {q.options.map(n => (
+                                  <button key={n} onClick={() => setServiceQuantities(prev => ({ ...prev, [svcId]: n }))}
+                                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ${
+                                      (serviceQuantities[svcId] || q.options[0]) === n
+                                        ? 'bg-foreground text-background border-foreground'
+                                        : 'border-border bg-card text-muted-foreground'
+                                    }`}>{n}{svcId === 'ironing' ? '' : ''}</button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {selectedServices.length > 0 && (
                       <div className="mt-4 p-3 bg-primary/10 rounded-2xl">
                         <p className="text-xs text-muted-foreground mb-1">Selected ({selectedServices.length})</p>
                         <p className="text-sm font-bold text-foreground">{selectedNames}</p>
-                        <p className="text-xs text-primary-ink font-bold mt-1">Base: £{baseRate}/hr</p>
+                        <p className="text-xs text-primary-ink font-bold mt-1">Base: £{baseRate}/hr {serviceSurcharge > 0 && `+ £${serviceSurcharge} extras`}</p>
                       </div>
                     )}
                   </div>
@@ -335,7 +461,7 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {/* Step 5: Address */}
+            {/* Step 5: Address with saved addresses */}
             {step === 5 && (
               <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
@@ -351,13 +477,51 @@ export default function ScheduleBooking() {
                     ))}
                   </div>
                 </section>
+
                 <section className="mb-6">
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><MapPin className="h-4 w-4" strokeWidth={1.5} /> Address</h3>
-                  <div className="space-y-2">
-                    <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
-                    <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
-                  </div>
+
+                  {/* Saved addresses */}
+                  {savedAddresses.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Saved Addresses</p>
+                      {savedAddresses.map((addr: any) => (
+                        <button key={addr.id} onClick={() => { setAddress(addr.line1); setPostcode(addr.postcode); setSelectedAddressId(addr.id); }}
+                          className={`w-full text-left border rounded-2xl p-3 flex items-center gap-3 transition-all ${
+                            selectedAddressId === addr.id ? 'border-primary bg-primary/10 ring-1 ring-primary/20' : 'border-border bg-card'
+                          }`}>
+                          <MapPin className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-foreground">{addr.label}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{addr.line1}, {addr.postcode}</p>
+                          </div>
+                          {selectedAddressId === addr.id && <CheckCircle2 className="h-4 w-4 text-foreground shrink-0" strokeWidth={1.5} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <button onClick={() => { setSelectedAddressId(null); setAddress(''); setPostcode(''); }}
+                    className={`w-full text-left border rounded-2xl p-3 flex items-center gap-3 transition-all mb-3 ${
+                      !selectedAddressId ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                    }`}>
+                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                    <span className="text-xs font-bold text-foreground">Use a different address</span>
+                  </button>
+
+                  {!selectedAddressId && (
+                    <div className="space-y-2">
+                      <Button variant="outline" onClick={autoDetectAddress} disabled={detecting}
+                        className="w-full h-10 rounded-2xl border-dashed border-primary/30 text-xs font-bold">
+                        <Locate className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                        {detecting ? 'Detecting...' : 'Auto-detect location'}
+                      </Button>
+                      <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
+                      <Input placeholder="Address line" value={address} onChange={e => setAddress(e.target.value)} className="h-13 rounded-2xl border-2 border-border bg-card text-base" />
+                    </div>
+                  )}
                 </section>
+
                 <section>
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><StickyNote className="h-4 w-4" strokeWidth={1.5} /> Notes</h3>
                   <Textarea placeholder="Special instructions..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-2xl border-border resize-none" />
@@ -403,6 +567,12 @@ export default function ScheduleBooking() {
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-background/50">Extra bathrooms</span>
                       <span className="text-background">+£{bathroomSurcharge * duration}</span>
+                    </div>
+                  )}
+                  {serviceSurcharge > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Service extras</span>
+                      <span className="text-background">+£{serviceSurcharge * duration}</span>
                     </div>
                   )}
                   {tier === 'premium' && (
