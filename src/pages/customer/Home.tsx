@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, User, ArrowRight, CalendarDays, Zap, Star, ChevronRight } from 'lucide-react';
+import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
+import SimulatedMap, { generateCleanerMarkers } from '@/components/SimulatedMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCleaners } from '@/hooks/useCleaners';
-import cleanKitchen from '@/assets/clean-kitchen.jpg';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 
 export default function CustomerHome() {
@@ -25,6 +25,11 @@ export default function CustomerHome() {
   const topCleaners = cleaners?.filter(c => c.available).slice(0, 4) || [];
   const firstName = user?.name?.split(' ')[0] || 'there';
 
+  const mapMarkers = useMemo(() => {
+    const availableCount = cleaners?.filter(c => c.available).length || 3;
+    return generateCleanerMarkers(Math.min(availableCount, 6));
+  }, [cleaners]);
+
   const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
   const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } };
 
@@ -32,40 +37,39 @@ export default function CustomerHome() {
     <CustomerLayout>
       <WelcomeCoupon open={showCoupon} onClose={() => setShowCoupon(false)} onClaim={() => setShowCoupon(false)} />
       <PageTransition>
-        {/* Lime header bar */}
-        <div className="bg-primary rounded-b-[2rem] px-6 pt-14 pb-20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-display font-black text-primary-foreground leading-none">
-                Hello,<br />{firstName}
-              </h1>
+        {/* Header with map */}
+        <div className="relative">
+          {/* Map background */}
+          <SimulatedMap markers={mapMarkers} height={280} className="rounded-b-[2rem]">
+            {/* Gradient overlay for readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/40 to-background/80 rounded-b-[2rem]" />
+          </SimulatedMap>
+
+          {/* Header content on top of map */}
+          <div className="absolute inset-0 px-6 pt-14 pb-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-display font-black text-foreground leading-none">
+                  Hello,<br />{firstName}
+                </h1>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => navigate('/notifications')} className="w-11 h-11 rounded-full bg-foreground/10 backdrop-blur-sm border border-foreground/10 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </button>
+                <button onClick={() => navigate('/profile')} className="w-11 h-11 rounded-full bg-foreground flex items-center justify-center">
+                  <User className="h-5 w-5 text-background" strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => navigate('/notifications')} className="w-11 h-11 rounded-full bg-primary-foreground/10 border border-primary-foreground/10 flex items-center justify-center">
-                <Bell className="h-5 w-5 text-primary-foreground" strokeWidth={1.5} />
-              </button>
-              <button onClick={() => navigate('/profile')} className="w-11 h-11 rounded-full bg-primary-foreground flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
-              </button>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary-ink" strokeWidth={2} />
+              <span className="text-[11px] font-bold text-foreground/60">{topCleaners.length} cleaners nearby</span>
             </div>
           </div>
         </div>
 
-        <motion.div variants={stagger} initial="hidden" animate="show" className="px-5 -mt-12 space-y-5">
-          {/* Hero image card */}
-          <motion.div variants={fadeUp} className="rounded-3xl overflow-hidden relative shadow-elevated" style={{ height: 180 }}>
-            <img src={cleanKitchen} alt="Clean kitchen" className="w-full h-full object-cover" width={800} height={512} />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <h2 className="text-2xl font-display font-black text-white leading-tight mb-3">
-                Your home,<br /><span className="text-primary">sorted.</span>
-              </h2>
-              <Button onClick={() => navigate('/schedule-booking')} size="sm" className="bg-primary text-primary-foreground rounded-full font-bold text-xs h-10 px-6">
-                Book Now <ArrowRight className="h-3.5 w-3.5 ml-1.5" strokeWidth={2} />
-              </Button>
-            </div>
-          </motion.div>
-
+        <motion.div variants={stagger} initial="hidden" animate="show" className="px-5 mt-5 space-y-5">
           {/* Two booking paths */}
           <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
             <motion.button whileTap={{ scale: 0.97 }} onClick={() => navigate('/schedule-booking')}

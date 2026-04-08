@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { PoundSterling, CalendarDays, Clock, Zap, Briefcase, ChevronRight, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { PoundSterling, CalendarDays, Clock, Zap, Briefcase, ChevronRight, ToggleLeft, ToggleRight, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
-import EmptyState from '@/components/EmptyState';
+import SimulatedMap, { generateClientMarkers } from '@/components/SimulatedMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -68,34 +68,44 @@ export default function CleanerDashboard() {
   const weekEarnings = bookings.filter(b => b.status === 'completed').reduce((s, b) => s + Number(b.total_cost), 0);
   const isOnline = cleanerRecord?.available;
 
+  const mapMarkers = useMemo(() => {
+    return generateClientMarkers(Math.min(pendingJobs.length || 3, 5));
+  }, [pendingJobs]);
+
   return (
     <CleanerLayout>
       <PageTransition>
-        {/* Dark header */}
-        <div className="bg-foreground rounded-b-[2rem] px-5 pt-14 pb-20">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-display font-black text-background leading-none">{user?.name || 'Cleaner'}</h1>
-              <p className="text-[11px] text-background/40 font-medium mt-1">Dashboard</p>
-            </div>
-            <motion.button whileTap={{ scale: 0.93 }} onClick={() => toggleAvailability.mutate()}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all ${isOnline ? 'bg-primary text-primary-foreground' : 'bg-background/10 text-background/40'}`}>
-              {isOnline ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-              {isOnline ? 'Online' : 'Offline'}
-            </motion.button>
-          </div>
+        {/* Map + header area */}
+        <div className="relative">
+          <SimulatedMap markers={mapMarkers} height={260} className="rounded-b-[2rem]">
+            <div className="absolute inset-0 bg-gradient-to-b from-foreground/90 via-foreground/50 to-foreground/80 rounded-b-[2rem]" />
+          </SimulatedMap>
 
-          {/* Balance card inside dark area */}
-          <div className="bg-background/5 rounded-3xl p-5 border border-background/10">
-            <p className="text-[10px] text-background/40 font-bold uppercase tracking-wider mb-1">Total Earned</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-display font-black text-primary">£{weekEarnings}</span>
-              <span className="text-xs text-background/30 font-medium">.00</span>
+          <div className="absolute inset-0 px-5 pt-14 pb-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-display font-black text-background leading-none">{user?.name || 'Cleaner'}</h1>
+                <p className="text-[11px] text-background/40 font-medium mt-1">Dashboard</p>
+              </div>
+              <motion.button whileTap={{ scale: 0.93 }} onClick={() => toggleAvailability.mutate()}
+                className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all ${isOnline ? 'bg-primary text-primary-foreground' : 'bg-background/10 text-background/40'}`}>
+                {isOnline ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                {isOnline ? 'Online' : 'Offline'}
+              </motion.button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                <span className="text-[11px] font-bold text-background/50">{pendingJobs.length} requests nearby</span>
+              </div>
+              <div className="bg-background/10 rounded-full px-3 py-1.5 backdrop-blur-sm">
+                <span className="text-[11px] font-bold text-primary">£{weekEarnings} earned</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="px-5 -mt-8 space-y-5">
+        <div className="px-5 mt-5 space-y-5">
           {/* Quick stats */}
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -116,7 +126,7 @@ export default function CleanerDashboard() {
           <section>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display font-bold text-foreground text-sm">Upcoming Jobs</h3>
-              {upcomingJobs.length > 0 && <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary">View all →</button>}
+              {upcomingJobs.length > 0 && <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary-ink">View all →</button>}
             </div>
             {upcomingJobs.length === 0 ? (
               <div className="bg-card rounded-3xl p-6 text-center shadow-soft border border-border">
@@ -150,7 +160,7 @@ export default function CleanerDashboard() {
                   <h3 className="font-display font-bold text-foreground text-sm">New Requests</h3>
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 </div>
-                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary">View all →</button>
+                <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary-ink">View all →</button>
               </div>
               <div className="space-y-2.5">
                 {pendingJobs.slice(0, 3).map(b => {

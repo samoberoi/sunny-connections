@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
-import { PoundSterling, Users, CalendarDays, UserPlus, TrendingUp, TrendingDown } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { PoundSterling, Users, CalendarDays, UserPlus, TrendingUp, TrendingDown, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import SimulatedMap, { generateCleanerMarkers, generateClientMarkers } from '@/components/SimulatedMap';
 
 export default function AdminDashboard() {
+  const [mapView, setMapView] = useState<'requests' | 'cleaners'>('requests');
+
   const { data: bookings = [] } = useQuery({ queryKey: ['admin-bookings'], queryFn: async () => { const { data } = await supabase.from('bookings').select('*'); return data || []; } });
   const { data: cleaners = [] } = useQuery({ queryKey: ['admin-cleaners'], queryFn: async () => { const { data } = await supabase.from('cleaners').select('*'); return data || []; } });
   const { data: enrolments = [] } = useQuery({ queryKey: ['admin-enrolments'], queryFn: async () => { const { data } = await supabase.from('enrolment_applications').select('*'); return data || []; } });
@@ -14,6 +17,12 @@ export default function AdminDashboard() {
   const activeBookings = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const completedBookings = bookings.filter(b => b.status === 'completed');
   const activeCleaners = cleaners.filter((c: any) => c.available);
+  const pendingBookings = bookings.filter(b => b.status === 'pending');
+
+  const mapMarkers = useMemo(() => {
+    if (mapView === 'cleaners') return generateCleanerMarkers(Math.min(activeCleaners.length || 4, 8));
+    return generateClientMarkers(Math.min(pendingBookings.length || 3, 6));
+  }, [mapView, activeCleaners.length, pendingBookings.length]);
 
   const { revenueData, totalRevenue, growthPercent } = useMemo(() => {
     const monthMap: Record<string, number> = {};
@@ -38,7 +47,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-display font-black text-foreground">Dashboard</h1>
           {totalRevenue > 0 && (
@@ -51,7 +60,35 @@ export default function AdminDashboard() {
         <p className="text-sm text-muted-foreground mt-1">Your cleaning empire</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Live Map */}
+      <div className="bg-card rounded-3xl overflow-hidden shadow-soft border border-border mb-6">
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary-ink" strokeWidth={1.5} />
+            <h3 className="font-display font-bold text-foreground text-sm">Live Map</h3>
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          </div>
+          <div className="flex bg-muted rounded-full p-0.5">
+            <button onClick={() => setMapView('requests')}
+              className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-all ${mapView === 'requests' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+              Requests
+            </button>
+            <button onClick={() => setMapView('cleaners')}
+              className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-all ${mapView === 'cleaners' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+              Cleaners
+            </button>
+          </div>
+        </div>
+        <SimulatedMap markers={mapMarkers} height={220}>
+          <div className="absolute bottom-3 left-3 bg-foreground/80 backdrop-blur-sm rounded-2xl px-3 py-2">
+            <span className="text-[10px] font-bold text-background">
+              {mapView === 'requests' ? `${pendingBookings.length} pending requests` : `${activeCleaners.length} online cleaners`}
+            </span>
+          </div>
+        </SimulatedMap>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             className="bg-card rounded-3xl p-5 shadow-soft border border-border">
