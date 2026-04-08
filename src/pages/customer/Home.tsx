@@ -40,7 +40,7 @@ export default function CustomerHome() {
         {/* Header with map */}
         <div className="relative">
           {/* Map background */}
-          <SimulatedMap markers={mapMarkers} height={280} className="rounded-b-[2rem]">
+          <SimulatedMap markers={mapMarkers} height={420} className="rounded-b-[2rem]">
             {/* Gradient overlay for readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/40 to-background/80 rounded-b-[2rem]" />
           </SimulatedMap>

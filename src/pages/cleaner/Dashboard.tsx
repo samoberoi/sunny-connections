@@ -77,7 +77,7 @@ export default function CleanerDashboard() {
       <PageTransition>
         {/* Map + header area */}
         <div className="relative">
-          <SimulatedMap markers={mapMarkers} height={260} className="rounded-b-[2rem]">
+          <SimulatedMap markers={mapMarkers} height={420} className="rounded-b-[2rem]">
             <div className="absolute inset-0 bg-gradient-to-b from-foreground/90 via-foreground/50 to-foreground/80 rounded-b-[2rem]" />
           </SimulatedMap>
 
