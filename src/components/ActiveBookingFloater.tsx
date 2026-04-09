@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Loader2 } from 'lucide-react';
@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { playNotificationSound } from '@/lib/notificationSound';
 
 const statusLabels: Record<string, string> = {
   pending: 'Finding cleaner…',
@@ -20,6 +21,7 @@ export default function ActiveBookingFloater() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const prevStatusRef = useRef<string | null>(null);
 
   const { data: activeBooking } = useQuery({
     queryKey: ['active-booking-floater', user?.id],
@@ -45,14 +47,25 @@ export default function ActiveBookingFloater() {
       .channel(`floater-${activeBooking.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${activeBooking.id}` },
         (payload) => {
+          const newStatus = (payload.new as any).status;
+          // Play sound on status change
+          if (prevStatusRef.current && prevStatusRef.current !== newStatus) {
+            playNotificationSound();
+          }
+          prevStatusRef.current = newStatus;
           queryClient.invalidateQueries({ queryKey: ['active-booking-floater'] });
-          if ((payload.new as any).status === 'completed') {
+          if (newStatus === 'completed') {
             navigate('/rate-service', { state: { bookingId: activeBooking.id } });
           }
         })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeBooking?.id, queryClient, navigate]);
+
+  // Track status for sound
+  useEffect(() => {
+    if (activeBooking?.status) prevStatusRef.current = activeBooking.status;
+  }, [activeBooking?.status]);
 
   if (!activeBooking) return null;
 
@@ -68,7 +81,6 @@ export default function ActiveBookingFloater() {
   };
 
   const handleTap = () => {
-    // Single tap navigates to active booking
     navigate(
       activeBooking.status === 'pending'
         ? '/searching-cleaner'
@@ -86,7 +98,6 @@ export default function ActiveBookingFloater() {
         className="fixed bottom-[88px] right-4 z-40"
       >
         <motion.div className="flex flex-col items-end gap-2">
-          {/* Cancel button when expanded */}
           <AnimatePresence>
             {expanded && (
               <motion.button
@@ -101,18 +112,13 @@ export default function ActiveBookingFloater() {
             )}
           </AnimatePresence>
 
-          {/* Main floating button */}
           <motion.button
             whileTap={{ scale: 0.93 }}
             onClick={handleTap}
             onContextMenu={(e) => { e.preventDefault(); setExpanded(!expanded); }}
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-elevated relative ${
-              isInProgress ? 'bg-primary' : 'bg-primary'
-            }`}
+            className="w-14 h-14 rounded-full flex items-center justify-center shadow-elevated relative bg-primary"
           >
-            {/* Pulsing ring */}
             <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
-            
             {isInProgress ? (
               <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" strokeWidth={2} />
             ) : (
@@ -120,7 +126,6 @@ export default function ActiveBookingFloater() {
             )}
           </motion.button>
           
-          {/* Status label */}
           <div className="bg-foreground/90 backdrop-blur-md text-background text-[10px] font-bold px-3 py-1 rounded-full shadow-sm max-w-[160px] truncate">
             {label}
           </div>

@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
+import SimulatedMap from '@/components/SimulatedMap';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -28,7 +29,8 @@ export default function SearchingCleaner() {
   const [dots, setDots] = useState('');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [assignedCleaner, setAssignedCleaner] = useState<{ name: string; rating: number; review_count: number; experience: number; verified: boolean } | null>(null);
+  const [assignedCleaner, setAssignedCleaner] = useState<{ name: string; rating: number; review_count: number; experience: number; verified: boolean; id?: string } | null>(null);
+  const [cleanerPhone, setCleanerPhone] = useState<string | null>(null);
 
   const bookingId = state?.bookingId;
   const otp = state?.otp || '1111';
@@ -44,6 +46,15 @@ export default function SearchingCleaner() {
   const effectiveBookingId = bookingId || savedState?.bookingId;
   const effectiveOtp = otp || savedState?.otp || '1111';
 
+  // Fetch cleaner phone when assigned
+  const fetchCleanerPhone = async (cleanerId: string) => {
+    const { data: cleaner } = await supabase.from('cleaners').select('user_id').eq('id', cleanerId).maybeSingle();
+    if (cleaner?.user_id) {
+      const { data: profile } = await supabase.from('profiles').select('phone').eq('user_id', cleaner.user_id).maybeSingle();
+      if (profile?.phone) setCleanerPhone(profile.phone);
+    }
+  };
+
   // Check initial status
   useEffect(() => {
     if (!effectiveBookingId) return;
@@ -53,7 +64,8 @@ export default function SearchingCleaner() {
       if (data?.cleaner_id) {
         const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', data.cleaner_id).maybeSingle();
         if (cleaner) {
-          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified, id: cleaner.id });
+          fetchCleanerPhone(cleaner.id);
           setPhase('confirmed');
         }
       }
@@ -61,16 +73,16 @@ export default function SearchingCleaner() {
     checkStatus();
   }, [effectiveBookingId]);
 
-  // Realtime updates — handle both assignment AND cancellation by cleaner
+  // Realtime updates
   useEffect(() => {
     if (!effectiveBookingId) return;
     const channel = supabase
       .channel(`booking-${effectiveBookingId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${effectiveBookingId}` }, async (payload) => {
         const updated = payload.new as any;
-        // Cleaner cancelled — go back to searching
         if (!updated.cleaner_id && updated.status === 'pending') {
           setAssignedCleaner(null);
+          setCleanerPhone(null);
           setPhase('searching');
           toast.info('Cleaner unavailable, finding another...');
           return;
@@ -82,9 +94,13 @@ export default function SearchingCleaner() {
         if (updated.cleaner_id) {
           const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', updated.cleaner_id).maybeSingle();
           if (cleaner) {
-            setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+            setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified, id: cleaner.id });
+            fetchCleanerPhone(cleaner.id);
             setPhase('found');
-            setTimeout(() => setPhase('confirmed'), 3000);
+            // Auto-navigate to ActiveBooking after 3 seconds
+            setTimeout(() => {
+              navigate('/active-booking', { state: { bookingId: effectiveBookingId }, replace: true });
+            }, 3000);
           }
         }
       })
@@ -100,9 +116,12 @@ export default function SearchingCleaner() {
       if (data?.cleaner_id) {
         const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', data.cleaner_id).maybeSingle();
         if (cleaner) {
-          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified, id: cleaner.id });
+          fetchCleanerPhone(cleaner.id);
           setPhase('found');
-          setTimeout(() => setPhase('confirmed'), 3000);
+          setTimeout(() => {
+            navigate('/active-booking', { state: { bookingId: effectiveBookingId }, replace: true });
+          }, 3000);
           clearInterval(interval);
         }
       }
@@ -119,6 +138,18 @@ export default function SearchingCleaner() {
   const copyOtp = () => {
     navigator.clipboard.writeText(effectiveOtp);
     toast.success('OTP copied!');
+  };
+
+  const handleCall = () => {
+    if (cleanerPhone) {
+      window.open(`tel:${cleanerPhone}`, '_self');
+    } else {
+      toast.error('Phone number not available yet');
+    }
+  };
+
+  const handleChat = () => {
+    navigate('/chat', { state: { bookingId: effectiveBookingId, otherName: assignedCleaner?.name || 'Cleaner', otherPhone: cleanerPhone } });
   };
 
   // Intercept back button
@@ -145,10 +176,17 @@ export default function SearchingCleaner() {
 
   const displayState = savedState || state || {};
 
+  const mapMarkers = phase === 'searching'
+    ? [{ id: 'self', x: 50, y: 60, label: 'You', type: 'self' as const }]
+    : [
+        { id: 'self', x: 50, y: 60, label: 'You', type: 'self' as const },
+        { id: 'cleaner', x: 30, y: 25, label: assignedCleaner?.name || 'Cleaner', type: 'cleaner' as const, pulse: true },
+      ];
+
   return (
     <CustomerLayout>
       <PageTransition>
-        {/* Cancel dialog with reason */}
+        {/* Cancel dialog */}
         <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
           <AlertDialogContent className="rounded-3xl mx-4 max-w-sm">
             <AlertDialogHeader>
@@ -176,53 +214,23 @@ export default function SearchingCleaner() {
 
         <div className="px-5 pt-6 pb-6 min-h-[80vh] flex flex-col">
           {/* Map area */}
-          <div className="relative bg-accent rounded-2xl overflow-hidden mb-6 flex-shrink-0" style={{ height: 280 }}>
-            <div className="absolute inset-0 opacity-[0.08]" style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px)`,
-              backgroundSize: '40px 40px',
-            }} />
-            <div className="absolute top-1/3 left-0 right-0 h-px bg-primary/10" />
-            <div className="absolute top-2/3 left-0 right-0 h-px bg-primary/10" />
-            <div className="absolute left-1/3 top-0 bottom-0 w-px bg-primary/10" />
-            <div className="absolute left-2/3 top-0 bottom-0 w-px bg-primary/10" />
-            <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="w-4 h-4 rounded-full bg-primary" />
-              <div className="absolute inset-0 w-4 h-4 rounded-full bg-primary animate-pulse-ring" />
-            </div>
-
-            <AnimatePresence>
-              {phase === 'searching' && (
-                <>
-                  {[{ x: '25%', y: '20%', delay: 0 }, { x: '70%', y: '40%', delay: 0.5 }, { x: '40%', y: '75%', delay: 1 }].map((pos, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8], x: [0, Math.random() * 20 - 10, 0], y: [0, Math.random() * 20 - 10, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: pos.delay }} exit={{ opacity: 0, scale: 0 }}
-                      className="absolute w-3 h-3 rounded-full bg-primary/40" style={{ left: pos.x, top: pos.y }} />
-                  ))}
-                </>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {(phase === 'found' || phase === 'confirmed') && (
-                <motion.div initial={{ left: '70%', top: '20%' }} animate={{ left: '45%', top: '55%' }} transition={{ duration: 2, ease: 'easeInOut' }} className="absolute">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-elevated">
-                    <Navigation className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
+          <SimulatedMap markers={mapMarkers} height={280} className="rounded-2xl mb-6">
+            {/* Dashed pathway line when cleaner found */}
+            {phase !== 'searching' && (
+              <svg className="absolute inset-0 w-full h-full z-[5] pointer-events-none">
+                <line x1="30%" y1="25%" x2="50%" y2="60%" stroke="hsl(var(--primary))" strokeWidth="2" strokeDasharray="8 4" opacity="0.5" />
+              </svg>
+            )}
             <div className="absolute bottom-4 left-4 right-4">
               <div className="glass-card-elevated rounded-xl px-4 py-3">
                 <AnimatePresence mode="wait">
                   {phase === 'searching' && <motion.p key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-semibold text-foreground">Finding cleaners near you{dots}</motion.p>}
-                  {phase === 'found' && <motion.p key="f" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-semibold text-primary">{assignedCleaner?.name || 'A cleaner'} accepted your request!</motion.p>}
+                  {phase === 'found' && <motion.p key="f" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-semibold text-primary">{assignedCleaner?.name || 'A cleaner'} accepted! Redirecting...</motion.p>}
                   {phase === 'confirmed' && <motion.p key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-semibold text-primary">Arriving in ~12 minutes</motion.p>}
                 </AnimatePresence>
               </div>
             </div>
-          </div>
+          </SimulatedMap>
 
           <div className="flex-1 space-y-4">
             <AnimatePresence mode="wait">
@@ -256,10 +264,10 @@ export default function SearchingCleaner() {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                      <Button variant="outline" size="sm" onClick={handleCall} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
                         <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                      <Button variant="outline" size="sm" onClick={handleChat} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
                         <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Chat
                       </Button>
                     </div>
@@ -286,8 +294,8 @@ export default function SearchingCleaner() {
                     </div>
                   </div>
 
-                  <Button onClick={() => navigate('/active-booking', { state: { bookingId: effectiveBookingId } })} className="w-full h-14 font-semibold text-base rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
-                    Track Live
+                  <Button variant="ghost" onClick={() => setShowCancelDialog(true)} className="w-full text-destructive font-semibold text-sm">
+                    <XCircle className="h-4 w-4 mr-1.5" /> Cancel Booking
                   </Button>
                 </motion.div>
               )}

@@ -7,11 +7,20 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { playNotificationSound } from '@/lib/notificationSound';
+
+const quickTemplates = [
+  'I am on the way 🚗',
+  'Stuck in traffic 🚦',
+  'I have arrived 📍',
+  'Please open the door 🚪',
+  'Thank you! 😊',
+];
 
 export default function Chat() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [message, setMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -40,24 +49,54 @@ export default function Chat() {
     const channel = supabase
       .channel(`chat-${bookingId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${bookingId}` },
-        () => queryClient.invalidateQueries({ queryKey: ['chat-messages', bookingId] }))
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ['chat-messages', bookingId] });
+          // Play sound for messages from the other person
+          if ((payload.new as any).sender_id !== user?.id) {
+            playNotificationSound();
+          }
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [bookingId, queryClient]);
+  }, [bookingId, queryClient, user?.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = useMutation({
-    mutationFn: async () => {
-      if (!message.trim() || !bookingId || !user?.id) return;
+    mutationFn: async (text?: string) => {
+      const content = (text || message).trim();
+      if (!content || !bookingId || !user?.id) return;
       const { error } = await supabase.from('messages').insert({
         booking_id: bookingId,
         sender_id: user.id,
-        content: message.trim(),
+        content,
       });
       if (error) throw error;
+
+      // Send notification to other party
+      try {
+        const { data: booking } = await supabase.from('bookings').select('customer_id, cleaner_id').eq('id', bookingId).maybeSingle();
+        if (booking) {
+          let recipientId: string | null = null;
+          if (booking.customer_id === user.id && booking.cleaner_id) {
+            // I'm customer, notify cleaner's user_id
+            const { data: cleaner } = await supabase.from('cleaners').select('user_id').eq('id', booking.cleaner_id).maybeSingle();
+            recipientId = cleaner?.user_id || null;
+          } else if (booking.customer_id !== user.id) {
+            recipientId = booking.customer_id;
+          }
+          if (recipientId) {
+            await supabase.from('notifications').insert({
+              user_id: recipientId,
+              title: `New message from ${profile?.name || 'Someone'}`,
+              message: content.length > 60 ? content.slice(0, 57) + '...' : content,
+              type: 'booking',
+            });
+          }
+        }
+      } catch { /* notification is best-effort */ }
     },
     onSuccess: () => {
       setMessage('');
@@ -65,11 +104,14 @@ export default function Chat() {
     },
   });
 
+  const handleQuickTemplate = (tpl: string) => {
+    sendMessage.mutate(tpl);
+  };
+
   const handleCall = () => {
     if (otherPhone) {
       window.open(`tel:${otherPhone}`, '_self');
     } else {
-      // Fallback alert
       alert('Phone number not available for this booking.');
     }
   };
@@ -100,7 +142,7 @@ export default function Chat() {
           <p className="text-[10px] text-muted-foreground">Active booking</p>
         </div>
         <button onClick={handleCall} className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-          <Phone className="h-4 w-4 text-primary-ink" strokeWidth={1.5} />
+          <Phone className="h-4 w-4 text-primary" strokeWidth={1.5} />
         </button>
       </div>
 
@@ -133,6 +175,19 @@ export default function Chat() {
             </motion.div>
           );
         })}
+      </div>
+
+      {/* Quick Templates */}
+      <div className="px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide">
+        {quickTemplates.map(tpl => (
+          <button
+            key={tpl}
+            onClick={() => handleQuickTemplate(tpl)}
+            className="shrink-0 text-[11px] font-medium px-3 py-1.5 rounded-full border border-border bg-accent text-foreground hover:bg-primary/10 transition-colors"
+          >
+            {tpl}
+          </button>
+        ))}
       </div>
 
       {/* Input */}
