@@ -1,122 +1,117 @@
 
 
-# Clean Fit -- Bug Fixes, Training Gate, and Admin Enhancements
+# Comprehensive App Hardening -- Security, Notifications, and End-to-End Flow Fix
 
-## Phase 1: Fix Default Name Race Condition (All Views)
-
-**Problem**: New users see "Emma Thompson" or "Alex Morgan" until page refresh because `AuthContext` sets `user` with a hardcoded name before the profile is synced.
-
-**Fix**: In `AuthContext.tsx`, after `syncProfileRecord` completes, re-fetch the profile and update the `user` state with the actual saved name. Also update the `verifyOtp` flow to use the entered name from onboarding rather than the static `roleNames` map. Add a listener so that when `profiles` table updates for the current user, the `user` state refreshes automatically.
-
-**Files**: `src/contexts/AuthContext.tsx`, `src/contexts/auth-helpers.ts`
+This plan addresses admin access control, notification automation, user management, and end-to-end flow validation across all roles.
 
 ---
 
-## Phase 2: Mandatory Training Gate for Cleaners
+## Phase 1: Super Admin Access Control
 
-**Problem**: After onboarding, cleaners go straight to the dashboard. They should be forced to complete all training modules before accessing the app.
+**Problem**: Anyone can navigate to `/admin/login` and create an admin account with any phone number.
 
-**Fix**:
-- In `ProtectedRoute.tsx`, after onboarding check, add a second gate: query `training_modules` count vs `training_progress` completed count for the cleaner. If not all modules are done and role is `cleaner`, render an inline Training screen instead of children.
-- Create a new `CleanerTrainingGate.tsx` component (embedded version of the Training page) that shows the modules and marks them complete. Once all are done, set `cleaners.verified = true` and allow through.
-- Cleaner onboarding `handleSave` should NOT set `onboarding_completed` until the cleaner finishes training -- OR keep onboarding separate and add a `training_completed` check in `ProtectedRoute`.
+**Solution**:
+- In `Login.tsx`, when `role === 'admin'`, after OTP verification check if the user has an `admin` role in the `user_roles` table. If not, block login with an error toast ("Unauthorized -- admin access only") and sign them out.
+- Add an **Admin Management** page (`admin/Admins.tsx`) accessible from the More menu, where existing admins can add new admin phone numbers (insert into `user_roles` with role `admin`) and view/remove existing admins.
+- Seed the first admin via the database insert tool so the current test admin (phone `0000000000`) has a `user_roles` entry.
+- Add route `/admin/admins` in `App.tsx` and link in `AdminLayout.tsx` More menu.
 
-**Files**: `src/components/ProtectedRoute.tsx`, new `src/components/CleanerTrainingGate.tsx`, `src/pages/enrol/Training.tsx` (reuse logic)
-
----
-
-## Phase 3: Cleaner Job Cancellation Loop
-
-**Problem**: When a cleaner cancels/declines an accepted job, it should revert to `pending` with `cleaner_id = null`, and the customer's SearchingCleaner screen should detect this and go back to "searching" phase.
-
-**Fix**:
-- The cleaner decline logic already exists in `Jobs.tsx` (lines 243-248) but uses two separate mutations. Consolidate into a single update: `{ status: 'pending', cleaner_id: null, cleaner_name: null, cleaner_avatar: null }`.
-- In `SearchingCleaner.tsx`, the realtime listener should also handle the case where `cleaner_id` becomes `null` again -- reset to `phase: 'searching'` and clear `assignedCleaner`.
-- Add a "Cancel Request" button on the searching phase with a reason selector (Too slow, Changed mind, Extra charges, Other) before confirming cancellation.
-
-**Files**: `src/pages/cleaner/Jobs.tsx`, `src/pages/customer/SearchingCleaner.tsx`
+**Files**: `Login.tsx`, `AuthContext.tsx`, new `admin/Admins.tsx`, `AdminLayout.tsx`, `App.tsx`
 
 ---
 
-## Phase 4: Admin Dashboard -- Map Toggle Z-Index Fix
+## Phase 2: Admin User Management (Delete Users/Cleaners)
 
-**Problem**: The map toggle (Requests/Cleaners) is hidden behind the white scrollable content sheet.
+**Problem**: Admin cannot delete customers or cleaners.
 
-**Fix**: In `admin/Dashboard.tsx`, the toggle container at line 98 has `z-20` but the content sheet at line 119 has `z-10`. The sticky map container itself needs a higher stacking context. Change the map's parent `sticky` div to `z-[5]` and ensure the toggle overlay inside it uses `z-30`. The content sheet stays at `z-10`.
+**Solution**:
+- Add a "Delete User" button in the customer detail dialog (`admin/Customers.tsx`) and cleaner detail dialog (`admin/Cleaners.tsx`).
+- Deletion calls a new edge function `delete-user` that uses the service role key to delete the auth user (which cascades to profiles via trigger). For cleaners, also delete the cleaner record.
+- Add RLS policy for admin DELETE on `profiles` and `cleaners` tables via migration.
 
-**Files**: `src/pages/admin/Dashboard.tsx`
-
----
-
-## Phase 5: Admin Customers & Cleaners Pages -- Mobile-Friendly Redesign
-
-**Problem**: Admin can't see customer list properly; needs filters and better mobile UI. Cleaner page needs ranking/filter capabilities.
-
-**Fix -- Customers**:
-- Replace the desktop `Table` component with mobile-friendly card layout
-- Each card shows: name, phone, booking count, total spent, most-used service
-- Add filter/sort options: by bookings count, total spent, join date
-- Profile drawer already exists -- enhance with service breakdown chart
-
-**Fix -- Cleaners**:
-- Replace `Table` with card layout matching customer style
-- Add filters: sort by rating, jobs completed, earnings
-- Show certification badge, rating stars, job count prominently
-- Add "Performance Rankings" section at top: Top Rated, Most Jobs, Needs Attention
-
-**Files**: `src/pages/admin/Customers.tsx`, `src/pages/admin/Cleaners.tsx`
+**Files**: `admin/Customers.tsx`, `admin/Cleaners.tsx`, new edge function `supabase/functions/delete-user/index.ts`, migration for DELETE policies
 
 ---
 
-## Phase 6: Admin Revenue Analytics
+## Phase 3: Automated Notifications System
 
-**Problem**: No per-area or per-service revenue breakdown.
+**Problem**: No automatic notifications are sent for booking lifecycle events.
 
-**Fix**: Enhance `admin/Dashboard.tsx` or create a dedicated section in `admin/Reports.tsx`:
-- Revenue by service type (bar chart)
-- Revenue by area/postcode (grouped)
-- Total revenue, average monthly revenue, month-over-month growth
-- Use existing booking data grouped by `service_name` and `address_postcode`
+**Solution**: Add notification insertion at key points in the existing client-side code:
 
-**Files**: `src/pages/admin/Reports.tsx`
+1. **Booking created** -- notify customer: "Your booking is confirmed, searching for a cleaner."
+2. **Cleaner assigned** -- notify customer: "Your cleaner {name} has been assigned!"
+3. **Cleaner en-route** -- notify customer: "Your cleaner is on the way!"
+4. **Job completed** -- notify customer: "Your cleaning is done! Rate your experience."
+5. **Cleaner declined** -- notify customer: "Your cleaner couldn't make it. Searching for a new one."
+6. **Leave replacement** -- notify customer: "Your regular cleaner is on leave. {replacement} will cover."
+7. **Upcoming booking reminder** -- create an edge function triggered by pg_cron that runs daily, finds bookings for tomorrow, and inserts reminder notifications.
 
----
+Insert notifications inline in `Jobs.tsx` mutations, `SearchingCleaner.tsx`, `ScheduleBooking.tsx`, and the new cron function.
 
-## Phase 7: End-to-End UI Audit & Consistency Pass
-
-- Login card z-index (already partially fixed, verify)
-- Logout from all roles navigates to `/` (verify admin, cleaner, customer)
-- Floating active booking tab clearance on all screens
-- Remove gray overlay on cleaner/admin maps (verify `bg-gradient` opacity)
-- Consistent typography, spacing, border-radius across all three role views
-
-**Files**: Multiple layout and page files
+**Files**: `cleaner/Jobs.tsx`, `customer/ScheduleBooking.tsx`, `customer/SearchingCleaner.tsx`, new edge function `supabase/functions/booking-reminders/index.ts`
 
 ---
 
-## Phase 8: Generate Final Audit Excel Report
+## Phase 4: Offer Pop-up for End Users
 
-After all fixes, generate a comprehensive Excel file with sheets:
-1. **Features Implemented** -- all features with status
-2. **Bugs Fixed** -- each bug, root cause, solution
-3. **Recommendations** -- future improvements for production readiness
+**Problem**: Admin-created offers show on home page but don't proactively alert users.
 
-**Output**: `/mnt/documents/CleanFit_Final_Audit.xlsx`
+**Solution**:
+- In `CustomerHome`, check for unclaimed active offers on mount. If found, show a modal/dialog with the offer details and a "Claim" button that inserts into `offer_claims`.
+- Track claimed offers so the pop-up only shows once per offer.
+
+**Files**: `customer/Home.tsx`
 
 ---
 
-## Summary of File Changes
+## Phase 5: Booking Flow Hardening
 
-| File | Change |
-|------|--------|
-| `AuthContext.tsx` | Fix name race condition with profile re-fetch |
-| `ProtectedRoute.tsx` | Add training completion gate for cleaners |
-| New: `CleanerTrainingGate.tsx` | Inline training wizard before dashboard access |
-| `SearchingCleaner.tsx` | Handle cleaner cancellation, add cancel reason selector |
-| `Jobs.tsx` | Fix decline mutation to single update |
-| `admin/Dashboard.tsx` | Fix map toggle z-index |
-| `admin/Customers.tsx` | Mobile card layout with filters |
-| `admin/Cleaners.tsx` | Card layout with ranking/filters |
-| `admin/Reports.tsx` | Revenue by service/area analytics |
-| Multiple UI files | Consistency audit fixes |
+Ensure end-to-end flows work correctly:
+
+1. **Recurring bookings**: In `ScheduleBooking.tsx`, when a recurring plan is selected, create the initial booking. A daily cron edge function generates future bookings based on frequency.
+2. **Cleaner leave auto-reassignment**: In `admin/Leaves.tsx`, when a leave is approved and the cleaner has active recurring bookings during the leave period, auto-assign a replacement cleaner and notify the customer.
+3. **Cancel from floater**: Already implemented in `ActiveBookingFloater.tsx`. Verify the cancel mutation updates booking status to `cancelled`.
+4. **Map cleaner movement**: The `SearchingCleaner.tsx` already subscribes to realtime booking changes. Enhance the "found" phase to poll `cleaner_locations` and update the map marker position for the assigned cleaner.
+
+**Files**: `admin/Leaves.tsx`, `SearchingCleaner.tsx`, `ActiveBookingFloater.tsx`, new edge function `supabase/functions/recurring-bookings/index.ts`
+
+---
+
+## Phase 6: UI/UX Consistency Audit
+
+- Verify all screens use consistent padding (`px-5`), border radius (`rounded-2xl/3xl`), and the same bottom navbar offset (`pb-24`).
+- Ensure no horizontal scroll on any screen (already have `overflow-x: hidden` globally).
+- Verify the coin system works: earn coins on rating, redeem on checkout.
+- Confirm the Refer a Mate share button triggers WhatsApp/copy link.
+- Verify before/after photo flow: cleaner uploads before photo to start, after photo to complete, customer sees both on rating screen.
+
+---
+
+## Database Changes
+
+1. **Migration**: Add DELETE policies on `profiles` and `cleaners` for admins.
+2. **Insert**: Seed admin user_role for the test admin account.
+3. **Edge functions**: `delete-user`, `booking-reminders`, `recurring-bookings`.
+
+## Summary of Files
+
+| Action | File | Purpose |
+|--------|------|---------|
+| Edit | `Login.tsx` | Block non-admin users from admin login |
+| Edit | `AuthContext.tsx` | Check admin role on login |
+| New | `admin/Admins.tsx` | Admin management page |
+| Edit | `AdminLayout.tsx` | Add Admins link to More menu |
+| Edit | `App.tsx` | Add /admin/admins route |
+| Edit | `admin/Customers.tsx` | Add delete user button |
+| Edit | `admin/Cleaners.tsx` | Add delete cleaner button |
+| Edit | `admin/Leaves.tsx` | Auto-reassignment on leave approval |
+| Edit | `cleaner/Jobs.tsx` | Insert notifications on status changes |
+| Edit | `customer/ScheduleBooking.tsx` | Insert booking notification |
+| Edit | `customer/SearchingCleaner.tsx` | Real-time cleaner location on map |
+| Edit | `customer/Home.tsx` | Offer claim pop-up |
+| New | Edge: `delete-user` | Delete auth user (service role) |
+| New | Edge: `booking-reminders` | Daily reminder notifications |
+| New | Edge: `recurring-bookings` | Generate recurring booking instances |
+| Migration | DELETE policies | Admin can delete profiles/cleaners |
 
