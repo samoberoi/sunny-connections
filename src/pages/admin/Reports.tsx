@@ -136,7 +136,7 @@ export default function AdminReports() {
         {/* Monthly Revenue Chart */}
         {monthlyData.length > 0 && (
           <div className="bg-foreground rounded-3xl p-5 mb-6">
-            <h3 className="font-display font-bold text-background/40 mb-4 text-sm">Monthly Revenue</h3>
+            <h3 className="font-display font-bold text-background/70 mb-4 text-sm">Monthly Revenue</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlyData}>
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
@@ -181,7 +181,7 @@ export default function AdminReports() {
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={byService} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                <Pie data={byService} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name.length > 12 ? name.slice(0, 12) + '…' : name} ${(percent * 100).toFixed(0)}%`} fontSize={9}>
                   {byService.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(v: number) => [`£${v}`, 'Revenue']} />

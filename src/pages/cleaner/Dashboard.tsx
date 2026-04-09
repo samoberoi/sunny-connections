@@ -134,7 +134,7 @@ export default function CleanerDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-display font-black text-white leading-none">{cleanerRecord?.name || user?.name || 'Cleaner'}</h1>
-                  <p className="text-[11px] text-white/50 font-medium mt-1">Dashboard</p>
+                  <p className="text-[11px] text-white/70 font-medium mt-1">Dashboard</p>
                 </div>
                 <motion.button whileTap={{ scale: 0.93 }} onClick={() => toggleAvailability.mutate()}
                   className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all shadow-md ${isOnline ? 'bg-primary text-primary-foreground' : 'bg-white/20 backdrop-blur-md text-white/70'}`}>
@@ -227,7 +227,7 @@ export default function CleanerDashboard() {
                           </div>
                           <span className="text-lg font-display font-black text-primary">£{b.total_cost}</span>
                         </div>
-                        <p className="text-[11px] text-background/40">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                        <p className="text-[11px] text-background/60">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
                         <div className="flex items-center justify-end text-[11px] text-primary font-bold mt-2">View & Accept <ChevronRight className="h-3 w-3 ml-0.5" /></div>
                       </motion.div>
                     );
