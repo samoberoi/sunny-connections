@@ -217,9 +217,22 @@ export default function ScheduleBooking() {
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
         address_city: 'London', total_cost: totalCost, property_type: propertyType, notes: notes || null,
-        tier, bedrooms, bathrooms,
+        tier, bedrooms, bathrooms, payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
+
+      // Deduct coins if used
+      if (useCoins && coinDiscount > 0 && user.id) {
+        const actualCoinsUsed = Math.min(coinDiscount, coinBalance);
+        await supabase.from('customer_coins').update({
+          balance: coinBalance - actualCoinsUsed,
+          total_spent: (coinData?.total_spent || 0) + actualCoinsUsed,
+        }).eq('customer_id', user.id);
+        await supabase.from('coin_transactions').insert({
+          customer_id: user.id, amount: actualCoinsUsed, type: 'spent',
+          description: 'Redeemed on booking', booking_id: booking.id,
+        });
+      }
 
       // Save address if new
       if (!selectedAddressId && address && postcode) {
