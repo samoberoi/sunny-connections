@@ -144,7 +144,7 @@ export default function CleanerJobs() {
   const upcomingJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['assigned', 'en-route'].includes(b.status));
   const todayStr = new Date().toISOString().split('T')[0];
   const upcomingToday = upcomingJobs.filter(b => b.date === todayStr);
-  const upcomingFuture = upcomingJobs.filter(b => b.date > todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  const upcomingFuture = upcomingJobs.filter(b => b.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
   const filteredUpcoming = upcomingFilter === 'today' ? upcomingToday : upcomingFuture;
   const activeJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['otp-verified', 'in-progress'].includes(b.status));
   const myJobs = [...upcomingJobs, ...activeJobs];
