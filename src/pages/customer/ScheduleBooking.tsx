@@ -157,7 +157,9 @@ export default function ScheduleBooking() {
   const sizeMultiplier = propertySizes.find(s => s.value === propertySize)?.multiplier || 1;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
   const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (serviceSurcharge * duration);
-  const preCoinCost = Math.round(subtotal * (1 - discount / 100));
+  const afterFreqDiscount = Math.round(subtotal * (1 - discount / 100));
+  const afterCoupon = couponDiscount > 0 ? Math.round(afterFreqDiscount * (1 - couponDiscount / 100)) : afterFreqDiscount;
+  const preCoinCost = afterCoupon;
   const coinBalance = coinData?.balance || 0;
   const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0;
   const coinPoundValue = Math.floor(coinDiscount / 10);
