@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
+import ActiveOffers from '@/components/ActiveOffers';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -616,15 +617,16 @@ export default function ScheduleBooking() {
                   </motion.button>
                 )}
 
-                {/* Coupon Code */}
-                <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
+                {/* Active Offers */}
+                <ActiveOffers onApplyOffer={(discount) => setCouponDiscount(discount)} />
 
-                {/* Referral Code */}
-                <div className="bg-card rounded-3xl p-4 mb-4 shadow-soft border border-border">
-                  <h3 className="font-display font-bold text-foreground text-xs mb-2 flex items-center gap-2">
-                    <Tag className="h-3.5 w-3.5" strokeWidth={1.5} /> Referral Code (optional)
-                  </h3>
-                  <Input placeholder="Enter referral code" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                {/* Coupon / Referral combined */}
+                <div className="bg-card rounded-3xl p-4 shadow-soft border border-border space-y-2">
+                  <h4 className="font-display font-bold text-foreground text-xs flex items-center gap-2">
+                    <Tag className="h-3.5 w-3.5" strokeWidth={1.5} /> Promo / Referral Code
+                  </h4>
+                  <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
+                  <Input placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
                     className="h-11 rounded-2xl border-border bg-background text-sm font-mono uppercase" />
                 </div>
 

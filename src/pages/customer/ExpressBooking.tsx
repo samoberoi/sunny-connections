@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Sparkles, Home, MapPin, ChevronRight, Bed, Locate, CheckCircle2, UtensilsCrossed, ShowerHead, Wind, WashingMachine, Brush, Sofa, Trash2 } from 'lucide-react';
+import { Zap, Sparkles, Home, MapPin, ChevronRight, Bed, Locate, CheckCircle2, UtensilsCrossed, ShowerHead, Wind, WashingMachine, Brush, Sofa, Trash2, Tag, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -13,6 +13,7 @@ import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useServicesByMode } from '@/hooks/useServices';
+import ActiveOffers from '@/components/ActiveOffers';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -210,7 +211,7 @@ export default function ExpressBooking() {
             </motion.section>
           )}
 
-          {/* Payment & Referral */}
+          {/* Payment & Offers */}
           {selected && service && (
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 mb-6">
               <h3 className="font-display font-bold text-foreground text-sm">Payment Method</h3>
@@ -222,8 +223,19 @@ export default function ExpressBooking() {
                   </button>
                 ))}
               </div>
-              <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
-              <Input placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())} className="h-12 rounded-2xl border-2 border-border bg-card text-sm" />
+
+              {/* Active Offers */}
+              <ActiveOffers onApplyOffer={(discount) => setCouponDiscount(discount)} />
+
+              {/* Coupon / Referral combined */}
+              <div className="bg-card rounded-3xl p-4 border border-border space-y-2">
+                <h4 className="font-display font-bold text-foreground text-xs flex items-center gap-2">
+                  <Tag className="h-3.5 w-3.5" strokeWidth={1.5} /> Promo / Referral Code
+                </h4>
+                <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
+                <Input placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                  className="h-11 rounded-2xl border-border bg-background text-sm font-mono uppercase" />
+              </div>
             </motion.section>
           )}
 
