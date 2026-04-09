@@ -4,18 +4,39 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import AdminLayout from '@/components/layout/AdminLayout';
 import StarRating from '@/components/StarRating';
 import EmptyState from '@/components/EmptyState';
-import { UserCheck, Briefcase, PoundSterling, CalendarOff, Star, ShieldCheck, ChevronRight, Trophy, AlertTriangle } from 'lucide-react';
+import { UserCheck, Briefcase, PoundSterling, CalendarOff, Star, ShieldCheck, ChevronRight, Trophy, AlertTriangle, Trash2 } from 'lucide-react';
 import { useCleaners } from '@/hooks/useCleaners';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function AdminCleaners() {
   const { data: cleaners = [] } = useCleaners();
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('rating');
+
+  const deleteCleaner = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cleaners'] });
+      setSelectedId(null);
+      toast.success('Cleaner deleted');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['admin-cleaner-bookings'],
@@ -181,6 +202,30 @@ export default function AdminCleaners() {
                     <p className="text-xs font-bold text-foreground mb-2">Specialisations</p>
                     <div className="flex flex-wrap gap-1.5">
                       {selected.specialisations.map((s: string) => (
+                        <Badge key={s} className="rounded-full text-[10px] bg-primary/15 text-foreground border-0">{s}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selected.user_id && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/20 mt-2">
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Cleaner
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="rounded-3xl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="font-display font-bold">Delete this cleaner?</AlertDialogTitle>
+                        <AlertDialogDescription>This permanently removes the cleaner and their account.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground" onClick={() => deleteCleaner.mutate(selected.user_id!)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
                         <Badge key={s} className="rounded-full text-[10px] bg-primary/15 text-foreground border-0">{s}</Badge>
                       ))}
                     </div>
