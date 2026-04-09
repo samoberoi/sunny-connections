@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar } from 'lucide-react';
+import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar, Pencil, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 function CleanerJobHistory({ cleanerId }: { cleanerId: string }) {
@@ -63,8 +65,14 @@ function CleanerJobHistory({ cleanerId }: { cleanerId: string }) {
 }
 
 export default function CleanerProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const { data: cleaner } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
@@ -85,6 +93,35 @@ export default function CleanerProfile() {
     }
   };
 
+  const startEdit = () => {
+    setEditFirstName(cleaner?.first_name || user?.name?.split(' ')[0] || '');
+    setEditLastName(cleaner?.last_name || user?.name?.split(' ').slice(1).join(' ') || '');
+    setEditName(user?.name || '');
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
+      await supabase.from('profiles').update({ name: fullName }).eq('user_id', user.id);
+      await supabase.from('cleaners').update({
+        name: fullName,
+        first_name: editFirstName.trim(),
+        last_name: editLastName.trim(),
+      }).eq('user_id', user.id);
+      await refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ['my-cleaner-record'] });
+      toast.success('Profile updated!');
+      setEditing(false);
+    } catch {
+      toast.error('Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <CleanerLayout>
       <PageTransition>
@@ -95,7 +132,12 @@ export default function CleanerProfile() {
           </div>
 
           {/* Profile card */}
-          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center">
+          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center relative">
+            {!editing && (
+              <button onClick={startEdit} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-accent flex items-center justify-center">
+                <Pencil className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+              </button>
+            )}
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="w-20 h-20 rounded-full bg-foreground mx-auto mb-3 flex items-center justify-center text-background font-bold text-2xl relative">
               {user?.name?.[0] || 'C'}
@@ -105,17 +147,41 @@ export default function CleanerProfile() {
                 </div>
               )}
             </motion.div>
-            <h2 className="text-2xl font-display font-black text-foreground">{user?.name}</h2>
-            {cleaner && (
-              <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                <Star className="h-4 w-4 text-primary" strokeWidth={2} fill="hsl(78, 85%, 65%)" />
-                <span className="text-base font-bold text-foreground">{cleaner.rating}</span>
-                <span className="text-xs text-muted-foreground">({cleaner.review_count})</span>
+
+            {editing ? (
+              <div className="space-y-3 mt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="First name" value={editFirstName} onChange={e => setEditFirstName(e.target.value)} className="h-11 rounded-xl text-sm" />
+                  <Input placeholder="Last name" value={editLastName} onChange={e => setEditLastName(e.target.value)} className="h-11 rounded-xl text-sm" />
+                </div>
+                <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+                  <Smartphone className="h-3.5 w-3.5" strokeWidth={1.5} /> {user?.phone}
+                  <span className="text-[9px] text-muted-foreground/50 ml-1">(cannot change)</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => setEditing(false)} variant="outline" size="sm" className="flex-1 rounded-full">
+                    <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                  </Button>
+                  <Button onClick={saveEdit} disabled={saving || !editFirstName.trim()} size="sm" className="flex-1 rounded-full">
+                    <Save className="h-3.5 w-3.5 mr-1" /> {saving ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
               </div>
+            ) : (
+              <>
+                <h2 className="text-2xl font-display font-black text-foreground">{user?.name}</h2>
+                {cleaner && (
+                  <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                    <Star className="h-4 w-4 text-primary" strokeWidth={2} fill="hsl(78, 85%, 65%)" />
+                    <span className="text-base font-bold text-foreground">{cleaner.rating}</span>
+                    <span className="text-xs text-muted-foreground">({cleaner.review_count})</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mt-1">
+                  <Smartphone className="h-3.5 w-3.5" strokeWidth={1.5} /> {user?.phone}
+                </div>
+              </>
             )}
-            <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mt-1">
-              <Smartphone className="h-3.5 w-3.5" strokeWidth={1.5} /> {user?.phone}
-            </div>
           </div>
 
           {/* Certification Card */}

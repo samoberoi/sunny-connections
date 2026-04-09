@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -57,6 +57,7 @@ export default function ActiveBookingFloater() {
   if (!activeBooking) return null;
 
   const label = statusLabels[activeBooking.status] || activeBooking.status;
+  const isInProgress = activeBooking.status === 'in-progress';
 
   const handleCancel = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,15 +67,25 @@ export default function ActiveBookingFloater() {
     setExpanded(false);
   };
 
+  const handleTap = () => {
+    // Single tap navigates to active booking
+    navigate(
+      activeBooking.status === 'pending'
+        ? '/searching-cleaner'
+        : '/active-booking',
+      { state: { bookingId: activeBooking.id } }
+    );
+  };
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 20, opacity: 0 }}
-        className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 w-auto max-w-[280px]"
+        className="fixed bottom-[88px] right-4 z-40"
       >
-        <motion.div className="flex flex-col items-center gap-2">
+        <motion.div className="flex flex-col items-end gap-2">
           {/* Cancel button when expanded */}
           <AnimatePresence>
             {expanded && (
@@ -90,21 +101,29 @@ export default function ActiveBookingFloater() {
             )}
           </AnimatePresence>
 
-          {/* Main pill */}
+          {/* Main floating button */}
           <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setExpanded(!expanded)}
-            onDoubleClick={() => navigate(
-              activeBooking.status === 'pending'
-                ? '/searching-cleaner'
-                : '/active-booking',
-              { state: { bookingId: activeBooking.id } }
-            )}
-            className="bg-primary rounded-full px-5 py-2.5 flex items-center gap-2 shadow-elevated"
+            whileTap={{ scale: 0.93 }}
+            onClick={handleTap}
+            onContextMenu={(e) => { e.preventDefault(); setExpanded(!expanded); }}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-elevated relative ${
+              isInProgress ? 'bg-primary' : 'bg-primary'
+            }`}
           >
-            <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse shrink-0" />
-            <p className="text-xs font-bold text-primary-foreground whitespace-nowrap">{label}</p>
+            {/* Pulsing ring */}
+            <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
+            
+            {isInProgress ? (
+              <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" strokeWidth={2} />
+            ) : (
+              <Sparkles className="h-6 w-6 text-primary-foreground" strokeWidth={2} />
+            )}
           </motion.button>
+          
+          {/* Status label */}
+          <div className="bg-foreground/90 backdrop-blur-md text-background text-[10px] font-bold px-3 py-1 rounded-full shadow-sm max-w-[160px] truncate">
+            {label}
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

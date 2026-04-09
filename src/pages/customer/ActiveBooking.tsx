@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CircleCheck, Circle, MapPin, Clock, Phone, MessageCircle, Navigation, Timer } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CircleCheck, Circle, MapPin, Clock, Phone, MessageCircle, Navigation, Timer, Star, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
@@ -24,7 +24,8 @@ export default function ActiveBooking() {
   const { state } = useLocation();
   const { user } = useAuth();
   const [liveStatus, setLiveStatus] = useState<string>('pending');
-  const [eta, setEta] = useState(12); // minutes
+  const [eta, setEta] = useState(12);
+  const [showComplete, setShowComplete] = useState(false);
 
   const { data: booking } = useQuery({
     queryKey: ['active-booking', state?.bookingId, user?.id],
@@ -42,6 +43,34 @@ export default function ActiveBooking() {
     enabled: !!(state?.bookingId || user?.id),
   });
 
+  // Fetch before/after photos for this booking
+  const { data: jobPhotos = [] } = useQuery({
+    queryKey: ['job-photos', booking?.id],
+    queryFn: async () => {
+      if (!booking?.id) return [];
+      const { data } = await supabase.from('job_photos').select('*').eq('booking_id', booking.id).order('uploaded_at', { ascending: true });
+      return data || [];
+    },
+    enabled: !!booking?.id,
+  });
+
+  // Fetch cleaner's phone from profiles table
+  const { data: cleanerProfile } = useQuery({
+    queryKey: ['cleaner-profile-phone', booking?.cleaner_id],
+    queryFn: async () => {
+      if (!booking?.cleaner_id) return null;
+      // Get the cleaner record to find user_id, then get profile for phone
+      const { data: cleanerRec } = await supabase.from('cleaners').select('user_id').eq('id', booking.cleaner_id).maybeSingle();
+      if (!cleanerRec?.user_id) return null;
+      const { data: profile } = await supabase.from('profiles').select('phone').eq('user_id', cleanerRec.user_id).maybeSingle();
+      return profile;
+    },
+    enabled: !!booking?.cleaner_id,
+  });
+
+  const beforePhoto = jobPhotos.find((p: any) => p.photo_type === 'before');
+  const afterPhoto = jobPhotos.find((p: any) => p.photo_type === 'after');
+
   useEffect(() => {
     if (booking) setLiveStatus(booking.status);
   }, [booking]);
@@ -54,11 +83,11 @@ export default function ActiveBooking() {
         (payload) => {
           const newStatus = (payload.new as any).status;
           setLiveStatus(newStatus);
-          // Auto-navigate to rating when cleaner marks complete (brief delay for UX)
           if (newStatus === 'completed') {
+            setShowComplete(true);
             setTimeout(() => {
               navigate('/rate-service', { state: { bookingId: booking.id } });
-            }, 2000);
+            }, 3000);
           }
         })
       .subscribe();
@@ -74,15 +103,43 @@ export default function ActiveBooking() {
         if (prev <= 1) { clearInterval(interval); return 1; }
         return prev - 1;
       });
-    }, 30000); // decrement every 30s for realism
+    }, 30000);
     return () => clearInterval(interval);
   }, [liveStatus]);
 
   const currentIdx = statuses.findIndex(s => s.key === liveStatus);
 
+  const handleCall = () => {
+    const phone = cleanerProfile?.phone;
+    if (phone) {
+      window.open(`tel:${phone}`, '_self');
+    } else {
+      alert('Phone number not available yet.');
+    }
+  };
+
   return (
     <CustomerLayout>
       <PageTransition>
+        {/* Completion celebration overlay */}
+        <AnimatePresence>
+          {showComplete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center px-8 text-center"
+            >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 12 }}
+                className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center mb-6">
+                <CircleCheck className="h-10 w-10 text-primary" strokeWidth={1.5} />
+              </motion.div>
+              <h2 className="text-2xl font-display font-black text-foreground mb-2">Cleaning Complete! ✨</h2>
+              <p className="text-sm text-muted-foreground">Taking you to rate your experience...</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="px-5 pt-6 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <BackButton to="/home" />
@@ -121,10 +178,10 @@ export default function ActiveBooking() {
                     </button>
                 </div>
                 <div className="flex gap-1.5">
-                  <button onClick={() => window.open('tel:+2222222222', '_self')} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                  <button onClick={handleCall} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
                     <Phone className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
-                  <button onClick={() => navigate('/chat', { state: { bookingId: booking?.id, otherName: booking?.cleaner_name } })} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
+                  <button onClick={() => navigate('/chat', { state: { bookingId: booking?.id, otherName: booking?.cleaner_name, otherPhone: cleanerProfile?.phone } })} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
                     <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
                   </button>
                 </div>
@@ -150,6 +207,29 @@ export default function ActiveBooking() {
               <p className="text-xs text-primary-foreground/60 mb-2 font-medium uppercase tracking-wider">Share code with cleaner</p>
               <div className="text-3xl font-display font-black tracking-[0.4em] text-primary-foreground">{booking.otp}</div>
             </motion.div>
+          )}
+
+          {/* Job Photos - Before/After */}
+          {(beforePhoto || afterPhoto) && (
+            <div className="mb-5">
+              <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-1.5">
+                <Image className="h-4 w-4" strokeWidth={1.5} /> Job Photos
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {beforePhoto && (
+                  <div className="rounded-2xl overflow-hidden border border-border">
+                    <img src={beforePhoto.photo_url} alt="Before cleaning" className="w-full h-28 object-cover" />
+                    <p className="text-[10px] font-bold text-center py-1.5 text-muted-foreground uppercase">Before</p>
+                  </div>
+                )}
+                {afterPhoto && (
+                  <div className="rounded-2xl overflow-hidden border border-border">
+                    <img src={afterPhoto.photo_url} alt="After cleaning" className="w-full h-28 object-cover" />
+                    <p className="text-[10px] font-bold text-center py-1.5 text-muted-foreground uppercase">After</p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Status timeline */}
@@ -178,7 +258,7 @@ export default function ActiveBooking() {
             })}
           </div>
 
-          {liveStatus === 'completed' && (
+          {liveStatus === 'completed' && !showComplete && (
             <Button onClick={() => navigate('/rate-service', { state: { bookingId: booking?.id } })} className="w-full h-14 font-semibold text-base rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
               Rate Service
             </Button>
