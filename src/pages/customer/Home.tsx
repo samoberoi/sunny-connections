@@ -5,14 +5,13 @@ import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift, Shield
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
-import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
 import SimulatedMap, { generateCleanerMarkers } from '@/components/SimulatedMap';
 import StreakProgress from '@/components/StreakProgress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCleaners } from '@/hooks/useCleaners';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 import CoinBalance from '@/components/CoinBalance';
 import { toast } from 'sonner';
@@ -65,16 +64,24 @@ function NotificationBadge() {
 }
 
 export default function CustomerHome() {
-  const [showCoupon, setShowCoupon] = useState(false);
   const [offerModal, setOfferModal] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: cleaners } = useCleaners();
+  const queryClient = useQueryClient();
 
+  // Realtime coin balance refresh
   useEffect(() => {
-    const seen = sessionStorage.getItem('coupon_shown');
-    if (!seen) { setShowCoupon(true); sessionStorage.setItem('coupon_shown', '1'); }
-  }, []);
+    if (!user?.id) return;
+    const channel = supabase
+      .channel('home-coin-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'coin_transactions', filter: `customer_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['coin-balance'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
+
 
   // Check for unclaimed offers
   const { data: unclaimedOffers = [] } = useQuery({
@@ -121,7 +128,6 @@ export default function CustomerHome() {
 
   return (
     <CustomerLayout>
-      <WelcomeCoupon open={showCoupon} onClose={() => setShowCoupon(false)} onClaim={() => setShowCoupon(false)} />
       
       {/* Offer claim pop-up */}
       <Dialog open={!!offerModal} onOpenChange={open => !open && setOfferModal(null)}>

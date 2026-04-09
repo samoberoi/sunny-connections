@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, ArrowLeft, Sparkles } from 'lucide-react';
@@ -14,6 +14,12 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const pathnameRole: UserRole | undefined = location.pathname.startsWith('/admin') ? 'admin' : location.pathname.startsWith('/cleaner') ? 'cleaner' : undefined;
   const roleParam = ((searchParams.get('role') as UserRole) || pathnameRole || 'customer') as UserRole;
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) localStorage.setItem('pending_referral_code', ref);
+  }, [searchParams]);
   const [step, setStep] = useState<'phone' | 'otp' | 'onboarding'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
