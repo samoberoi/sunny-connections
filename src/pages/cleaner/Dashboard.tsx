@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { playNotificationSound } from '@/lib/notificationSound';
 import { PoundSterling, CalendarDays, Clock, Zap, Briefcase, ChevronRight, ToggleLeft, ToggleRight, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +69,38 @@ export default function CleanerDashboard() {
   const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
   const weekEarnings = bookings.filter(b => b.status === 'completed' && new Date(b.date) >= weekStart).reduce((s, b) => s + Number(b.total_cost), 0);
   const isOnline = cleanerRecord?.available;
+
+  // Daily reminder: check for tomorrow's jobs and alert cleaner
+  const reminderShown = useRef(false);
+  useEffect(() => {
+    if (reminderShown.current || !bookings.length) return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const tomorrowJobs = bookings.filter(b => b.date === tomorrowStr && ['assigned', 'en-route'].includes(b.status));
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayJobs = bookings.filter(b => b.date === todayStr && ['assigned', 'en-route', 'otp-verified', 'in-progress'].includes(b.status));
+
+    if (tomorrowJobs.length > 0) {
+      reminderShown.current = true;
+      setTimeout(() => {
+        playNotificationSound();
+        toast.info(`📋 You have ${tomorrowJobs.length} job${tomorrowJobs.length > 1 ? 's' : ''} scheduled for tomorrow!`, {
+          duration: 6000,
+          description: tomorrowJobs.map(j => `${j.service_name} at ${j.time}`).join(' · '),
+        });
+      }, 1500);
+    } else if (todayJobs.length > 0) {
+      reminderShown.current = true;
+      setTimeout(() => {
+        playNotificationSound();
+        toast.info(`🔔 You have ${todayJobs.length} job${todayJobs.length > 1 ? 's' : ''} today!`, {
+          duration: 6000,
+          description: todayJobs.map(j => `${j.service_name} at ${j.time}`).join(' · '),
+        });
+      }, 1500);
+    }
+  }, [bookings]);
 
   // Filter pending jobs by cleaner specialisation
   const filteredPending = useMemo(() => {
