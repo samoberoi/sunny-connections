@@ -21,7 +21,7 @@ interface CleanerOnboardingProps {
 }
 
 export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps) {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -90,7 +90,12 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
         await supabase.from('cleaner_availability').insert(rows);
       }
 
-      toast.success('Profile set up! Let\'s get cleaning 🧹');
+      // Refresh profile so name updates immediately (fixes "Hi, New" issue)
+      await refreshProfile();
+
+      toast.success('Profile set up! Let\'s start training 📚');
+      // Don't call onComplete here - the ProtectedRoute will detect onboarding is done
+      // and then show CleanerTrainingGate since training is not complete yet
       onComplete();
     } catch { toast.error('Something went wrong'); }
     finally { setSaving(false); }
@@ -138,7 +143,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
 
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         <AnimatePresence mode="wait">
-          {/* Step 1: Personal Info */}
           {step === 1 && (
             <motion.div key="cs1" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -168,7 +172,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {/* Step 2: Experience & Interests */}
           {step === 2 && (
             <motion.div key="cs2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -208,7 +211,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {/* Step 3: Specialisations */}
           {step === 3 && (
             <motion.div key="cs3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -234,7 +236,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {/* Step 4: Availability */}
           {step === 4 && (
             <motion.div key="cs4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -282,7 +283,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {/* Step 5: Review */}
           {step === 5 && (
             <motion.div key="cs5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4 pt-4">
               <div className="flex items-center gap-3 mb-2">
