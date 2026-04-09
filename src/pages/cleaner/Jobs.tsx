@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat } from 'lucide-react';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
