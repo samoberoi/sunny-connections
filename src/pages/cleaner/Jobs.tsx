@@ -745,9 +745,7 @@ export default function CleanerJobs() {
           </Tabs>
         </div>
 
-        {viewerImage && (
-          <ImageViewer images={[viewerImage]} initialIndex={0} onClose={() => setViewerImage(null)} />
-        )}
+        <ImageViewer images={viewerImage ? [viewerImage] : []} currentIndex={0} open={!!viewerImage} onOpenChange={(open) => { if (!open) setViewerImage(null); }} />
       </PageTransition>
     </CleanerLayout>
   );
