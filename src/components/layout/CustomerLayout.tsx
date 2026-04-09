@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, CalendarDays, User, Bell } from 'lucide-react';
+import { Home, CalendarDays, User, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ActiveBookingFloater from '@/components/ActiveBookingFloater';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,8 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 const navItems = [
   { to: '/home', icon: Home, label: 'Home' },
+  { to: '/services', icon: Sparkles, label: 'Services' },
   { to: '/my-bookings', icon: CalendarDays, label: 'Bookings' },
-  { to: '/notifications', icon: Bell, label: 'Alerts' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 
