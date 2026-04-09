@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { LayoutDashboard, Briefcase, PoundSterling, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import LocationTracker from '@/components/LocationTracker';
 
 const navItems = [
   { to: '/cleaner', icon: LayoutDashboard, label: 'Home' },
@@ -16,6 +17,7 @@ export default function CleanerLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <LocationTracker />
       <div className="flex-1 pb-24">{children}</div>
       <nav className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-foreground rounded-[2rem] shadow-elevated">

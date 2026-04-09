@@ -72,6 +72,8 @@ export type Database = {
           service_id: string
           service_name: string
           status: Database["public"]["Enums"]["booking_status"]
+          subscription_end_date: string | null
+          subscription_status: string | null
           tier: string | null
           time: string
           total_cost: number
@@ -101,6 +103,8 @@ export type Database = {
           service_id: string
           service_name: string
           status?: Database["public"]["Enums"]["booking_status"]
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           tier?: string | null
           time: string
           total_cost: number
@@ -130,6 +134,8 @@ export type Database = {
           service_id?: string
           service_name?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           tier?: string | null
           time?: string
           total_cost?: number
@@ -194,6 +200,7 @@ export type Database = {
           end_date: string
           id: string
           reason: string | null
+          replacement_cleaner_id: string | null
           start_date: string
           status: string
         }
@@ -203,6 +210,7 @@ export type Database = {
           end_date: string
           id?: string
           reason?: string | null
+          replacement_cleaner_id?: string | null
           start_date: string
           status?: string
         }
@@ -212,6 +220,7 @@ export type Database = {
           end_date?: string
           id?: string
           reason?: string | null
+          replacement_cleaner_id?: string | null
           start_date?: string
           status?: string
         }
@@ -223,15 +232,58 @@ export type Database = {
             referencedRelation: "cleaners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cleaner_leaves_replacement_cleaner_id_fkey"
+            columns: ["replacement_cleaner_id"]
+            isOneToOne: false
+            referencedRelation: "cleaners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cleaner_locations: {
+        Row: {
+          cleaner_id: string
+          id: string
+          latitude: number
+          longitude: number
+          updated_at: string | null
+        }
+        Insert: {
+          cleaner_id: string
+          id?: string
+          latitude: number
+          longitude: number
+          updated_at?: string | null
+        }
+        Update: {
+          cleaner_id?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cleaner_locations_cleaner_id_fkey"
+            columns: ["cleaner_id"]
+            isOneToOne: true
+            referencedRelation: "cleaners"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cleaners: {
         Row: {
+          address_line1: string | null
+          address_postcode: string | null
           available: boolean
           avatar: string | null
           created_at: string
           experience: number
+          first_name: string | null
           id: string
+          last_name: string | null
           name: string
           rating: number
           review_count: number
@@ -241,11 +293,15 @@ export type Database = {
           verified: boolean
         }
         Insert: {
+          address_line1?: string | null
+          address_postcode?: string | null
           available?: boolean
           avatar?: string | null
           created_at?: string
           experience?: number
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name: string
           rating?: number
           review_count?: number
@@ -255,11 +311,15 @@ export type Database = {
           verified?: boolean
         }
         Update: {
+          address_line1?: string | null
+          address_postcode?: string | null
           available?: boolean
           avatar?: string | null
           created_at?: string
           experience?: number
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name?: string
           rating?: number
           review_count?: number
@@ -303,6 +363,39 @@ export type Database = {
           id?: string
           max_uses?: number
           used_count?: number
+        }
+        Relationships: []
+      }
+      customer_streaks: {
+        Row: {
+          booking_count: number | null
+          created_at: string | null
+          customer_id: string
+          free_clean_earned: boolean | null
+          free_clean_redeemed: boolean | null
+          id: string
+          month: string
+          streak_active: boolean | null
+        }
+        Insert: {
+          booking_count?: number | null
+          created_at?: string | null
+          customer_id: string
+          free_clean_earned?: boolean | null
+          free_clean_redeemed?: boolean | null
+          id?: string
+          month: string
+          streak_active?: boolean | null
+        }
+        Update: {
+          booking_count?: number | null
+          created_at?: string | null
+          customer_id?: string
+          free_clean_earned?: boolean | null
+          free_clean_redeemed?: boolean | null
+          id?: string
+          month?: string
+          streak_active?: boolean | null
         }
         Relationships: []
       }
@@ -458,6 +551,80 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      offer_claims: {
+        Row: {
+          claimed_at: string | null
+          customer_id: string
+          id: string
+          offer_id: string
+          redeemed: boolean | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          customer_id: string
+          id?: string
+          offer_id: string
+          redeemed?: boolean | null
+        }
+        Update: {
+          claimed_at?: string | null
+          customer_id?: string
+          id?: string
+          offer_id?: string
+          redeemed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_claims_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          active: boolean | null
+          claimed_count: number | null
+          code: string | null
+          created_at: string | null
+          description: string
+          discount_percent: number
+          id: string
+          max_claims: number | null
+          title: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          active?: boolean | null
+          claimed_count?: number | null
+          code?: string | null
+          created_at?: string | null
+          description: string
+          discount_percent: number
+          id?: string
+          max_claims?: number | null
+          title: string
+          valid_from: string
+          valid_until: string
+        }
+        Update: {
+          active?: boolean | null
+          claimed_count?: number | null
+          code?: string | null
+          created_at?: string | null
+          description?: string
+          discount_percent?: number
+          id?: string
+          max_claims?: number | null
+          title?: string
+          valid_from?: string
+          valid_until?: string
         }
         Relationships: []
       }
