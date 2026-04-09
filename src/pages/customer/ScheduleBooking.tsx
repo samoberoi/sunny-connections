@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Home, Clock, MapPin, CalendarDays, Repeat, ChevronLeft, ChevronRight,
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
-  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate
+  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate, CreditCard, Banknote, Smartphone, Coins, Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useCoinBalance } from '@/components/CoinBalance';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -96,7 +97,12 @@ export default function ScheduleBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [referralCode, setReferralCode] = useState('');
+  const [useCoins, setUseCoins] = useState(false);
   const totalSteps = 6;
+
+  const { data: coinData } = useCoinBalance();
 
   // Fetch saved addresses
   const { data: savedAddresses = [] } = useQuery({
@@ -152,7 +158,11 @@ export default function ScheduleBooking() {
   const bathroomSurcharge = Math.max(0, bathrooms - 1) * 5;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
   const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (bathroomSurcharge * duration) + (serviceSurcharge * duration);
-  const totalCost = Math.round(subtotal * (1 - discount / 100));
+  const preCoinCost = Math.round(subtotal * (1 - discount / 100));
+  const coinBalance = coinData?.balance || 0;
+  const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0; // max coins that make sense (10 coins = £1)
+  const coinPoundValue = Math.floor(coinDiscount / 10);
+  const totalCost = Math.max(0, preCoinCost - coinPoundValue);
   const selectedNames = selectedServiceDetails.map(s => s.name).join(', ');
 
   // Service-specific questions for selected services
@@ -207,9 +217,22 @@ export default function ScheduleBooking() {
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
         address_city: 'London', total_cost: totalCost, property_type: propertyType, notes: notes || null,
-        tier, bedrooms, bathrooms,
+        tier, bedrooms, bathrooms, payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
+
+      // Deduct coins if used
+      if (useCoins && coinDiscount > 0 && user.id) {
+        const actualCoinsUsed = Math.min(coinDiscount, coinBalance);
+        await supabase.from('customer_coins').update({
+          balance: coinBalance - actualCoinsUsed,
+          total_spent: (coinData?.total_spent || 0) + actualCoinsUsed,
+        }).eq('customer_id', user.id);
+        await supabase.from('coin_transactions').insert({
+          customer_id: user.id, amount: actualCoinsUsed, type: 'spent',
+          description: 'Redeemed on booking', booking_id: booking.id,
+        });
+      }
 
       // Save address if new
       if (!selectedAddressId && address && postcode) {
@@ -552,6 +575,56 @@ export default function ScheduleBooking() {
                   </div>
                 </div>
 
+                {/* Payment Method */}
+                <div className="bg-card rounded-3xl p-5 mb-4 shadow-soft border border-border">
+                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" strokeWidth={1.5} /> Payment Method
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'card', label: 'Card', icon: CreditCard },
+                      { value: 'online', label: 'Online', icon: Smartphone },
+                      { value: 'cash', label: 'Cash', icon: Banknote },
+                    ].map(pm => (
+                      <motion.button key={pm.value} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(pm.value)}
+                        className={`py-3 rounded-2xl text-xs font-bold flex flex-col items-center gap-1.5 border transition-all ${
+                          paymentMethod === pm.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                        }`}>
+                        <pm.icon className="h-4 w-4" strokeWidth={1.5} />
+                        {pm.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CleanFit Coins */}
+                {coinBalance > 0 && (
+                  <motion.button initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    onClick={() => setUseCoins(!useCoins)}
+                    className={`w-full text-left rounded-3xl p-4 mb-4 flex items-center gap-3 border transition-all ${
+                      useCoins ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                    }`}>
+                    <Coins className="h-5 w-5 text-amber-600 shrink-0" strokeWidth={1.5} />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-foreground">Use CleanFit Coins</p>
+                      <p className="text-[10px] text-muted-foreground">{coinBalance} coins = £{(coinBalance / 10).toFixed(2)} discount</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useCoins ? 'bg-primary border-primary' : 'border-border'}`}>
+                      {useCoins && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={2} />}
+                    </div>
+                  </motion.button>
+                )}
+
+                {/* Referral Code */}
+                <div className="bg-card rounded-3xl p-4 mb-4 shadow-soft border border-border">
+                  <h3 className="font-display font-bold text-foreground text-xs mb-2 flex items-center gap-2">
+                    <Tag className="h-3.5 w-3.5" strokeWidth={1.5} /> Referral Code (optional)
+                  </h3>
+                  <Input placeholder="Enter referral code" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                    className="h-11 rounded-2xl border-border bg-background text-sm font-mono uppercase" />
+                </div>
+
+                {/* Price Breakdown */}
                 <div className="bg-foreground rounded-3xl p-5 mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-background/50">Base rate</span>
@@ -587,6 +660,12 @@ export default function ScheduleBooking() {
                       <span className="text-primary">-{discount}%</span>
                     </div>
                   )}
+                  {useCoins && coinPoundValue > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">🪙 Coins ({coinDiscount})</span>
+                      <span className="text-primary">-£{coinPoundValue}</span>
+                    </div>
+                  )}
                   <div className="border-t border-background/20 mt-2 pt-2 flex justify-between font-display font-black text-2xl">
                     <span className="text-background">Total</span>
                     <span className="text-primary">£{totalCost}</span>
@@ -594,7 +673,7 @@ export default function ScheduleBooking() {
                 </div>
 
                 <Button onClick={handleBook} disabled={submitting} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
-                  {submitting ? 'Booking...' : 'Confirm & Find Cleaner'} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
+                  {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
             )}

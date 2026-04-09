@@ -13,6 +13,7 @@ import { useCleaners } from '@/hooks/useCleaners';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
+import CoinBalance from '@/components/CoinBalance';
 
 function ActiveOffersBanner() {
   const navigate = useNavigate();
@@ -131,6 +132,9 @@ export default function CustomerHome() {
                 <p className="text-[10px] text-background/40 mt-1">Instant</p>
               </motion.button>
             </motion.div>
+
+            {/* CleanFit Coins */}
+            <CoinBalance />
 
             {/* Streak Progress */}
             <StreakProgress />
