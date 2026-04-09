@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Settings, Tag, BarChart3, CalendarOff } from 'lucide-react';
+import { NavLink as RouterNavLink, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, CalendarDays, Users, UserCheck, GraduationCap, Settings, Tag, BarChart3, CalendarOff, LogOut } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -20,6 +21,8 @@ function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -50,6 +53,15 @@ function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <div className="mt-auto p-4">
+          <button
+            onClick={async () => { await logout(); navigate('/login'); }}
+            className={`flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 text-destructive/70 hover:bg-destructive/10 hover:text-destructive w-full`}
+          >
+            <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+            {!collapsed && <span className="text-sm font-medium">Log out</span>}
+          </button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

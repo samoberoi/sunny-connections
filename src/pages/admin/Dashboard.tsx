@@ -1,18 +1,40 @@
-import { useMemo, useState } from 'react';
-import { PoundSterling, Users, CalendarDays, UserPlus, TrendingUp, TrendingDown, MapPin } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { PoundSterling, Users, CalendarDays, UserPlus, TrendingUp, TrendingDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import SimulatedMap, { generateCleanerMarkers, generateClientMarkers } from '@/components/SimulatedMap';
 
 export default function AdminDashboard() {
   const [mapView, setMapView] = useState<'requests' | 'cleaners'>('requests');
+  const queryClient = useQueryClient();
 
   const { data: bookings = [] } = useQuery({ queryKey: ['admin-bookings'], queryFn: async () => { const { data } = await supabase.from('bookings').select('*'); return data || []; } });
   const { data: cleaners = [] } = useQuery({ queryKey: ['admin-cleaners'], queryFn: async () => { const { data } = await supabase.from('cleaners').select('*'); return data || []; } });
   const { data: enrolments = [] } = useQuery({ queryKey: ['admin-enrolments'], queryFn: async () => { const { data } = await supabase.from('enrolment_applications').select('*'); return data || []; } });
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cleaners' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-cleaners'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enrolment_applications' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-enrolments'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   const activeBookings = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const completedBookings = bookings.filter(b => b.status === 'completed');
@@ -47,70 +69,81 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-display font-black text-foreground">Dashboard</h1>
-          {totalRevenue > 0 && (
-            <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 ${growthPercent >= 0 ? 'bg-primary' : 'bg-destructive/10'}`}>
-              <GrowthIcon className={`h-3.5 w-3.5 ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`} strokeWidth={1.5} />
-              <span className={`text-xs font-bold ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`}>{growthPercent >= 0 ? '+' : ''}{growthPercent}%</span>
-            </div>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">Your cleaning empire</p>
-      </div>
+      <div className="relative min-h-[calc(100vh-4rem)]">
+        {/* Sticky map - top half, same style as customer view */}
+        <div className="sticky top-0 z-0">
+          <SimulatedMap markers={mapMarkers} height={380} className="">
+            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-background pointer-events-none" />
+          </SimulatedMap>
 
-      {/* Live Map */}
-      <div className="bg-card rounded-3xl overflow-hidden shadow-soft border border-border mb-6">
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary-ink" strokeWidth={1.5} />
-            <h3 className="font-display font-bold text-foreground text-sm">Live Map</h3>
+          {/* Header overlay */}
+          <div className="absolute top-0 left-0 right-0 px-6 pt-6 z-20">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-display font-black text-foreground leading-none">Dashboard</h1>
+                <p className="text-xs text-muted-foreground mt-1">Your cleaning empire</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {totalRevenue > 0 && (
+                  <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 ${growthPercent >= 0 ? 'bg-primary' : 'bg-destructive/10'}`}>
+                    <GrowthIcon className={`h-3.5 w-3.5 ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`} strokeWidth={1.5} />
+                    <span className={`text-xs font-bold ${growthPercent >= 0 ? 'text-primary-foreground' : 'text-destructive'}`}>{growthPercent >= 0 ? '+' : ''}{growthPercent}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Map toggle overlay */}
+          <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center">
+            <div className="flex bg-foreground/80 backdrop-blur-md rounded-full p-1 shadow-lg">
+              <button onClick={() => setMapView('requests')}
+                className={`text-[11px] font-bold px-4 py-2 rounded-full transition-all ${mapView === 'requests' ? 'bg-primary text-primary-foreground' : 'text-background/60'}`}>
+                Requests ({pendingBookings.length})
+              </button>
+              <button onClick={() => setMapView('cleaners')}
+                className={`text-[11px] font-bold px-4 py-2 rounded-full transition-all ${mapView === 'cleaners' ? 'bg-primary text-primary-foreground' : 'text-background/60'}`}>
+                Cleaners ({activeCleaners.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Live indicator */}
+          <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 bg-foreground/70 backdrop-blur-md rounded-full px-3 py-1.5">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          </div>
-          <div className="flex bg-muted rounded-full p-0.5">
-            <button onClick={() => setMapView('requests')}
-              className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-all ${mapView === 'requests' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
-              Requests
-            </button>
-            <button onClick={() => setMapView('cleaners')}
-              className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-all ${mapView === 'cleaners' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
-              Cleaners
-            </button>
+            <span className="text-[10px] font-bold text-background">LIVE</span>
           </div>
         </div>
-        <SimulatedMap markers={mapMarkers} height={220}>
-          <div className="absolute bottom-3 left-3 bg-foreground/80 backdrop-blur-sm rounded-2xl px-3 py-2">
-            <span className="text-[10px] font-bold text-background">
-              {mapView === 'requests' ? `${pendingBookings.length} pending requests` : `${activeCleaners.length} online cleaners`}
-            </span>
+
+        {/* Scrollable content over map */}
+        <div className="relative z-10 bg-background rounded-t-[2rem] -mt-8 pt-6 px-5 pb-8 min-h-[60vh]">
+          <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-5" />
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {stats.map((stat, i) => (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className="bg-card rounded-3xl p-4 shadow-soft border border-border">
+                <div className="w-10 h-10 rounded-2xl bg-primary/15 flex items-center justify-center mb-2">
+                  <stat.icon className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                </div>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl font-display font-black text-foreground mt-0.5">{stat.value}</p>
+              </motion.div>
+            ))}
           </div>
-        </SimulatedMap>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="bg-card rounded-3xl p-5 shadow-soft border border-border">
-            <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center mb-3">
-              <stat.icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-            </div>
-            <p className="text-xs text-muted-foreground font-bold">{stat.label}</p>
-            <p className="text-3xl font-display font-black text-foreground mt-1">{stat.value}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="bg-foreground rounded-3xl p-6">
-        <h3 className="font-display font-bold text-background/40 mb-4 text-sm">Revenue</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={revenueData}>
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
-            <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
-            <Tooltip formatter={(value: number) => [`£${value}`, 'Revenue']} contentStyle={{ background: '#1a1a1a', border: 'none', borderRadius: '16px', color: '#fff' }} />
-            <Bar dataKey="revenue" fill="hsl(78, 85%, 65%)" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+          <div className="bg-foreground rounded-3xl p-5">
+            <h3 className="font-display font-bold text-background/40 mb-4 text-sm">Revenue</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={revenueData}>
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} stroke="rgba(255,255,255,0.1)" />
+                <Tooltip formatter={(value: number) => [`£${value}`, 'Revenue']} contentStyle={{ background: '#1a1a1a', border: 'none', borderRadius: '16px', color: '#fff' }} />
+                <Bar dataKey="revenue" fill="hsl(78, 85%, 65%)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );
