@@ -192,7 +192,7 @@ export default function Chat() {
 
       {/* Input */}
       <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe">
-        <form onSubmit={(e) => { e.preventDefault(); sendMessage.mutate(); }} className="flex gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); sendMessage.mutate(undefined); }} className="flex gap-2">
           <Input
             value={message}
             onChange={e => setMessage(e.target.value)}
