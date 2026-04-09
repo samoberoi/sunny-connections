@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, PoundSterling, Navigation, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer } from 'lucide-react';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -14,6 +14,7 @@ import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import EmptyState from '@/components/EmptyState';
+import SimulatedMap from '@/components/SimulatedMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,24 @@ const isExpressBooking = (b: any) => {
   return name.includes('express') || name.includes('blitz');
 };
 
+// Explicit category mapping for specialization matching
+const CLEANING_SERVICES = ['deep clean', 'kitchen blitz', 'bathroom blitz', 'house cleaning', 'express clean', 'spring clean', 'end of tenancy'];
+const HOUSEKEEPING_SERVICES = ['housekeeping', 'laundry', 'iron', 'bed making', 'organisation', 'organizing'];
+
+function getServiceCategory(serviceName: string): 'cleaning' | 'housekeeping' | 'unknown' {
+  const s = serviceName.toLowerCase();
+  if (CLEANING_SERVICES.some(c => s.includes(c))) return 'cleaning';
+  if (HOUSEKEEPING_SERVICES.some(h => s.includes(h))) return 'housekeeping';
+  return 'unknown';
+}
+
+function getSpecCategory(spec: string): 'cleaning' | 'housekeeping' | 'unknown' {
+  const s = spec.toLowerCase();
+  if (s.includes('house cleaning') || s.includes('deep clean') || s.includes('kitchen') || s.includes('bathroom') || s.includes('tenancy') || s.includes('spring')) return 'cleaning';
+  if (s.includes('housekeeping') || s.includes('laundry') || s.includes('iron') || s.includes('bed') || s.includes('organis') || s.includes('organiz')) return 'housekeeping';
+  return 'unknown';
+}
+
 export default function CleanerJobs() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +56,6 @@ export default function CleanerJobs() {
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
-
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
@@ -63,19 +81,32 @@ export default function CleanerJobs() {
     enabled: !!cleanerRecord,
   });
 
-  // Reset photo state and derive hasArrived when switching jobs
+  // Fetch existing photos from DB when switching jobs (instead of resetting to null)
   useEffect(() => {
-    setBeforePhotoUrl(null);
-    setAfterPhotoUrl(null);
-    if (selectedBooking) {
-      const booking = allBookings.find((b: any) => b.id === selectedBooking);
-      if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
-        setHasArrived(true);
-      } else {
-        setHasArrived(false);
-      }
+    if (!selectedBooking) {
+      setBeforePhotoUrl(null);
+      setAfterPhotoUrl(null);
+      setHasArrived(false);
+      return;
     }
-  }, [selectedBooking, allBookings]);
+    const booking = allBookings.find((b: any) => b.id === selectedBooking);
+    if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
+      setHasArrived(true);
+    } else {
+      setHasArrived(false);
+    }
+    // Fetch existing photos from DB
+    const fetchPhotos = async () => {
+      const { data } = await supabase.from('job_photos').select('*').eq('booking_id', selectedBooking);
+      if (data) {
+        const before = data.find(p => p.photo_type === 'before');
+        const after = data.find(p => p.photo_type === 'after');
+        setBeforePhotoUrl(before?.photo_url || null);
+        setAfterPhotoUrl(after?.photo_url || null);
+      }
+    };
+    fetchPhotos();
+  }, [selectedBooking]); // Only depend on selectedBooking, NOT allBookings
 
   useEffect(() => {
     const channel = supabase
@@ -87,24 +118,15 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Filter available jobs by cleaner specialization
+  // Filter available jobs by cleaner specialization using strict category matching
   const available = allBookings.filter(b => {
     if (b.cleaner_id || b.status !== 'pending') return false;
-    // If cleaner has specialisations, only show matching jobs
     if (cleanerRecord?.specialisations?.length > 0) {
-      const jobService = (b.service_name || '').toLowerCase();
-      const matches = cleanerRecord.specialisations.some((spec: string) => 
-        jobService.includes(spec.toLowerCase()) || 
-        spec.toLowerCase().includes(jobService.split(' ')[0]?.toLowerCase())
-      );
-      // Also match by category: if cleaner has "House Cleaning" and job is a cleaning type
-      const categoryMatch = cleanerRecord.specialisations.some((spec: string) => {
-        const s = spec.toLowerCase();
-        if (s.includes('house cleaning') || s.includes('deep clean')) return jobService.includes('clean');
-        if (s.includes('housekeeping')) return jobService.includes('keeping') || jobService.includes('laundry') || jobService.includes('bed') || jobService.includes('organis');
-        return false;
-      });
-      return matches || categoryMatch;
+      const jobCategory = getServiceCategory(b.service_name || '');
+      const cleanerCategories = cleanerRecord.specialisations.map((s: string) => getSpecCategory(s));
+      // If job category is unknown, show to all. Otherwise must match.
+      if (jobCategory === 'unknown') return true;
+      return cleanerCategories.includes(jobCategory);
     }
     return true;
   });
@@ -129,7 +151,6 @@ export default function CleanerJobs() {
         cleaner_id: cleanerRecord.id, cleaner_name: user.name, status: 'assigned' as any,
       }).eq('id', bookingId);
       if (error) throw error;
-      // Notify customer
       if (booking?.customer_id) {
         await supabase.from('notifications').insert({
           user_id: booking.customer_id, title: 'Cleaner Assigned!',
@@ -148,7 +169,6 @@ export default function CleanerJobs() {
       const { data: booking } = await supabase.from('bookings').select('customer_id, customer_name').eq('id', id).single();
       const { error } = await supabase.from('bookings').update({ status: status as any }).eq('id', id);
       if (error) throw error;
-      // Notify customer based on status
       if (booking?.customer_id) {
         const msgs: Record<string, { title: string; message: string }> = {
           'en-route': { title: 'Cleaner On The Way!', message: `${user?.name || 'Your cleaner'} is heading to your location.` },
@@ -199,11 +219,29 @@ export default function CleanerJobs() {
     }
   };
 
+  const handleCallCustomer = async () => {
+    if (!selectedJob) return;
+    const { data: prof } = await supabase.from('profiles').select('phone').eq('user_id', selectedJob.customer_id).maybeSingle();
+    if (prof?.phone) window.open(`tel:${prof.phone}`, '_self');
+    else toast.error('Phone number not available');
+  };
+
+  const handleChatCustomer = async () => {
+    if (!selectedJob) return;
+    const { data: prof } = await supabase.from('profiles').select('phone').eq('user_id', selectedJob.customer_id).maybeSingle();
+    navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name, otherPhone: prof?.phone } });
+  };
+
   const PropIcon = selectedJob ? (propertyIcons[selectedJob.property_type] || Home) : Home;
 
   // ─── Job Detail View ───
   if (selectedJob) {
     const isExpress = isExpressBooking(selectedJob);
+    const mapMarkers = [
+      { id: 'self', x: 30, y: 25, label: 'You', type: 'self' as const },
+      { id: 'client', x: 60, y: 70, label: selectedJob.customer_name, type: 'client' as const, pulse: true },
+    ];
+
     return (
       <CleanerLayout>
         <PageTransition>
@@ -223,6 +261,19 @@ export default function CleanerJobs() {
               )}
             </div>
 
+            {/* Map with pathway */}
+            {['assigned', 'en-route'].includes(selectedJob.status) && (
+              <SimulatedMap markers={mapMarkers} height={180} className="rounded-2xl">
+                <svg className="absolute inset-0 w-full h-full z-[5] pointer-events-none">
+                  <line x1="30%" y1="25%" x2="60%" y2="70%" stroke="hsl(var(--primary))" strokeWidth="2" strokeDasharray="8 4" opacity="0.5" />
+                </svg>
+                <div className="absolute bottom-3 left-3 right-3 glass-card-elevated rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <Timer className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                  <span className="text-xs font-semibold text-foreground">ETA: ~12 min</span>
+                </div>
+              </SimulatedMap>
+            )}
+
             {/* Customer Card */}
             <div className="bg-muted/30 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-4">
@@ -234,7 +285,7 @@ export default function CleanerJobs() {
                   <p className="text-[11px] text-muted-foreground">{selectedJob.service_name}</p>
                 </div>
                 <Badge className={`text-[9px] rounded-lg font-medium border-0 capitalize ${
-                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary-ink' : 'bg-muted text-muted-foreground'
+                  selectedJob.status === 'in-progress' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                 }`}>
                   {selectedJob.status.replace('-', ' ')}
                 </Badge>
@@ -247,7 +298,7 @@ export default function CleanerJobs() {
                   { icon: Clock, text: `${selectedJob.date} at ${selectedJob.time} · ${selectedJob.duration}h` },
                 ].map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                    <Ic className="h-3.5 w-3.5 text-primary-ink shrink-0" strokeWidth={1.5} />
+                    <Ic className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={1.5} />
                     <span className="capitalize">{text}</span>
                   </div>
                 ))}
@@ -262,21 +313,16 @@ export default function CleanerJobs() {
 
               <div className="mt-4 pt-3 border-t border-border/50 flex justify-between items-center">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Earnings</span>
-                <span className="text-xl font-display font-black text-primary-ink">£{selectedJob.total_cost}</span>
+                <span className="text-xl font-display font-black text-primary">£{selectedJob.total_cost}</span>
               </div>
             </div>
 
             {/* Contact */}
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={async () => {
-                // Fetch customer's phone from profiles
-                const { data: prof } = await supabase.from('profiles').select('phone').eq('user_id', selectedJob.customer_id).maybeSingle();
-                if (prof?.phone) window.open(`tel:${prof.phone}`, '_self');
-                else toast.error('Phone number not available');
-              }} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
+              <Button variant="outline" size="sm" onClick={handleCallCustomer} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
                 <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name } })} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
+              <Button variant="outline" size="sm" onClick={handleChatCustomer} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
                 <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Chat
               </Button>
             </div>
@@ -285,7 +331,7 @@ export default function CleanerJobs() {
             <AnimatePresence mode="wait">
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
-                  <Navigation className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
+                  <Navigation className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
                   <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
                   <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm mb-2">
@@ -311,7 +357,6 @@ export default function CleanerJobs() {
                             cleaner_name: null,
                             cleaner_avatar: null,
                           }).eq('id', selectedJob.id);
-                          // Notify customer
                           await supabase.from('notifications').insert({
                             user_id: selectedJob.customer_id,
                             title: 'Cleaner Unavailable',
@@ -331,7 +376,7 @@ export default function CleanerJobs() {
               {selectedJob.status === 'en-route' && !hasArrived && (
                 <motion.div key="en-route-travel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Navigation className="h-5 w-5 text-primary-ink animate-pulse" strokeWidth={1.5} />
+                    <Navigation className="h-5 w-5 text-primary animate-pulse" strokeWidth={1.5} />
                   </div>
                   <p className="font-semibold text-foreground text-sm mb-1">On your way</p>
                   <p className="text-[11px] text-muted-foreground mb-4">Tap when you arrive</p>
@@ -363,7 +408,7 @@ export default function CleanerJobs() {
               {selectedJob.status === 'otp-verified' && (
                 <motion.div key="verified" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
                   <div className="bg-muted/30 rounded-2xl p-6 text-center">
-                    <CircleCheck className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
+                    <CircleCheck className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
                     <p className="font-semibold text-foreground text-sm mb-1">OTP Verified!</p>
                     <p className="text-[11px] text-muted-foreground mb-3">Take a "before" photo to start</p>
                   </div>
@@ -388,6 +433,12 @@ export default function CleanerJobs() {
                       <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                       <span className="font-semibold text-foreground text-sm">In Progress</span>
                     </div>
+                    {beforePhotoUrl && (
+                      <div className="mb-3 rounded-xl overflow-hidden border border-border">
+                        <img src={beforePhotoUrl} alt="Before" className="w-full h-24 object-cover" />
+                        <p className="text-[9px] font-bold text-center py-1 text-muted-foreground uppercase">Before Photo ✓</p>
+                      </div>
+                    )}
                     <Textarea placeholder="Completion notes..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border/50 mb-3 resize-none text-sm" />
                   </div>
                   <PhotoCapture
@@ -404,6 +455,17 @@ export default function CleanerJobs() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Cancel for en-route */}
+            {['en-route'].includes(selectedJob.status) && (
+              <Button variant="ghost" onClick={() => {
+                // Return to assigned
+                updateStatus.mutate({ id: selectedJob.id, status: 'assigned' });
+                setHasArrived(false);
+              }} className="w-full text-destructive font-semibold text-xs">
+                <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel Trip
+              </Button>
+            )}
           </div>
         </PageTransition>
       </CleanerLayout>
@@ -494,7 +556,6 @@ export default function CleanerJobs() {
             </TabsList>
 
             <TabsContent value="available">
-              {/* Express / Schedule toggle */}
               <div className="mb-4">
                 <ToggleGroup type="single" value={jobFilter} onValueChange={v => setJobFilter(v || 'all')} className="bg-muted/30 rounded-xl p-1 w-full">
                   <ToggleGroupItem value="all" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
