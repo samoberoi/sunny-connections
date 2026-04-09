@@ -196,8 +196,19 @@ export default function Register() {
             {step === 2 && (
               <>
                 <Input placeholder="Years of cleaning experience" type="number" value={form.experience || ''} onChange={e => updateForm('experience', parseInt(e.target.value) || 0)} className={inputClass} />
-                <Input placeholder="Specialisations (comma separated)" value={form.specialisations} onChange={e => updateForm('specialisations', e.target.value)} className={inputClass} />
-                <p className="text-xs text-muted-foreground">e.g. Deep cleaning, End of tenancy, Office cleaning</p>
+                <p className="text-xs font-bold text-muted-foreground mt-2 mb-1">Specialisations (select all that apply)</p>
+                <div className="flex flex-wrap gap-2">
+                  {allServices.map(svc => (
+                    <motion.button key={svc.id} whileTap={{ scale: 0.95 }}
+                      onClick={() => updateForm('selectedSpecs', form.selectedSpecs.includes(svc.name) ? form.selectedSpecs.filter((s: string) => s !== svc.name) : [...form.selectedSpecs, svc.name])}
+                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                        form.selectedSpecs.includes(svc.name) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                      }`}>
+                      {form.selectedSpecs.includes(svc.name) && <Check className="h-3 w-3" />}
+                      {svc.name}
+                    </motion.button>
+                  ))}
+                </div>
               </>
             )}
             {step === 3 && (
