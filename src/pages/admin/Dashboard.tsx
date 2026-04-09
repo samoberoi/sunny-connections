@@ -11,9 +11,9 @@ export default function AdminDashboard() {
   const [mapView, setMapView] = useState<'requests' | 'cleaners'>('requests');
   const queryClient = useQueryClient();
 
-  const { data: bookings = [] } = useQuery({ queryKey: ['admin-bookings'], queryFn: async () => { const { data } = await supabase.from('bookings').select('*'); return data || []; } });
-  const { data: cleaners = [] } = useQuery({ queryKey: ['admin-cleaners'], queryFn: async () => { const { data } = await supabase.from('cleaners').select('*'); return data || []; } });
-  const { data: enrolments = [] } = useQuery({ queryKey: ['admin-enrolments'], queryFn: async () => { const { data } = await supabase.from('enrolment_applications').select('*'); return data || []; } });
+  const { data: bookings = [] } = useQuery({ queryKey: ['admin-bookings'], queryFn: async () => { const { data } = await supabase.from('bookings').select('*').limit(1000); return data || []; } });
+  const { data: cleaners = [] } = useQuery({ queryKey: ['admin-cleaners'], queryFn: async () => { const { data } = await supabase.from('cleaners').select('*').limit(500); return data || []; } });
+  const { data: enrolments = [] } = useQuery({ queryKey: ['admin-enrolments'], queryFn: async () => { const { data } = await supabase.from('enrolment_applications').select('*').limit(500); return data || []; } });
 
   // Realtime subscriptions
   useEffect(() => {

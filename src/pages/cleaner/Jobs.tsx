@@ -38,11 +38,6 @@ export default function CleanerJobs() {
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
 
-  // Reset photo state when switching jobs
-  useEffect(() => {
-    setBeforePhotoUrl(null);
-    setAfterPhotoUrl(null);
-  }, [selectedBooking]);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
@@ -62,11 +57,25 @@ export default function CleanerJobs() {
   const { data: allBookings = [] } = useQuery({
     queryKey: ['cleaner-all-bookings', cleanerRecord?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(200);
       return data || [];
     },
     enabled: !!cleanerRecord,
   });
+
+  // Reset photo state and derive hasArrived when switching jobs
+  useEffect(() => {
+    setBeforePhotoUrl(null);
+    setAfterPhotoUrl(null);
+    if (selectedBooking) {
+      const booking = allBookings.find((b: any) => b.id === selectedBooking);
+      if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
+        setHasArrived(true);
+      } else {
+        setHasArrived(false);
+      }
+    }
+  }, [selectedBooking, allBookings]);
 
   useEffect(() => {
     const channel = supabase

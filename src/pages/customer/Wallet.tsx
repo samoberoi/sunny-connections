@@ -68,9 +68,9 @@ export default function Wallet() {
               <Info className="h-4 w-4 text-primary" /> How Coins Work
             </h3>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <li>• <strong>Earn 10 coins</strong> every time you rate a completed service</li>
+              <li>• <strong>Earn 1 coin</strong> for every £5 spent on a completed booking</li>
               <li>• <strong>Earn 50 coins</strong> when a referred friend completes their first booking</li>
-              <li>• <strong>Redeem coins</strong> at checkout for discounts (100 coins = £5 off)</li>
+              <li>• <strong>Redeem coins</strong> at checkout for discounts (10 coins = £1 off)</li>
             </ul>
           </div>
 

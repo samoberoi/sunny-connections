@@ -54,9 +54,11 @@ export default function ActiveBooking() {
         (payload) => {
           const newStatus = (payload.new as any).status;
           setLiveStatus(newStatus);
-          // Auto-navigate to rating when cleaner marks complete
+          // Auto-navigate to rating when cleaner marks complete (brief delay for UX)
           if (newStatus === 'completed') {
-            navigate('/rate-service', { state: { bookingId: booking.id } });
+            setTimeout(() => {
+              navigate('/rate-service', { state: { bookingId: booking.id } });
+            }, 2000);
           }
         })
       .subscribe();

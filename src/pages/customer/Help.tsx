@@ -12,7 +12,7 @@ const faqs = [
   { q: 'Can I cancel or reschedule?', a: 'You can cancel or reschedule any booking with status "Pending" or "Assigned" from the My Bookings page. Cancellations after the cleaner is en-route may incur a partial charge.' },
   { q: 'How is pricing calculated?', a: 'Pricing is based on the service type and duration. Each service has an hourly rate shown on the Services page. The total is calculated as rate × hours.' },
   { q: 'What is the CleanFit Guarantee?', a: 'We guarantee quality on every clean. If you\'re not satisfied, contact us within 24 hours and we\'ll arrange a free re-clean or full refund.' },
-  { q: 'How do CleanFit Coins work?', a: 'Earn coins by rating completed services (10 coins per rating) and referring friends. Coins can be redeemed for discounts on future bookings in the Wallet section.' },
+  { q: 'How do CleanFit Coins work?', a: 'Earn 1 coin for every £5 spent on completed bookings. Refer friends to earn 50 coins when they complete their first booking. Redeem coins at checkout — 10 coins = £1 off.' },
   { q: 'Are cleaners background-checked?', a: 'Yes! All CleanFit cleaners undergo DBS checks, reference verification, and complete our certified training programme before they can accept jobs.' },
   { q: 'What payment methods are accepted?', a: 'We accept debit/credit cards and cash payments. You can select your preferred method during checkout.' },
   { q: 'How do I refer a friend?', a: 'Go to your Profile page and use the "Refer a Mate" card. Share your unique link via WhatsApp or copy it. When your friend completes their first booking, you both earn rewards!' },

@@ -28,7 +28,7 @@ export default function AdminBookings() {
   const { data: bookings = [] } = useQuery({
     queryKey: ['admin-all-bookings'],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(500);
       return data || [];
     },
   });

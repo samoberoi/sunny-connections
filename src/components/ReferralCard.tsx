@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Gift, Copy, Share2, CircleCheck, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export default function ReferralCard() {
@@ -15,6 +17,22 @@ export default function ReferralCard() {
 
   const referralLink = `${window.location.origin}/login?ref=${referralCode}`;
   const shareText = `Use my referral code ${referralCode} to get 20% off your first clean with Clean Fit! 🧹✨ ${referralLink}`;
+
+  // Fetch referral stats: count bookings that used this user's referral code
+  const { data: referralStats } = useQuery({
+    queryKey: ['referral-stats', referralCode],
+    queryFn: async () => {
+      if (!user?.id) return { count: 0, credit: 0 };
+      const { data, count } = await supabase.from('bookings')
+        .select('id, total_cost', { count: 'exact' })
+        .eq('referral_code', referralCode)
+        .eq('status', 'completed');
+      const completedCount = count || 0;
+      // £10 credit per completed referral
+      return { count: completedCount, credit: completedCount * 10 };
+    },
+    enabled: !!user?.id,
+  });
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -78,12 +96,12 @@ export default function ReferralCard() {
 
       <div className="bg-primary/5 border-t border-primary/10 px-5 py-3">
         <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">Referrals made</span>
-          <span className="font-semibold text-foreground">0</span>
+          <span className="text-muted-foreground">Referrals completed</span>
+          <span className="font-semibold text-foreground">{referralStats?.count || 0}</span>
         </div>
         <div className="flex justify-between text-xs mt-1">
           <span className="text-muted-foreground">Credit earned</span>
-          <span className="font-semibold text-primary">£0.00</span>
+          <span className="font-semibold text-primary">£{(referralStats?.credit || 0).toFixed(2)}</span>
         </div>
       </div>
     </div>

@@ -41,6 +41,8 @@ export default function ExpressBooking() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [referralCode, setReferralCode] = useState('');
 
   const services = category ? expressServices[category] : [];
   const service = services.find(s => s.id === selected);
@@ -97,13 +99,15 @@ export default function ExpressBooking() {
     try {
       const now = new Date();
       const { data: dbServices } = await supabase.from('services').select('id, name');
-      const matchedService = dbServices?.find(s => s.name.toLowerCase().includes(service.name.toLowerCase().split(' ')[0]));
+      const matchedService = dbServices?.find(s => s.name.toLowerCase() === service.name.toLowerCase())
+        || dbServices?.find(s => s.name.toLowerCase().includes(service.name.toLowerCase()));
       const serviceId = matchedService?.id || dbServices?.[0]?.id;
       if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Express: ${service.name}`,
         date: now.toISOString().split('T')[0], time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.duration),
         recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: service.price, property_type: 'house',
+        payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
       navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.duration), address, postcode, totalCost: service.price, otp: booking.otp, isExpress: true } });
@@ -215,6 +219,22 @@ export default function ExpressBooking() {
             </motion.section>
           )}
 
+          {/* Payment & Referral */}
+          {selected && service && (
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 mb-6">
+              <h3 className="font-display font-bold text-foreground text-sm">Payment Method</h3>
+              <div className="flex gap-2">
+                {['card', 'online', 'cash'].map(m => (
+                  <button key={m} onClick={() => setPaymentMethod(m)}
+                    className={`flex-1 py-2.5 rounded-2xl text-xs font-bold border transition-all ${paymentMethod === m ? 'border-primary bg-primary/10 text-foreground' : 'border-border bg-card text-muted-foreground'}`}>
+                    {m === 'card' ? '💳 Card' : m === 'online' ? '📱 Online' : '💵 Cash'}
+                  </button>
+                ))}
+              </div>
+              <Input placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())} className="h-12 rounded-2xl border-2 border-border bg-card text-sm" />
+            </motion.section>
+          )}
+
           {/* Summary */}
           {selected && service && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -222,6 +242,10 @@ export default function ExpressBooking() {
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-background/50">{service.name}</span>
                   <span className="text-background">~{service.duration}h</span>
+                </div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-background/50">Payment</span>
+                  <span className="text-background capitalize">{paymentMethod}</span>
                 </div>
                 <div className="flex justify-between font-display font-black text-2xl">
                   <span className="text-background">Total</span>

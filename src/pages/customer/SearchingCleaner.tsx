@@ -27,7 +27,7 @@ export default function SearchingCleaner() {
   const [phase, setPhase] = useState<Phase>('searching');
   const [dots, setDots] = useState('');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [cancelReason, setCancelReason] = useState(cancelReasons[0]);
+  const [cancelReason, setCancelReason] = useState('');
   const [assignedCleaner, setAssignedCleaner] = useState<{ name: string; rating: number; review_count: number; experience: number; verified: boolean } | null>(null);
 
   const bookingId = state?.bookingId;

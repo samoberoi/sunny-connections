@@ -212,7 +212,8 @@ export default function ScheduleBooking() {
     try {
       // Match service by name from selected services
       const { data: dbServices } = await supabase.from('services').select('id, name');
-      const matchedService = dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase().split(' ')[0])));
+      const matchedService = dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase() === sel.name.toLowerCase())) 
+        || dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase())));
       const serviceId = matchedService?.id || dbServices?.[0]?.id;
       if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
