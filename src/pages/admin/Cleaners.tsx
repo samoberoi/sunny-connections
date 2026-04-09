@@ -225,12 +225,7 @@ export default function AdminCleaners() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                )}
-                        <Badge key={s} className="rounded-full text-[10px] bg-primary/15 text-foreground border-0">{s}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                )
               </div>
             )}
           </DialogContent>
