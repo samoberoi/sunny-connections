@@ -676,6 +676,7 @@ export default function ScheduleBooking() {
                   {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
+            )}
           </AnimatePresence>
 
           {step < 6 && (
