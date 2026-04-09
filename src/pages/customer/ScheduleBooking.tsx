@@ -221,6 +221,12 @@ export default function ScheduleBooking() {
       }).select().single();
       if (error) throw error;
 
+      // Notify customer: booking confirmed
+      await supabase.from('notifications').insert({
+        user_id: user.id, title: 'Booking Confirmed! 🎉',
+        message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
+      });
+
       // Deduct coins if used
       if (useCoins && coinDiscount > 0 && user.id) {
         const actualCoinsUsed = Math.min(coinDiscount, coinBalance);
