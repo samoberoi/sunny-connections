@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CircleCheck, MapPin, Clock, Phone, MessageCircle, Timer, Image, XCircle } from 'lucide-react';
+import ImageViewer from '@/components/ImageViewer';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
@@ -30,6 +31,8 @@ export default function ActiveBooking() {
   const [liveStatus, setLiveStatus] = useState<string>('pending');
   const [eta, setEta] = useState(12);
   const [showComplete, setShowComplete] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   const { data: booking } = useQuery({
     queryKey: ['active-booking', state?.bookingId, user?.id],
@@ -69,8 +72,9 @@ export default function ActiveBooking() {
     enabled: !!booking?.cleaner_id,
   });
 
-  const beforePhoto = jobPhotos.find((p: any) => p.photo_type === 'before');
-  const afterPhoto = jobPhotos.find((p: any) => p.photo_type === 'after');
+  const beforePhotos = jobPhotos.filter((p: any) => p.photo_type === 'before');
+  const afterPhotos = jobPhotos.filter((p: any) => p.photo_type === 'after');
+  const allPhotoUrls = jobPhotos.map((p: any) => p.photo_url);
 
   useEffect(() => {
     if (booking) setLiveStatus(booking.status);
@@ -229,25 +233,39 @@ export default function ActiveBooking() {
           )}
 
           {/* Job Photos */}
-          {(beforePhoto || afterPhoto) && (
+          {(beforePhotos.length > 0 || afterPhotos.length > 0) && (
             <div className="mb-4">
               <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-1.5">
                 <Image className="h-4 w-4" strokeWidth={1.5} /> Job Photos
               </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {beforePhoto && (
-                  <div className="rounded-2xl overflow-hidden border border-border">
-                    <img src={beforePhoto.photo_url} alt="Before cleaning" className="w-full h-28 object-cover" />
-                    <p className="text-[10px] font-bold text-center py-1.5 text-muted-foreground uppercase">Before</p>
+              {beforePhotos.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Before ({beforePhotos.length})</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {beforePhotos.map((p: any, i: number) => (
+                      <div key={p.id} className="shrink-0 rounded-xl overflow-hidden border border-border cursor-pointer"
+                        onClick={() => { setViewerIndex(allPhotoUrls.indexOf(p.photo_url)); setViewerOpen(true); }}>
+                        <img src={p.photo_url} alt={`Before ${i + 1}`} className="w-24 h-24 object-cover" />
+                      </div>
+                    ))}
                   </div>
-                )}
-                {afterPhoto && (
-                  <div className="rounded-2xl overflow-hidden border border-border">
-                    <img src={afterPhoto.photo_url} alt="After cleaning" className="w-full h-28 object-cover" />
-                    <p className="text-[10px] font-bold text-center py-1.5 text-muted-foreground uppercase">After</p>
+                </div>
+              )}
+              {afterPhotos.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">After ({afterPhotos.length})</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {afterPhotos.map((p: any, i: number) => (
+                      <div key={p.id} className="shrink-0 rounded-xl overflow-hidden border border-border cursor-pointer"
+                        onClick={() => { setViewerIndex(allPhotoUrls.indexOf(p.photo_url)); setViewerOpen(true); }}>
+                        <img src={p.photo_url} alt={`After ${i + 1}`} className="w-24 h-24 object-cover" />
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              <ImageViewer images={allPhotoUrls} currentIndex={viewerIndex} open={viewerOpen}
+                onOpenChange={setViewerOpen} onIndexChange={setViewerIndex} />
             </div>
           )}
 
