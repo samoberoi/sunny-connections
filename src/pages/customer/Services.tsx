@@ -1,6 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Search, Clock, ChevronRight, Sparkles, Home, ShowerHead, Truck, Brush, UtensilsCrossed, Wind, WashingMachine, Bed, Sofa, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import CustomerLayout from '@/components/layout/CustomerLayout';
+import PageTransition from '@/components/PageTransition';
+import BackButton from '@/components/BackButton';
+import { useServices } from '@/hooks/useServices';
+import { motion } from 'framer-motion';
 import { Search, Clock, ChevronRight, Sparkles, Home, ShowerHead, Truck, Brush } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
