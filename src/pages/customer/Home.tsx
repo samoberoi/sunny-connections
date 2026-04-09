@@ -13,6 +13,7 @@ import { useCleaners } from '@/hooks/useCleaners';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
+import CoinBalance from '@/components/CoinBalance';
 
 function ActiveOffersBanner() {
   const navigate = useNavigate();
