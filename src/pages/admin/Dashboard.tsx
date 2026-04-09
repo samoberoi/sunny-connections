@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Map toggle overlay */}
-          <div className="absolute bottom-6 left-0 right-0 z-30 flex justify-center">
+          <div className="absolute bottom-14 left-0 right-0 z-30 flex justify-center">
             <div className="flex bg-foreground/80 backdrop-blur-md rounded-full p-1 shadow-lg">
               <button onClick={() => setMapView('requests')}
                 className={`text-[11px] font-bold px-4 py-2 rounded-full transition-all ${mapView === 'requests' ? 'bg-primary text-primary-foreground' : 'text-background/60'}`}>
