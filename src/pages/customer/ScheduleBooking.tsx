@@ -329,7 +329,7 @@ export default function ScheduleBooking() {
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quick Details</p>
                         {serviceQuestionsToShow.map(svcId => {
                           const q = serviceQuestions[svcId];
-                          const svc = allServices.find(s => s.id === svcId);
+                          const svc = dbScheduledServices.find(s => s.id === svcId);
                           return (
                             <div key={svcId} className="bg-card border border-border rounded-2xl p-4">
                               <p className="text-xs font-bold text-foreground mb-2">{svc?.name}: {q.question}</p>
