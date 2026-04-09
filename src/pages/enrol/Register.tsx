@@ -41,13 +41,14 @@ export default function Register() {
 
   const [form, setForm] = useState<FormData>({
     fullName: '', dob: '', phone: '', email: '', postcode: '', rightToWork: '', idType: 'Passport',
-    experience: 0, specialisations: '',
+    experience: 0, selectedSpecs: [],
     ref1Name: '', ref1Phone: '', ref1Relation: '',
     ref2Name: '', ref2Phone: '', ref2Relation: '',
     dbsConsent: false, selectedDays: [], hours: '',
     sortCode: '', accountNumber: '', accountHolder: '',
     agreedTerms: false, agreedData: false,
   });
+  const { data: allServices = [] } = useServices();
 
   const updateForm = (field: keyof FormData, value: any) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -72,7 +73,7 @@ export default function Register() {
           phone: form.phone, email: form.email, postcode: form.postcode,
           right_to_work: form.rightToWork || 'UK Citizen', id_type: form.idType,
           experience: form.experience,
-          specialisations: form.specialisations.split(',').map(s => s.trim()).filter(Boolean),
+          specialisations: form.selectedSpecs,
           reference_contacts: [
             { name: form.ref1Name, phone: form.ref1Phone, relation: form.ref1Relation },
             { name: form.ref2Name, phone: form.ref2Phone, relation: form.ref2Relation },
