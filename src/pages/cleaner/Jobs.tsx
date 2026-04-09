@@ -240,9 +240,14 @@ export default function CleanerJobs() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-full">Keep</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground" onClick={() => {
-                          updateStatus.mutate({ id: selectedJob.id, status: 'pending' });
-                          supabase.from('bookings').update({ cleaner_id: null, cleaner_name: null, cleaner_avatar: null }).eq('id', selectedJob.id);
+                        <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground" onClick={async () => {
+                          await supabase.from('bookings').update({
+                            status: 'pending' as any,
+                            cleaner_id: null,
+                            cleaner_name: null,
+                            cleaner_avatar: null,
+                          }).eq('id', selectedJob.id);
+                          queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] });
                           setSelectedBooking(null);
                           toast.success('Job returned to pool');
                         }}>Decline</AlertDialogAction>
