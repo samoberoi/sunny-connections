@@ -71,7 +71,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background">
       {/* Lime header */}
-      <div className="bg-primary rounded-b-[2rem] px-6 pt-14 pb-24 relative">
+      <div className="bg-primary rounded-b-[2rem] px-6 pt-14 pb-28 relative">
         <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full bg-primary-foreground/10 border border-primary-foreground/10 flex items-center justify-center mb-6">
           <ArrowLeft className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
         </button>
@@ -86,7 +86,8 @@ export default function Login() {
         </h1>
       </div>
 
-      <div className="px-6 -mt-10">
+      {/* Card overlapping the header - higher z-index and more negative margin */}
+      <div className="px-6 -mt-16 relative z-20">
         <div className="bg-card rounded-3xl p-6 shadow-elevated border border-border">
           <AnimatePresence mode="wait">
             {step === 'phone' ? (
