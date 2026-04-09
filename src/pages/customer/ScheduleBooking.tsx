@@ -241,6 +241,17 @@ export default function ScheduleBooking() {
         }
       }
 
+      // Increment coupon used_count if applied
+      if (couponDiscount > 0) {
+        const storedCode = localStorage.getItem('claimed_coupon_code');
+        if (storedCode) {
+          const { data: couponData } = await supabase.from('coupons').select('used_count').eq('code', storedCode).maybeSingle();
+          if (couponData) {
+            await supabase.from('coupons').update({ used_count: (couponData.used_count || 0) + 1 }).eq('code', storedCode);
+          }
+        }
+      }
+
       await supabase.from('notifications').insert({
         user_id: user.id, title: 'Booking Confirmed! 🎉',
         message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
