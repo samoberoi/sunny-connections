@@ -29,7 +29,7 @@ const statusStyles: Record<string, string> = {
   cancelled: 'bg-destructive/10 text-destructive',
 };
 
-const cancelReasons = [
+const CANCEL_REASONS = [
   'Change of plans',
   'Found another service',
   'Cleaner taking too long',
@@ -95,8 +95,8 @@ export default function MyBookings() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelNote, setCancelNote] = useState('');
+  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
+  const [cancelNotes, setCancelNotes] = useState<Record<string, string>>({});
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['my-bookings', user?.id],
@@ -138,12 +138,11 @@ export default function MyBookings() {
   const cancelBooking = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const { error } = await supabase.from('bookings').update({
-        status: 'cancelled' as any,
+        status: 'cancelled',
         notes: `Cancelled by customer: ${reason}`,
       }).eq('id', id);
       if (error) throw error;
 
-      // Notify admin
       if (user?.id) {
         await supabase.from('notifications').insert({
           user_id: user.id,
@@ -153,11 +152,11 @@ export default function MyBookings() {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       toast.success('Booking cancelled');
-      setCancelReason('');
-      setCancelNote('');
+      setCancelReasons(prev => { const n = { ...prev }; delete n[variables.id]; return n; });
+      setCancelNotes(prev => { const n = { ...prev }; delete n[variables.id]; return n; });
     },
     onError: () => toast.error('Failed to cancel booking'),
   });
@@ -235,21 +234,21 @@ export default function MyBookings() {
                           <DialogHeader><DialogTitle className="font-display font-bold">Cancel Booking</DialogTitle></DialogHeader>
                           <p className="text-sm text-muted-foreground mb-3">Please tell us why you're cancelling:</p>
                           <div className="flex flex-wrap gap-2 mb-3">
-                            {cancelReasons.map(r => (
-                              <button key={r} onClick={() => setCancelReason(r)}
+                            {CANCEL_REASONS.map(r => (
+                              <button key={r} onClick={() => setCancelReasons(prev => ({ ...prev, [b.id]: r }))}
                                 className={`px-3 py-2 rounded-full text-xs font-bold border transition-all ${
-                                  cancelReason === r ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'
+                                  cancelReasons[b.id] === r ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'
                                 }`}>{r}</button>
                             ))}
                           </div>
-                          {cancelReason === 'Other' && (
-                            <Textarea placeholder="Tell us more..." value={cancelNote} onChange={e => setCancelNote(e.target.value)} rows={2} className="rounded-2xl resize-none mb-2" />
+                          {cancelReasons[b.id] === 'Other' && (
+                            <Textarea placeholder="Tell us more..." value={cancelNotes[b.id] || ''} onChange={e => setCancelNotes(prev => ({ ...prev, [b.id]: e.target.value }))} rows={2} className="rounded-2xl resize-none mb-2" />
                           )}
                           <div className="flex gap-3 mt-2">
                             <DialogClose asChild><Button variant="outline" className="flex-1 rounded-full font-bold">Keep</Button></DialogClose>
                             <Button
-                              onClick={() => cancelBooking.mutate({ id: b.id, reason: cancelReason === 'Other' ? cancelNote || 'Other' : cancelReason })}
-                              disabled={!cancelReason}
+                              onClick={() => cancelBooking.mutate({ id: b.id, reason: cancelReasons[b.id] === 'Other' ? cancelNotes[b.id] || 'Other' : cancelReasons[b.id] })}
+                              disabled={!cancelReasons[b.id]}
                               variant="destructive" className="flex-1 rounded-full font-bold disabled:opacity-40">
                               Cancel
                             </Button>
@@ -276,16 +275,16 @@ export default function MyBookings() {
                             <DialogHeader><DialogTitle className="font-display font-bold">Cancel Active Service?</DialogTitle></DialogHeader>
                             <p className="text-sm text-muted-foreground mb-3">Your cleaner is already on their way. A partial charge may apply.</p>
                             <div className="flex flex-wrap gap-2 mb-3">
-                              {cancelReasons.map(r => (
-                                <button key={r} onClick={() => setCancelReason(r)}
+                              {CANCEL_REASONS.map(r => (
+                                <button key={r} onClick={() => setCancelReasons(prev => ({ ...prev, [b.id]: r }))}
                                   className={`px-3 py-2 rounded-full text-xs font-bold border transition-all ${
-                                    cancelReason === r ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'
+                                    cancelReasons[b.id] === r ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'
                                   }`}>{r}</button>
                               ))}
                             </div>
                             <div className="flex gap-3 mt-2">
                               <DialogClose asChild><Button variant="outline" className="flex-1 rounded-full font-bold">Keep</Button></DialogClose>
-                              <Button onClick={() => cancelBooking.mutate({ id: b.id, reason: cancelReason || 'No reason given' })}
+                              <Button onClick={() => cancelBooking.mutate({ id: b.id, reason: cancelReasons[b.id] || 'No reason given' })}
                                 variant="destructive" className="flex-1 rounded-full font-bold">Confirm Cancel</Button>
                             </div>
                           </DialogContent>

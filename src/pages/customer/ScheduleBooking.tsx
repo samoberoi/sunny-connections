@@ -210,8 +210,10 @@ export default function ScheduleBooking() {
     if (!user || !date || !address || !postcode) return;
     setSubmitting(true);
     try {
-      const { data: services } = await supabase.from('services').select('id').limit(1);
-      const serviceId = services?.[0]?.id;
+      // Match service by name from selected services
+      const { data: dbServices } = await supabase.from('services').select('id, name');
+      const matchedService = dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase().split(' ')[0])));
+      const serviceId = matchedService?.id || dbServices?.[0]?.id;
       if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
@@ -242,9 +244,12 @@ export default function ScheduleBooking() {
 
       // Save address if new
       if (!selectedAddressId && address && postcode) {
-        await supabase.from('addresses').upsert({
-          user_id: user.id, label: 'Home', line1: address, postcode, city: 'London',
-        }, { onConflict: 'user_id,label' }).select();
+        const { data: existing } = await supabase.from('addresses').select('id').eq('user_id', user.id).eq('label', 'Home').maybeSingle();
+        if (existing) {
+          await supabase.from('addresses').update({ line1: address, postcode, city: 'London' }).eq('id', existing.id);
+        } else {
+          await supabase.from('addresses').insert({ user_id: user.id, label: 'Home', line1: address, postcode, city: 'London' });
+        }
       }
 
       navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp } });

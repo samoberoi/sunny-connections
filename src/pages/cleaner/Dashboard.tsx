@@ -65,7 +65,8 @@ export default function CleanerDashboard() {
   const activeJobs = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const upcomingJobs = bookings.filter(b => ['assigned', 'en-route'].includes(b.status));
   const completedCount = bookings.filter(b => b.status === 'completed').length;
-  const weekEarnings = bookings.filter(b => b.status === 'completed').reduce((s, b) => s + Number(b.total_cost), 0);
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekEarnings = bookings.filter(b => b.status === 'completed' && new Date(b.date) >= weekStart).reduce((s, b) => s + Number(b.total_cost), 0);
   const isOnline = cleanerRecord?.available;
 
   const mapMarkers = useMemo(() => {

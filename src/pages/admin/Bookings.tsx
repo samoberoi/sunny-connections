@@ -12,13 +12,13 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  assigned: 'bg-blue-100 text-blue-800 border-blue-200',
-  'en-route': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'otp-verified': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+  pending: 'bg-warning/15 text-warning-foreground border-warning/20',
+  assigned: 'bg-accent text-accent-foreground border-accent',
+  'en-route': 'bg-secondary text-secondary-foreground border-secondary',
+  'otp-verified': 'bg-muted text-muted-foreground border-muted',
   'in-progress': 'bg-primary/10 text-primary border-primary/20',
-  completed: 'bg-green-100 text-green-800 border-green-200',
-  cancelled: 'bg-red-100 text-red-800 border-red-200',
+  completed: 'bg-primary/15 text-primary-ink border-primary/20',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 export default function AdminBookings() {
@@ -55,7 +55,7 @@ export default function AdminBookings() {
 
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', id);
+      const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -67,7 +67,7 @@ export default function AdminBookings() {
   const unassignCleaner = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('bookings').update({
-        cleaner_id: null, cleaner_name: null, cleaner_avatar: null, status: 'pending' as any,
+        cleaner_id: null, cleaner_name: null, cleaner_avatar: null, status: 'pending',
       }).eq('id', id);
       if (error) throw error;
     },
@@ -133,7 +133,7 @@ export default function AdminBookings() {
             {selected.tier && selected.tier !== 'standard' && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Tier</span>
-                <span className="text-amber-600 font-bold">👑 Premium</span>
+                <span className="text-primary-ink font-bold">👑 Premium</span>
               </div>
             )}
             <div className="border-t border-border pt-2 flex justify-between items-center">

@@ -29,7 +29,7 @@ export default function CleanerEarnings() {
     queryKey: ['cleaner-completed', cleanerRecord?.id],
     queryFn: async () => {
       if (!cleanerRecord?.id) return [];
-      const { data } = await supabase.from('bookings').select('*').eq('cleaner_id', cleanerRecord.id).eq('status', 'completed').order('date', { ascending: false });
+      const { data } = await supabase.from('bookings').select('*').eq('cleaner_id', cleanerRecord.id).eq('status', 'completed').order('date', { ascending: false }).limit(5000);
       return data || [];
     },
     enabled: !!cleanerRecord?.id,

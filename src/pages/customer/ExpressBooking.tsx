@@ -96,8 +96,9 @@ export default function ExpressBooking() {
     setSubmitting(true);
     try {
       const now = new Date();
-      const { data: svcs } = await supabase.from('services').select('id').limit(1);
-      const serviceId = svcs?.[0]?.id;
+      const { data: dbServices } = await supabase.from('services').select('id, name');
+      const matchedService = dbServices?.find(s => s.name.toLowerCase().includes(service.name.toLowerCase().split(' ')[0]));
+      const serviceId = matchedService?.id || dbServices?.[0]?.id;
       if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Express: ${service.name}`,
