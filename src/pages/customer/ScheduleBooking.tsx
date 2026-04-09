@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
+import ActiveOffers from '@/components/ActiveOffers';
 
 type Category = 'cleaning' | 'housekeeping';
 
