@@ -195,8 +195,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (authUser) {
         if (nextSession) setSession(nextSession);
 
-        // Sync profile first, then fetch actual profile data
-        await syncProfileRecord(authUser.id, { email, name, phone: pendingPhone, role });
+        // Only sync profile with default name for NEW signups; for existing users, fetch their real name
+        const { data: existingProfile } = await supabase.from('profiles').select('name').eq('user_id', authUser.id).maybeSingle();
+        const profileName = existingProfile?.name && existingProfile.name !== 'New User' ? existingProfile.name : name;
+        await syncProfileRecord(authUser.id, { email, name: profileName, phone: pendingPhone, role });
         const freshUser = await fetchAndBuildUser(authUser.id, authUser);
         setUser(freshUser);
 

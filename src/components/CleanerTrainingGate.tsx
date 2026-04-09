@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CircleCheck, Circle, ChevronDown, ChevronUp, ShieldCheck, Sparkles } from 'lucide-react';
+import { CircleCheck, Circle, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Award, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useTrainingModules } from '@/hooks/useTrainingModules';
@@ -19,6 +19,17 @@ export default function CleanerTrainingGate({ onComplete }: Props) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showCertified, setShowCertified] = useState(false);
+
+  const { data: cleanerRecord } = useQuery({
+    queryKey: ['my-cleaner-record', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('cleaners').select('*').eq('user_id', user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: progressData = [] } = useQuery({
     queryKey: ['my-training-progress', user?.id],
@@ -53,10 +64,9 @@ export default function CleanerTrainingGate({ onComplete }: Props) {
 
   const handleFinish = async () => {
     if (!user?.id) return;
-    // Mark cleaner as verified
     await supabase.from('cleaners').update({ verified: true }).eq('user_id', user.id);
     toast.success('🎉 You are now CleanFit Certified!');
-    onComplete();
+    setShowCertified(true);
   };
 
   const levels = [1, 2, 3];
@@ -66,12 +76,78 @@ export default function CleanerTrainingGate({ onComplete }: Props) {
     return lvl.length > 0 ? Math.round((done / lvl.length) * 100) : 0;
   };
 
+  const cleanerCode = cleanerRecord?.id ? `CF-${cleanerRecord.id.substring(0, 8).toUpperCase()}` : 'CF-XXXXXXXX';
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background px-5 pt-6 space-y-4">
         <Skeleton className="h-32 rounded-2xl" />
         <Skeleton className="h-20 rounded-2xl" />
         <Skeleton className="h-20 rounded-2xl" />
+      </div>
+    );
+  }
+
+  // Certification celebration screen
+  if (showCertified) {
+    return (
+      <div className="fixed inset-0 z-[150] bg-background flex flex-col items-center justify-center px-6 text-center">
+        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', damping: 12 }}
+          className="w-24 h-24 rounded-full bg-primary/15 flex items-center justify-center mb-6">
+          <BadgeCheck className="h-14 w-14 text-primary" strokeWidth={1.5} />
+        </motion.div>
+        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="text-3xl font-display font-black text-foreground mb-2">
+          Congratulations! 🎉
+        </motion.h1>
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+          className="text-muted-foreground text-sm mb-8">
+          You are now a certified CleanFit professional
+        </motion.p>
+
+        {/* Certification card */}
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+          className="w-full bg-card rounded-3xl p-6 border-2 border-primary/30 shadow-lg relative overflow-hidden mb-8">
+          {/* Stamp watermark */}
+          <div className="absolute top-3 right-3 opacity-10">
+            <ShieldCheck className="h-20 w-20 text-primary" strokeWidth={1} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck className="h-5 w-5 text-primary" strokeWidth={2} />
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">CleanFit Certified</span>
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-xl">
+                {user?.name?.[0] || 'C'}
+              </div>
+              <div className="text-left">
+                <h3 className="text-lg font-display font-black text-foreground">{user?.name}</h3>
+                <p className="text-xs text-muted-foreground">Professional Cleaner</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-3 border-t border-border">
+              <div>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Cleaner ID</p>
+                <p className="text-sm font-mono font-bold text-foreground">{cleanerCode}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Certified</p>
+                <p className="text-sm font-bold text-foreground">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-center gap-1.5 bg-primary/10 rounded-xl py-2">
+              <BadgeCheck className="h-4 w-4 text-primary" strokeWidth={2} />
+              <span className="text-xs font-bold text-primary">Verified by CleanFit</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="w-full">
+          <Button onClick={onComplete} className="w-full h-14 rounded-full font-bold text-base">
+            Welcome to CleanFit — Start Earning! 💪
+          </Button>
+        </motion.div>
       </div>
     );
   }
@@ -169,7 +245,7 @@ export default function CleanerTrainingGate({ onComplete }: Props) {
             <h2 className="text-xl font-display font-black text-foreground mb-2">All modules complete!</h2>
             <p className="text-sm text-muted-foreground mb-6">You're ready to become CleanFit Certified</p>
             <Button onClick={handleFinish} className="w-full h-14 rounded-2xl font-bold text-base">
-              Get Certified 🏆
+              Start Earning — Get Certified 🏆
             </Button>
           </motion.div>
         )}
