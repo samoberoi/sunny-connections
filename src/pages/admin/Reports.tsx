@@ -53,8 +53,9 @@ export default function AdminReports() {
       map[key] = (map[key] || 0) + Number(b.total_cost);
     });
     return Object.entries(map).sort((a, b) => {
-      const parseDate = (k: string) => { const [m, y] = k.split(' '); return new Date(`20${y}`, new Date(Date.parse(m + ' 1, 2000')).getMonth()); };
-      return parseDate(a[0]).getTime() - parseDate(b[0]).getTime();
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const parseDate = (k: string) => { const parts = k.split(' '); return parseInt('20' + parts[1]) * 12 + months.indexOf(parts[0]); };
+      return parseDate(a[0]) - parseDate(b[0]);
     }).slice(-6).map(([month, revenue]) => ({ month, revenue }));
   }, [completed]);
 
