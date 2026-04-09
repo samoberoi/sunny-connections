@@ -196,12 +196,9 @@ export default function ScheduleBooking() {
     if (!user || !date || !address || !postcode) return;
     setSubmitting(true);
     try {
-      // Match service by name from selected services
-      const { data: dbServices } = await supabase.from('services').select('id, name');
-      const matchedService = dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase() === sel.name.toLowerCase())) 
-        || dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase())));
-      const serviceId = matchedService?.id || dbServices?.[0]?.id;
-      if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
+      // Use first selected service's DB ID directly
+      const serviceId = selectedServiceDetails[0]?.id;
+      if (!serviceId) { toast.error('No services selected'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
