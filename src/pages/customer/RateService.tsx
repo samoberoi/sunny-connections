@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CircleCheck, Clock, MapPin, PoundSterling, User, ShieldCheck } from 'lucide-react';
+import { CircleCheck, Clock, MapPin, User, ShieldCheck, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from '@/components/StarRating';
@@ -32,6 +32,19 @@ export default function RateService() {
     enabled: !!state?.bookingId,
   });
 
+  const { data: jobPhotos = [] } = useQuery({
+    queryKey: ['job-photos', state?.bookingId],
+    queryFn: async () => {
+      if (!state?.bookingId) return [];
+      const { data } = await supabase.from('job_photos').select('*').eq('booking_id', state.bookingId).order('uploaded_at');
+      return data || [];
+    },
+    enabled: !!state?.bookingId,
+  });
+
+  const beforePhotos = jobPhotos.filter((p: any) => p.photo_type === 'before');
+  const afterPhotos = jobPhotos.filter((p: any) => p.photo_type === 'after');
+
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
@@ -41,7 +54,7 @@ export default function RateService() {
     setSubmitting(true);
     const fullReview = [review, ...selectedTags.map(t => `#${t}`)].filter(Boolean).join(' ');
     if (state?.bookingId) {
-      const { data: updatedBooking } = await supabase.from('bookings').update({ rating, review: fullReview || null }).eq('id', state.bookingId).select('cleaner_id').single();
+      const { data: updatedBooking } = await supabase.from('bookings').update({ rating, review: fullReview || null }).eq('id', state.bookingId).select('cleaner_id, customer_id, total_cost').single();
       
       if (updatedBooking?.cleaner_id) {
         const { data: allRatings } = await supabase.from('bookings').select('rating').eq('cleaner_id', updatedBooking.cleaner_id).not('rating', 'is', null);
@@ -51,11 +64,37 @@ export default function RateService() {
         }
       }
 
+      // Award CleanFit coins (1 coin per £5 spent)
+      if (updatedBooking?.customer_id && updatedBooking?.total_cost) {
+        const coinsEarned = Math.max(1, Math.floor(Number(updatedBooking.total_cost) / 5));
+        const { data: existing } = await supabase.from('customer_coins').select('*').eq('customer_id', updatedBooking.customer_id).maybeSingle();
+        if (existing) {
+          await supabase.from('customer_coins').update({
+            balance: (existing.balance || 0) + coinsEarned,
+            total_earned: (existing.total_earned || 0) + coinsEarned,
+          }).eq('id', existing.id);
+        } else {
+          await supabase.from('customer_coins').insert({
+            customer_id: updatedBooking.customer_id,
+            balance: coinsEarned,
+            total_earned: coinsEarned,
+          });
+        }
+        await supabase.from('coin_transactions').insert({
+          customer_id: updatedBooking.customer_id,
+          amount: coinsEarned,
+          type: 'earned',
+          description: `Earned from booking`,
+          booking_id: state.bookingId,
+        });
+        toast.success(`You earned ${coinsEarned} CleanFit Coins! 🪙`);
+      }
+
       // Update streak
-      if (booking?.customer_id) {
+      if (updatedBooking?.customer_id) {
         const month = new Date().toISOString().slice(0, 7);
         const { data: existingStreak } = await supabase.from('customer_streaks')
-          .select('*').eq('customer_id', booking.customer_id).eq('month', month).maybeSingle();
+          .select('*').eq('customer_id', updatedBooking.customer_id).eq('month', month).maybeSingle();
         
         if (existingStreak) {
           const newCount = (existingStreak.booking_count || 0) + 1;
@@ -65,7 +104,7 @@ export default function RateService() {
           }).eq('id', existingStreak.id);
         } else {
           await supabase.from('customer_streaks').insert({
-            customer_id: booking.customer_id, month, booking_count: 1,
+            customer_id: updatedBooking.customer_id, month, booking_count: 1,
           });
         }
       }
@@ -100,6 +139,29 @@ export default function RateService() {
         <div className="px-5 pt-6 pb-6">
           <h1 className="text-xl font-display font-black text-foreground mb-1">Service Complete!</h1>
           <p className="text-muted-foreground text-sm mb-5">Rate your experience below</p>
+
+          {/* Before & After Photos */}
+          {(beforePhotos.length > 0 || afterPhotos.length > 0) && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Camera className="h-3.5 w-3.5" strokeWidth={1.5} /> Before & After
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {beforePhotos[0] && (
+                  <div className="relative rounded-2xl overflow-hidden border border-border">
+                    <img src={(beforePhotos[0] as any).photo_url} alt="Before" className="w-full h-32 object-cover" />
+                    <div className="absolute bottom-1.5 left-1.5 bg-foreground/80 text-background text-[9px] font-bold px-2 py-0.5 rounded-lg">BEFORE</div>
+                  </div>
+                )}
+                {afterPhotos[0] && (
+                  <div className="relative rounded-2xl overflow-hidden border border-primary/30">
+                    <img src={(afterPhotos[0] as any).photo_url} alt="After" className="w-full h-32 object-cover" />
+                    <div className="absolute bottom-1.5 left-1.5 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-lg">AFTER</div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Service Summary */}
           {booking && (
