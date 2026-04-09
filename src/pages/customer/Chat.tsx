@@ -20,7 +20,7 @@ const quickTemplates = [
 export default function Chat() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [message, setMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
