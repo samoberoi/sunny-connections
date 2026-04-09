@@ -27,22 +27,16 @@ const isExpressBooking = (b: any) => {
   return name.includes('express') || name.includes('blitz');
 };
 
-// Explicit category mapping for specialization matching
-const CLEANING_SERVICES = ['deep clean', 'kitchen blitz', 'bathroom blitz', 'house cleaning', 'express clean', 'spring clean', 'end of tenancy'];
-const HOUSEKEEPING_SERVICES = ['housekeeping', 'laundry', 'iron', 'bed making', 'organisation', 'organizing'];
-
-function getServiceCategory(serviceName: string): 'cleaning' | 'housekeeping' | 'unknown' {
-  const s = serviceName.toLowerCase();
-  if (CLEANING_SERVICES.some(c => s.includes(c))) return 'cleaning';
-  if (HOUSEKEEPING_SERVICES.some(h => s.includes(h))) return 'housekeeping';
-  return 'unknown';
-}
-
-function getSpecCategory(spec: string): 'cleaning' | 'housekeeping' | 'unknown' {
-  const s = spec.toLowerCase();
-  if (s.includes('house cleaning') || s.includes('deep clean') || s.includes('kitchen') || s.includes('bathroom') || s.includes('tenancy') || s.includes('spring')) return 'cleaning';
-  if (s.includes('housekeeping') || s.includes('laundry') || s.includes('iron') || s.includes('bed') || s.includes('organis') || s.includes('organiz')) return 'housekeeping';
-  return 'unknown';
+// Match jobs to cleaner specializations by checking if the booking's service_name
+// matches any of the cleaner's stored specialisations (which now use exact DB service names).
+function jobMatchesSpecialisations(serviceName: string, specialisations: string[]): boolean {
+  if (!specialisations || specialisations.length === 0) return true; // no filter = see all
+  const sLower = serviceName.toLowerCase().trim();
+  return specialisations.some(spec => {
+    const specLower = spec.toLowerCase().trim();
+    // Exact match or substring containment in either direction
+    return sLower === specLower || sLower.includes(specLower) || specLower.includes(sLower);
+  });
 }
 
 export default function CleanerJobs() {
@@ -118,17 +112,10 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Filter available jobs by cleaner specialization using strict category matching
+  // Filter available jobs by cleaner specialization using direct name matching
   const available = allBookings.filter(b => {
     if (b.cleaner_id || b.status !== 'pending') return false;
-    if (cleanerRecord?.specialisations?.length > 0) {
-      const jobCategory = getServiceCategory(b.service_name || '');
-      const cleanerCategories = cleanerRecord.specialisations.map((s: string) => getSpecCategory(s));
-      // If job category is unknown, show to all. Otherwise must match.
-      if (jobCategory === 'unknown') return true;
-      return cleanerCategories.includes(jobCategory);
-    }
-    return true;
+    return jobMatchesSpecialisations(b.service_name || '', cleanerRecord?.specialisations || []);
   });
   const filteredAvailable = available.filter(b => {
     if (jobFilter === 'express') return isExpressBooking(b);
