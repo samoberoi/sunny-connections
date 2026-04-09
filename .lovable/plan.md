@@ -1,87 +1,71 @@
 
 
-# Restructure Service Hierarchy: Express/Schedule → House Cleaning/Housekeeping → Specializations
+# Fix Schedule Booking Smart Questions, Recurring Job Assignment, and Done Tab Details
 
-## Problem
-The app has mismatched service names across different views. The database has services like "Regular Cleaning" which doesn't exist as a real offering. Cleaner onboarding uses hardcoded categories that don't match the DB. Express and Schedule booking flows have their own hardcoded service lists that are disconnected from the database.
-
-## Architecture
-
-The hierarchy should be:
-
-```text
-Service Mode (Express / Scheduled)
-  └── Service Type (House Cleaning / Housekeeping)
-       └── Specializations (from DB services table)
-            e.g. House Cleaning: Kitchen Deep Clean, Deep Cleaning, End of Tenancy, Bathroom Refresh, etc.
-            e.g. Housekeeping: Laundry & Ironing, Bed Making & Linen Change, General Housekeeping, Organising & Decluttering
-```
-
-## Changes
-
-### 1. Update Database Services (data fix)
-- Rename "Regular Cleaning" → remove or rename to something meaningful like "Standard House Clean"
-- Ensure all services in DB have correct `category` of either `cleaning` or `housekeeping`
-- Add any missing services that appear in Express/Schedule booking hardcoded lists (e.g., "Bathroom Refresh", "Living Room Tidy", "Air & Freshen")
-
-### 2. Add `service_mode` Column to Services Table (migration)
-Add a column `service_mode` (text, default `'both'`) with values: `'express'`, `'scheduled'`, or `'both'`. This lets the admin control which services appear in which booking mode.
-
-### 3. Refactor Cleaner Onboarding (`CleanerOnboarding.tsx`)
-**Step 2** becomes a 3-part selection:
-1. **Service Mode**: "Express Cleaning" and/or "Scheduled Cleaning" (two cards with descriptions, multi-select)
-2. **Service Type**: "House Cleaning" and/or "Housekeeping" (two cards, multi-select)
-3. **Specializations**: Dynamically fetched from DB `services` table, filtered by the selected category (cleaning/housekeeping). If both types selected, combine and show all. Multi-select.
-
-Save the selected service mode preference to the cleaner record (new column `service_modes text[] default '{}'`).
-
-### 4. Refactor Express Booking (`ExpressBooking.tsx`)
-- Instead of hardcoded `expressServices`, fetch from DB: `services` where `service_mode IN ('express', 'both')` and `active = true`
-- Keep the category toggle (House Cleaning / Housekeeping) but populate services from DB
-- Map DB service names to icons using an icon mapping dictionary
-
-### 5. Refactor Schedule Booking (`ScheduleBooking.tsx`)
-- Replace hardcoded `serviceOptions` with DB fetch: `services` where `service_mode IN ('scheduled', 'both')` and `active = true`
-- Group by `category` for the cleaning/housekeeping toggle
-
-### 6. Admin Services Page (`admin/Services.tsx`)
-- Make "Add Service" functional: dialog/form with name, description, category (cleaning/housekeeping), service_mode (express/scheduled/both), rate, duration
-- Make "Edit" button functional: same form pre-filled
-- Add "Delete" button with confirmation
-- Show `service_mode` badge on each card
-
-### 7. Cleaner Job Matching
-- The existing `jobMatchesSpecialisations` helper already matches by service name. Since we're syncing all names from DB, this will work automatically once cleaner specialisations match DB service names.
-
-### 8. Customer Home Page (`Home.tsx`)
-- The quick-action cards ("Express Clean", "Schedule Clean") already exist and navigate correctly -- no changes needed here.
-
-### 9. Enrolment Register (`enrol/Register.tsx`)
-- Update step 2 (Experience) to also fetch specializations from DB instead of using hardcoded comma-separated input.
+## Summary
+Four issues to fix:
+1. Schedule Booking asks irrelevant questions (bedrooms/bathrooms for kitchen-only cleaning). Make questions context-aware based on selected services.
+2. Recurring scheduled bookings should auto-assign a permanent cleaner and show all future instances in the cleaner's Upcoming tab.
+3. Cleaner "Done" tab should show full job details (rating, review, service type, earnings, address) but no phone numbers.
+4. Remove any phone number display from cleaner job cards.
 
 ---
 
-## Database Changes
+## 1. Smart Context-Aware Questions in ScheduleBooking
 
-**Migration 1**: Add `service_mode` column and `service_modes` to cleaners
-```sql
-ALTER TABLE services ADD COLUMN IF NOT EXISTS service_mode text NOT NULL DEFAULT 'both';
-ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS service_modes text[] NOT NULL DEFAULT '{}';
-```
+**Problem**: The `serviceQuestions` map uses hardcoded keys (`bathroom`, `kitchen`) that don't match DB service IDs. Step 2 always asks bedrooms/bathrooms/size regardless of what service was selected.
 
-**Data Update**: Rename "Regular Cleaning" to "Standard House Clean" (or delete and recreate with proper name). Add missing services like "Bathroom Refresh", "Living Room Tidy" if they don't exist.
+**Fix**: Replace the `serviceQuestions` map with a name-based lookup that maps DB service names to relevant questions. Remove Step 2's generic bedrooms/bathrooms/size questions and instead derive them from Step 1's service-specific answers.
 
-## File Changes Summary
+Service-to-question mapping:
+- **Kitchen Deep Clean** → "How many kitchens?" (1-3)
+- **Bathroom Refresh** → "How many bathrooms?" (1-4)
+- **Bedroom Cleaning** → "How many bedrooms?" (1-5)
+- **Living Room Tidy** → "How many living rooms?" (1-3)
+- **Deep Cleaning** → "How many rooms?" (1-6)
+- **Laundry & Ironing** → "How many people's laundry?" (1-5)
+- **Bed Making & Linen Change** → "How many beds?" (1-5)
+- **Organising & Decluttering** → "How many rooms to organise?" (1-4)
+- **Standard House Clean / Full Express Clean / General Housekeeping** → "How many rooms total?" (2-8)
+- **End of Tenancy** → "How many rooms total?" (2-10)
+- Services without specific questions (Dusting, Air & Freshen, Trash) → no follow-up
+
+Step 2 will only show **property type, size, and tier** (remove bedrooms/bathrooms from Step 2 since they're now captured contextually in Step 1).
+
+## 2. Recurring Booking Auto-Assignment
+
+**Problem**: When a cleaner accepts a recurring scheduled booking, future generated instances don't auto-assign to the same cleaner.
+
+**Fix**: In `CleanerJobs.tsx` `acceptJob` mutation, after accepting a scheduled booking with `recurring != 'none'`, also update any other bookings from the same customer with the same `service_name` and `recurring` value that are still pending/unassigned — set them to the same cleaner (permanent assignment).
+
+## 3. Enhanced Done Tab
+
+**Problem**: Done tab only shows service name, customer name, date, cost, and rating number. Missing: review text, address, service type badge.
+
+**Fix**: Expand the Done tab card to be tappable, showing:
+- Service name with Express/Scheduled badge
+- Customer name (no phone)
+- Address (line1, postcode)
+- Date and duration
+- Earnings amount
+- Star rating display
+- Review text (if any)
+- Before/After photo thumbnails (fetch from job_photos)
+
+## 4. Remove Phone Numbers
+
+**Problem**: `handleCallCustomer` fetches phone and could expose it.
+
+**Fix**: Keep the Call button functional (it uses `tel:` protocol which is fine), but ensure no phone number text is ever displayed in the UI. The existing code already doesn't display phone numbers in cards — just verify `handleChatCustomer` doesn't pass phone to chat unnecessarily (it currently passes `otherPhone` — remove that).
+
+---
+
+## File Changes
 
 | Action | File | Description |
 |--------|------|-------------|
-| Migration | SQL | Add `service_mode` to services, `service_modes` to cleaners |
-| Data | SQL | Rename/sync service names, set service_mode values |
-| Edit | `src/hooks/useServices.ts` | Add `service_mode` to `ServiceRow` type |
-| Edit | `src/components/CleanerOnboarding.tsx` | 3-part selection: mode → type → DB specializations |
-| Edit | `src/pages/customer/ExpressBooking.tsx` | Fetch services from DB instead of hardcoded list |
-| Edit | `src/pages/customer/ScheduleBooking.tsx` | Fetch services from DB instead of hardcoded list |
-| Edit | `src/pages/admin/Services.tsx` | Add/Edit/Delete service functionality with mode field |
-| Edit | `src/pages/enrol/Register.tsx` | Fetch specializations from DB |
-| Edit | `src/pages/customer/Services.tsx` | Show service_mode badge |
+| Edit | `src/pages/customer/ScheduleBooking.tsx` | Replace hardcoded `serviceQuestions` with name-based mapping; remove bedrooms/bathrooms from Step 2 |
+| Edit | `src/pages/cleaner/Jobs.tsx` | Auto-assign recurring bookings to same cleaner; enhance Done tab with full details; remove phone from chat navigation |
+
+No database migrations needed.
 
