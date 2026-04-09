@@ -33,10 +33,7 @@ export default function CleanerJobs() {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
   const [notes, setNotes] = useState('');
-  const [hasArrived, setHasArrived] = useState(() => {
-    const stored = sessionStorage.getItem('cleaner_arrived');
-    return stored ? JSON.parse(stored) : false;
-  });
+  const [hasArrived, setHasArrived] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);

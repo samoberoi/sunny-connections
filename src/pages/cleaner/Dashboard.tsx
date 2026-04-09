@@ -105,7 +105,7 @@ export default function CleanerDashboard() {
                 <span className="text-[11px] font-bold text-foreground/70">{pendingJobs.length} requests nearby</span>
               </div>
               <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-border">
-                <span className="text-[11px] font-bold text-primary-ink">£{weekEarnings} earned</span>
+                <span className="text-[11px] font-bold text-primary-ink">£{weekEarnings} this week</span>
               </div>
             </div>
           </div>
