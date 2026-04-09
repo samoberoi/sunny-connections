@@ -1,19 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Gift, Copy, Share2, CircleCheck, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export default function ReferralCard() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const queryClient = useQueryClient();
 
   const referralCode = user?.id
     ? `CLEAN${user.id.slice(0, 6).toUpperCase()}`
     : 'CLEANFIT20';
+
+  // Realtime subscription for referral stats
+  useEffect(() => {
+    if (!referralCode || !user?.id) return;
+    const channel = supabase
+      .channel('referral-stats-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['referral-stats', referralCode] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [referralCode, user?.id, queryClient]);
+
+  
 
   const referralLink = `${window.location.origin}/login?ref=${referralCode}`;
   const shareText = `Use my referral code ${referralCode} to get 20% off your first clean with Clean Fit! 🧹✨ ${referralLink}`;

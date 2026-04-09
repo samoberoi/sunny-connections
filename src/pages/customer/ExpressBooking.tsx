@@ -42,7 +42,7 @@ export default function ExpressBooking() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [referralCode, setReferralCode] = useState('');
+  const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
 
   const services = category ? expressServices[category] : [];
   const service = services.find(s => s.id === selected);

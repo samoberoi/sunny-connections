@@ -194,14 +194,50 @@ export default function CleanerJobs() {
     }
   };
 
-  const completeJob = () => {
-    if (selectedJob) {
-      updateStatus.mutate({ id: selectedJob.id, status: 'completed' });
-      toast.success('Job completed! 💪');
-      setSelectedBooking(null);
-      setOtp('');
-      setNotes('');
+  const completeJob = async () => {
+    if (!selectedJob) return;
+    updateStatus.mutate({ id: selectedJob.id, status: 'completed' });
+
+    // Award referrer coins if referral_code exists
+    if (selectedJob.referral_code) {
+      try {
+        const code = selectedJob.referral_code;
+        // Referral codes are CLEAN + first 6 chars of user_id (uppercase)
+        const userIdPrefix = code.replace(/^CLEAN/i, '').toLowerCase();
+        // Find the referrer by matching user_id prefix
+        const { data: profiles } = await supabase.from('profiles').select('user_id').like('user_id', `${userIdPrefix}%`);
+        const referrerId = profiles?.[0]?.user_id;
+        if (referrerId && referrerId !== selectedJob.customer_id) {
+          // Credit 50 coins to referrer
+          await supabase.from('coin_transactions').insert({
+            customer_id: referrerId, amount: 50, type: 'referral',
+            description: 'Referral bonus — friend completed first clean', booking_id: selectedJob.id,
+          });
+          // Update or create coin balance
+          const { data: existing } = await supabase.from('customer_coins').select('*').eq('customer_id', referrerId).maybeSingle();
+          if (existing) {
+            await supabase.from('customer_coins').update({
+              balance: existing.balance + 50, total_earned: existing.total_earned + 50,
+            }).eq('customer_id', referrerId);
+          } else {
+            await supabase.from('customer_coins').insert({
+              customer_id: referrerId, balance: 50, total_earned: 50, total_spent: 0,
+            });
+          }
+          // Notify referrer
+          await supabase.from('notifications').insert({
+            user_id: referrerId, title: 'Referral Bonus! 🎉',
+            message: 'Your friend completed their first clean. +50 coins!', type: 'promo',
+          });
+        }
+      } catch (e) { console.error('Referral reward error', e); }
+      // Clear the applied referral code from customer's localStorage (they won't see this, but good hygiene)
     }
+
+    toast.success('Job completed! 💪');
+    setSelectedBooking(null);
+    setOtp('');
+    setNotes('');
   };
 
   const goEnRoute = () => {

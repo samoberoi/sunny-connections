@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, ChevronRight, ChevronLeft, Locate } from 'lucide-react';
+import { User, MapPin, ChevronRight, ChevronLeft, Locate, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,8 +20,10 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
   const [houseNumber, setHouseNumber] = useState('');
   const [saving, setSaving] = useState(false);
   const [detecting, setDetecting] = useState(false);
+  const [referralCode, setReferralCode] = useState(localStorage.getItem('pending_referral_code') || '');
+  const [referralApplied, setReferralApplied] = useState(false);
 
-  const totalSteps = 2;
+  const totalSteps = 3;
 
   const autoDetectAddress = async () => {
     setDetecting(true);
@@ -48,6 +50,19 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
     }
   };
 
+  const applyReferralCode = () => {
+    const code = referralCode.trim().toUpperCase();
+    if (!code) return;
+    if (code.startsWith('CLEAN') && code.length >= 8) {
+      setReferralApplied(true);
+      localStorage.setItem('applied_referral_code', code);
+      localStorage.removeItem('pending_referral_code');
+      toast.success("You'll get 20% off your first booking! 🎉");
+    } else {
+      toast.error('Invalid referral code. Codes start with CLEAN.');
+    }
+  };
+
   const handleSave = async () => {
     if (!user?.id) return;
     setSaving(true);
@@ -68,7 +83,6 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
         });
       }
 
-      // Refresh profile so name updates immediately (fixes "Hi, New" issue)
       await refreshProfile();
       toast.success('Welcome to Clean Fit! 🎉');
       onComplete();
@@ -127,7 +141,7 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-foreground">Home Address</h3>
-                  <p className="text-xs text-muted-foreground">Optional — you can skip this</p>
+                  <p className="text-xs text-muted-foreground">Where should we clean?</p>
                 </div>
               </div>
 
@@ -137,9 +151,48 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
                 {detecting ? 'Detecting...' : 'Auto-detect my location'}
               </Button>
 
-              <Input placeholder="Postcode" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
-              <Input placeholder="Street address" value={addressLine} onChange={e => setAddressLine(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+              <Input placeholder="Postcode *" value={postcode} onChange={e => setPostcode(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+              <Input placeholder="Street address *" value={addressLine} onChange={e => setAddressLine(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
               <Input placeholder="House / flat number" value={houseNumber} onChange={e => setHouseNumber(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="s3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Gift className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-foreground">Got a Referral Code?</h3>
+                  <p className="text-xs text-muted-foreground">Enter it to get 20% off your first booking</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. CLEAN1A2B3C"
+                  value={referralCode}
+                  onChange={e => { setReferralCode(e.target.value.toUpperCase()); setReferralApplied(false); }}
+                  className="h-14 rounded-2xl border-2 border-border bg-card text-base flex-1"
+                  disabled={referralApplied}
+                />
+                <Button
+                  onClick={applyReferralCode}
+                  disabled={!referralCode.trim() || referralApplied}
+                  className="h-14 rounded-2xl px-5 font-bold"
+                >
+                  {referralApplied ? '✓ Applied' : 'Apply'}
+                </Button>
+              </div>
+
+              {referralApplied && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  className="bg-primary/10 border border-primary/20 rounded-2xl p-4 text-center">
+                  <p className="text-sm font-bold text-foreground">🎉 20% off your first booking!</p>
+                  <p className="text-xs text-muted-foreground mt-1">Discount will be applied automatically</p>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -148,7 +201,7 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
       <div className="px-6 pb-10 pt-4 bg-background space-y-2">
         <Button
           onClick={() => { if (step < totalSteps) setStep(s => s + 1); else handleSave(); }}
-          disabled={step === 1 && !name.trim() || saving}
+          disabled={(step === 1 && !name.trim()) || (step === 2 && (!postcode.trim() || !addressLine.trim())) || saving}
           className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40"
         >
           {saving ? 'Saving...' : step < totalSteps ? (

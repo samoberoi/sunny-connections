@@ -98,7 +98,7 @@ export default function ScheduleBooking() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [referralCode, setReferralCode] = useState('');
+  const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [useCoins, setUseCoins] = useState(false);
   const totalSteps = 6;
 
