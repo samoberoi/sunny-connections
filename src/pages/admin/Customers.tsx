@@ -4,15 +4,36 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/EmptyState';
-import { Users, CalendarDays, PoundSterling, Crown, ChevronRight } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Users, CalendarDays, PoundSterling, Crown, ChevronRight, Trash2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function AdminCustomers() {
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('recent');
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+      setSelectedId(null);
+      toast.success('User deleted');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['admin-customers'],
@@ -160,6 +181,23 @@ export default function AdminCustomers() {
                     </div>
                   </div>
                 )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/20 mt-2">
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete User
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="font-display font-bold">Delete this customer?</AlertDialogTitle>
+                      <AlertDialogDescription>This permanently removes the user and all their data. This cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground" onClick={() => selected?.user_id && deleteUser.mutate(selected.user_id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </DialogContent>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
@@ -14,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 import CoinBalance from '@/components/CoinBalance';
+import { toast } from 'sonner';
 
 function ActiveOffersBanner() {
   const navigate = useNavigate();
@@ -48,6 +50,7 @@ function ActiveOffersBanner() {
 
 export default function CustomerHome() {
   const [showCoupon, setShowCoupon] = useState(false);
+  const [offerModal, setOfferModal] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: cleaners } = useCleaners();
@@ -56,6 +59,38 @@ export default function CustomerHome() {
     const seen = sessionStorage.getItem('coupon_shown');
     if (!seen) { setShowCoupon(true); sessionStorage.setItem('coupon_shown', '1'); }
   }, []);
+
+  // Check for unclaimed offers
+  const { data: unclaimedOffers = [] } = useQuery({
+    queryKey: ['unclaimed-offers', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const today = new Date().toISOString().split('T')[0];
+      const { data: offers } = await supabase.from('offers').select('*').eq('active', true).lte('valid_from', today).gte('valid_until', today);
+      if (!offers?.length) return [];
+      const { data: claims } = await supabase.from('offer_claims').select('offer_id').eq('customer_id', user.id);
+      const claimedIds = new Set((claims || []).map(c => c.offer_id));
+      return offers.filter(o => !claimedIds.has(o.id));
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (unclaimedOffers.length > 0 && !offerModal) {
+      const shownKey = `offer_popup_${unclaimedOffers[0].id}`;
+      if (!sessionStorage.getItem(shownKey)) {
+        setOfferModal(unclaimedOffers[0]);
+        sessionStorage.setItem(shownKey, '1');
+      }
+    }
+  }, [unclaimedOffers]);
+
+  const claimOffer = async (offer: any) => {
+    if (!user?.id) return;
+    await supabase.from('offer_claims').insert({ customer_id: user.id, offer_id: offer.id });
+    toast.success(`Offer claimed! Use code: ${offer.code || 'AUTO'}`);
+    setOfferModal(null);
+  };
 
   const topCleaners = cleaners?.filter(c => c.available).slice(0, 4) || [];
   const firstName = user?.name?.split(' ')[0] || 'there';
@@ -71,6 +106,35 @@ export default function CustomerHome() {
   return (
     <CustomerLayout>
       <WelcomeCoupon open={showCoupon} onClose={() => setShowCoupon(false)} onClaim={() => setShowCoupon(false)} />
+      
+      {/* Offer claim pop-up */}
+      <Dialog open={!!offerModal} onOpenChange={open => !open && setOfferModal(null)}>
+        <DialogContent className="rounded-3xl max-w-sm mx-4">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-lg flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" /> Special Offer!
+            </DialogTitle>
+          </DialogHeader>
+          {offerModal && (
+            <div className="space-y-4">
+              <div className="bg-primary/10 rounded-2xl p-5 text-center">
+                <p className="text-2xl font-display font-black text-foreground">{offerModal.discount_percent}% OFF</p>
+                <p className="text-sm text-muted-foreground mt-1">{offerModal.title}</p>
+              </div>
+              <p className="text-sm text-muted-foreground text-center">{offerModal.description}</p>
+              {offerModal.code && (
+                <div className="bg-foreground rounded-xl p-3 text-center">
+                  <p className="text-xs text-background/60">Use code</p>
+                  <p className="text-lg font-mono font-black text-primary tracking-wider">{offerModal.code}</p>
+                </div>
+              )}
+              <Button onClick={() => claimOffer(offerModal)} className="w-full h-12 rounded-full font-bold text-base">
+                Claim Offer 🎉
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <PageTransition>
         <div className="relative min-h-screen">
           {/* Fixed map background - top half */}

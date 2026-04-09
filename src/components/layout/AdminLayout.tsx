@@ -19,6 +19,7 @@ const moreItems = [
   { to: '/admin/coupons', icon: Tag, label: 'Coupons' },
   { to: '/admin/offers', icon: Gift, label: 'Offers' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/admin/admins', icon: UserCheck, label: 'Admins' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

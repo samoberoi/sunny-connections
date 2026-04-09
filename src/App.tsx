@@ -52,6 +52,7 @@ import AdminCoupons from "./pages/admin/Coupons";
 import AdminLeaves from "./pages/admin/Leaves";
 import AdminReports from "./pages/admin/Reports";
 import AdminOffers from "./pages/admin/Offers";
+import AdminAdmins from "./pages/admin/Admins";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,7 @@ const App = () => {
               <Route path="/admin/leaves" element={<ProtectedRoute allowedRoles={['admin']}><AdminLeaves /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
               <Route path="/admin/offers" element={<ProtectedRoute allowedRoles={['admin']}><AdminOffers /></ProtectedRoute>} />
+              <Route path="/admin/admins" element={<ProtectedRoute allowedRoles={['admin']}><AdminAdmins /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
