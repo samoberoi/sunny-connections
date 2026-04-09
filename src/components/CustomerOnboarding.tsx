@@ -12,7 +12,7 @@ interface CustomerOnboardingProps {
 }
 
 export default function CustomerOnboarding({ onComplete }: CustomerOnboardingProps) {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [name, setName] = useState(user?.name || '');
   const [postcode, setPostcode] = useState('');
@@ -68,6 +68,8 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
         });
       }
 
+      // Refresh profile so name updates immediately (fixes "Hi, New" issue)
+      await refreshProfile();
       toast.success('Welcome to Clean Fit! 🎉');
       onComplete();
     } catch {

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CustomerOnboarding from './CustomerOnboarding';
 import CleanerOnboarding from './CleanerOnboarding';
 import CleanerTrainingGate from './CleanerTrainingGate';
+import RoleOnboarding from './RoleOnboarding';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsTraining, setNeedsTraining] = useState(false);
+  const [showRoleIntro, setShowRoleIntro] = useState(false);
 
   useEffect(() => {
     if (!user?.id) { setOnboardingChecked(true); return; }
@@ -26,11 +28,24 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       const onboardingDone = !!profile?.onboarding_completed;
       setNeedsOnboarding(!onboardingDone);
 
+      // Check if role intro slides were shown
+      const introSeen = sessionStorage.getItem(`role_intro_${user.id}`);
+      if (!onboardingDone && !introSeen) {
+        setShowRoleIntro(true);
+      }
+
       // For cleaners, also check training completion
       if (user.role === 'cleaner' && onboardingDone) {
         const { count: totalModules } = await supabase.from('training_modules').select('*', { count: 'exact', head: true });
         const { count: completedModules } = await supabase.from('training_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('completed', true);
-        setNeedsTraining((totalModules || 0) > 0 && (completedModules || 0) < (totalModules || 0));
+        const trainingNeeded = (totalModules || 0) > 0 && (completedModules || 0) < (totalModules || 0);
+        setNeedsTraining(trainingNeeded);
+        
+        // Check if cleaner is verified - if yes, skip training regardless
+        const { data: cleaner } = await supabase.from('cleaners').select('verified').eq('user_id', user.id).maybeSingle();
+        if (cleaner?.verified) {
+          setNeedsTraining(false);
+        }
       } else {
         setNeedsTraining(false);
       }
@@ -56,6 +71,20 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
   }
 
+  // Show role introduction slides for new users (one-time)
+  if (showRoleIntro && user?.role !== 'admin') {
+    return (
+      <RoleOnboarding
+        role={user!.role}
+        userName={user!.name}
+        onComplete={() => {
+          sessionStorage.setItem(`role_intro_${user!.id}`, '1');
+          setShowRoleIntro(false);
+        }}
+      />
+    );
+  }
+
   // Show onboarding wizard for new users (skip for admin)
   if (needsOnboarding && user?.role !== 'admin') {
     const handleComplete = () => setNeedsOnboarding(false);
@@ -63,7 +92,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (user?.role === 'cleaner') return <CleanerOnboarding onComplete={handleComplete} />;
   }
 
-  // Mandatory training gate for cleaners
+  // Mandatory training gate for cleaners - this fires AFTER onboarding is done
   if (needsTraining && user?.role === 'cleaner') {
     return <CleanerTrainingGate onComplete={() => setNeedsTraining(false)} />;
   }
