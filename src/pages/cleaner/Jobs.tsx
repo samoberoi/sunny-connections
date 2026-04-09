@@ -33,7 +33,10 @@ export default function CleanerJobs() {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
   const [notes, setNotes] = useState('');
-  const [hasArrived, setHasArrived] = useState(false);
+  const [hasArrived, setHasArrived] = useState(() => {
+    const stored = sessionStorage.getItem('cleaner_arrived');
+    return stored ? JSON.parse(stored) : false;
+  });
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
@@ -62,7 +65,7 @@ export default function CleanerJobs() {
   const { data: allBookings = [] } = useQuery({
     queryKey: ['cleaner-all-bookings', cleanerRecord?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(200);
       return data || [];
     },
     enabled: !!cleanerRecord,

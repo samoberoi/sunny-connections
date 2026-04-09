@@ -264,7 +264,7 @@ export default function CustomerHome() {
             <motion.section variants={fadeUp} className="pb-6">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display font-bold text-foreground text-sm">Top Rated</h3>
-                <button onClick={() => navigate('/services')} className="text-[11px] text-muted-foreground font-medium hover:text-foreground transition-colors">View all →</button>
+                <button onClick={() => navigate('/schedule-booking')} className="text-[11px] text-muted-foreground font-medium hover:text-foreground transition-colors">View all →</button>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                 {topCleaners.map((cleaner, i) => (
