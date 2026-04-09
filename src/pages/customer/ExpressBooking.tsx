@@ -89,14 +89,24 @@ export default function ExpressBooking() {
     setSubmitting(true);
     try {
       const now = new Date();
+      const finalCost = totalPrice;
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: service.id, service_name: `Express: ${service.name}`,
         date: now.toISOString().split('T')[0], time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration),
-        recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: service.rate_per_hour * service.min_duration, property_type: 'house',
+        recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: finalCost, property_type: 'house',
         payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
-      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration), address, postcode, totalCost: service.rate_per_hour * service.min_duration, otp: booking.otp, isExpress: true } });
+
+      // Increment coupon used_count if applied
+      if (couponDiscount > 0) {
+        const storedCode = localStorage.getItem('claimed_coupon_code');
+        if (storedCode) {
+          await supabase.from('coupons').update({ used_count: (await supabase.from('coupons').select('used_count').eq('code', storedCode).maybeSingle()).data?.used_count + 1 || 1 }).eq('code', storedCode);
+        }
+      }
+
+      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration), address, postcode, totalCost: finalCost, otp: booking.otp, isExpress: true } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
 

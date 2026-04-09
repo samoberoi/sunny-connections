@@ -85,20 +85,20 @@ export default function Wallet() {
                   <motion.div key={tx.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${tx.type === 'earn' ? 'bg-primary/15' : 'bg-muted'}`}>
-                        {tx.type === 'earn' ? (
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${['earned', 'referral'].includes(tx.type) ? 'bg-primary/15' : 'bg-muted'}`}>
+                        {['earned', 'referral'].includes(tx.type) ? (
                           <ArrowUpCircle className="h-4 w-4 text-primary" strokeWidth={1.5} />
                         ) : (
                           <ArrowDownCircle className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-foreground">{tx.description || (tx.type === 'earn' ? 'Earned' : 'Spent')}</p>
+                        <p className="text-xs font-bold text-foreground">{tx.description || (['earned', 'referral'].includes(tx.type) ? 'Earned' : 'Spent')}</p>
                         <p className="text-[10px] text-muted-foreground">{format(new Date(tx.created_at), 'dd MMM yyyy, HH:mm')}</p>
                       </div>
                     </div>
-                    <span className={`font-display font-black text-sm ${tx.type === 'earn' ? 'text-primary' : 'text-foreground'}`}>
-                      {tx.type === 'earn' ? '+' : '-'}{tx.amount}
+                    <span className={`font-display font-black text-sm ${['earned', 'referral'].includes(tx.type) ? 'text-primary' : 'text-foreground'}`}>
+                      {['earned', 'referral'].includes(tx.type) ? '+' : '-'}{tx.amount}
                     </span>
                   </motion.div>
                 ))}
