@@ -70,7 +70,7 @@ export default function CleanerJobs() {
   const { data: allBookings = [] } = useQuery({
     queryKey: ['cleaner-all-bookings', cleanerRecord?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(200);
+      const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(500);
       return data || [];
     },
     enabled: !!cleanerRecord,
@@ -144,7 +144,7 @@ export default function CleanerJobs() {
   const upcomingJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['assigned', 'en-route'].includes(b.status));
   const todayStr = new Date().toISOString().split('T')[0];
   const upcomingToday = upcomingJobs.filter(b => b.date === todayStr);
-  const upcomingFuture = upcomingJobs.filter(b => b.date > todayStr);
+  const upcomingFuture = upcomingJobs.filter(b => b.date > todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
   const filteredUpcoming = upcomingFilter === 'today' ? upcomingToday : upcomingFuture;
   const activeJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['otp-verified', 'in-progress'].includes(b.status));
   const myJobs = [...upcomingJobs, ...activeJobs];
@@ -718,7 +718,22 @@ export default function CleanerJobs() {
                 <EmptyState icon={CalendarDays} title={upcomingFilter === 'today' ? 'No jobs today' : 'No upcoming jobs'} description={upcomingFilter === 'today' ? 'Check upcoming for future jobs' : 'Accept a job to see it here'} />
               ) : (
                 <div className="space-y-2">
-                  {filteredUpcoming.map(b => <JobCard key={b.id} b={b} />)}
+                  {(() => {
+                    let lastDate = '';
+                    return filteredUpcoming.map(b => {
+                      const showHeader = b.date !== lastDate;
+                      lastDate = b.date;
+                      const dateLabel = new Date(b.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+                      return (
+                        <div key={b.id}>
+                          {showHeader && upcomingFilter === 'future' && (
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-3 mb-1.5 first:mt-0">{dateLabel}</p>
+                          )}
+                          <JobCard b={b} />
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </TabsContent>

@@ -98,20 +98,44 @@ export default function CustomerHome() {
     enabled: !!user?.id,
   });
 
+  // Check for active coupons to show as pop-up
+  const { data: activeCoupons = [] } = useQuery({
+    queryKey: ['active-coupons-popup'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase.from('coupons').select('*').eq('active', true).gte('expires_at', today);
+      return (data || []).filter(c => c.used_count < c.max_uses);
+    },
+  });
+
   useEffect(() => {
+    // Show unclaimed offers first, then active coupons
     if (unclaimedOffers.length > 0 && !offerModal) {
       const shownKey = `offer_popup_${unclaimedOffers[0].id}`;
       if (!sessionStorage.getItem(shownKey)) {
         setOfferModal(unclaimedOffers[0]);
         sessionStorage.setItem(shownKey, '1');
       }
+    } else if (activeCoupons.length > 0 && !offerModal) {
+      const coupon = activeCoupons[0];
+      const shownKey = `coupon_popup_${coupon.id}`;
+      if (!sessionStorage.getItem(shownKey)) {
+        setOfferModal({ ...coupon, title: coupon.code, isCoupon: true });
+        sessionStorage.setItem(shownKey, '1');
+      }
     }
-  }, [unclaimedOffers]);
+  }, [unclaimedOffers, activeCoupons]);
 
   const claimOffer = async (offer: any) => {
     if (!user?.id) return;
-    await supabase.from('offer_claims').insert({ customer_id: user.id, offer_id: offer.id });
-    toast.success(`Offer claimed! Use code: ${offer.code || 'AUTO'}`);
+    if (offer.isCoupon) {
+      // Store coupon code for checkout
+      localStorage.setItem('claimed_coupon_code', offer.code);
+      toast.success(`Coupon saved! Code: ${offer.code} — applied at checkout`);
+    } else {
+      await supabase.from('offer_claims').insert({ customer_id: user.id, offer_id: offer.id });
+      toast.success(`Offer claimed! Use code: ${offer.code || 'AUTO'}`);
+    }
     setOfferModal(null);
   };
 

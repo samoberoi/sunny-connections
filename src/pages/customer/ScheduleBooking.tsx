@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
+import CouponCodeInput from '@/components/CouponCodeInput';
 import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
 
 type Category = 'cleaning' | 'housekeeping';
@@ -90,6 +91,7 @@ export default function ScheduleBooking() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [useCoins, setUseCoins] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
@@ -155,7 +157,9 @@ export default function ScheduleBooking() {
   const sizeMultiplier = propertySizes.find(s => s.value === propertySize)?.multiplier || 1;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
   const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (serviceSurcharge * duration);
-  const preCoinCost = Math.round(subtotal * (1 - discount / 100));
+  const afterFreqDiscount = Math.round(subtotal * (1 - discount / 100));
+  const afterCoupon = couponDiscount > 0 ? Math.round(afterFreqDiscount * (1 - couponDiscount / 100)) : afterFreqDiscount;
+  const preCoinCost = afterCoupon;
   const coinBalance = coinData?.balance || 0;
   const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0;
   const coinPoundValue = Math.floor(coinDiscount / 10);
@@ -590,6 +594,9 @@ export default function ScheduleBooking() {
                   </motion.button>
                 )}
 
+                {/* Coupon Code */}
+                <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
+
                 {/* Referral Code */}
                 <div className="bg-card rounded-3xl p-4 mb-4 shadow-soft border border-border">
                   <h3 className="font-display font-bold text-foreground text-xs mb-2 flex items-center gap-2">
@@ -627,6 +634,12 @@ export default function ScheduleBooking() {
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-background/50">{freq?.label}</span>
                       <span className="text-primary">-{discount}%</span>
+                    </div>
+                  )}
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Coupon</span>
+                      <span className="text-primary">-{couponDiscount}%</span>
                     </div>
                   )}
                   {useCoins && coinPoundValue > 0 && (
