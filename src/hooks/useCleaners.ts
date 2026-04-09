@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface CleanerRow {
   id: string;
+  user_id: string | null;
   name: string;
   avatar: string | null;
   rating: number;
