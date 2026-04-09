@@ -158,7 +158,11 @@ export default function ScheduleBooking() {
   const bathroomSurcharge = Math.max(0, bathrooms - 1) * 5;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
   const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (bathroomSurcharge * duration) + (serviceSurcharge * duration);
-  const totalCost = Math.round(subtotal * (1 - discount / 100));
+  const preCoinCost = Math.round(subtotal * (1 - discount / 100));
+  const coinBalance = coinData?.balance || 0;
+  const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0; // max coins that make sense (10 coins = £1)
+  const coinPoundValue = Math.floor(coinDiscount / 10);
+  const totalCost = Math.max(0, preCoinCost - coinPoundValue);
   const selectedNames = selectedServiceDetails.map(s => s.name).join(', ');
 
   // Service-specific questions for selected services
