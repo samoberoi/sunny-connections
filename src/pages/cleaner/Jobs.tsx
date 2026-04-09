@@ -87,7 +87,27 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const available = allBookings.filter(b => !b.cleaner_id && b.status === 'pending');
+  // Filter available jobs by cleaner specialization
+  const available = allBookings.filter(b => {
+    if (b.cleaner_id || b.status !== 'pending') return false;
+    // If cleaner has specialisations, only show matching jobs
+    if (cleanerRecord?.specialisations?.length > 0) {
+      const jobService = (b.service_name || '').toLowerCase();
+      const matches = cleanerRecord.specialisations.some((spec: string) => 
+        jobService.includes(spec.toLowerCase()) || 
+        spec.toLowerCase().includes(jobService.split(' ')[0]?.toLowerCase())
+      );
+      // Also match by category: if cleaner has "House Cleaning" and job is a cleaning type
+      const categoryMatch = cleanerRecord.specialisations.some((spec: string) => {
+        const s = spec.toLowerCase();
+        if (s.includes('house cleaning') || s.includes('deep clean')) return jobService.includes('clean');
+        if (s.includes('housekeeping')) return jobService.includes('keeping') || jobService.includes('laundry') || jobService.includes('bed') || jobService.includes('organis');
+        return false;
+      });
+      return matches || categoryMatch;
+    }
+    return true;
+  });
   const filteredAvailable = available.filter(b => {
     if (jobFilter === 'express') return isExpressBooking(b);
     if (jobFilter === 'schedule') return !isExpressBooking(b);
@@ -248,7 +268,12 @@ export default function CleanerJobs() {
 
             {/* Contact */}
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => window.open(`tel:+1111111111`, '_self')} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
+              <Button variant="outline" size="sm" onClick={async () => {
+                // Fetch customer's phone from profiles
+                const { data: prof } = await supabase.from('profiles').select('phone').eq('user_id', selectedJob.customer_id).maybeSingle();
+                if (prof?.phone) window.open(`tel:${prof.phone}`, '_self');
+                else toast.error('Phone number not available');
+              }} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
                 <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name } })} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
