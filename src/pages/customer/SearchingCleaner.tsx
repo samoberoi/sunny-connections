@@ -48,12 +48,14 @@ export default function SearchingCleaner() {
   useEffect(() => {
     if (!effectiveBookingId) return;
     const checkStatus = async () => {
-      const { data } = await supabase.from('bookings').select('*, cleaners(*)').eq('id', effectiveBookingId).maybeSingle();
+      const { data } = await supabase.from('bookings').select('*').eq('id', effectiveBookingId).maybeSingle();
       if (data?.status === 'cancelled') { navigate('/home', { replace: true }); return; }
-      if (data?.cleaner_id && data?.cleaners) {
-        const c = data.cleaners as any;
-        setAssignedCleaner({ name: c.name, rating: c.rating, review_count: c.review_count, experience: c.experience, verified: c.verified });
-        setPhase('confirmed');
+      if (data?.cleaner_id) {
+        const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', data.cleaner_id).maybeSingle();
+        if (cleaner) {
+          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+          setPhase('confirmed');
+        }
       }
     };
     checkStatus();
@@ -94,13 +96,15 @@ export default function SearchingCleaner() {
   useEffect(() => {
     if (phase !== 'searching' || !effectiveBookingId) return;
     const interval = setInterval(async () => {
-      const { data } = await supabase.from('bookings').select('*, cleaners(*)').eq('id', effectiveBookingId).maybeSingle();
-      if (data?.cleaner_id && data?.cleaners) {
-        const c = data.cleaners as any;
-        setAssignedCleaner({ name: c.name, rating: Number(c.rating), review_count: c.review_count, experience: c.experience, verified: c.verified });
-        setPhase('found');
-        setTimeout(() => setPhase('confirmed'), 3000);
-        clearInterval(interval);
+      const { data } = await supabase.from('bookings').select('*').eq('id', effectiveBookingId).maybeSingle();
+      if (data?.cleaner_id) {
+        const { data: cleaner } = await supabase.from('cleaners').select('*').eq('id', data.cleaner_id).maybeSingle();
+        if (cleaner) {
+          setAssignedCleaner({ name: cleaner.name, rating: Number(cleaner.rating), review_count: cleaner.review_count, experience: cleaner.experience, verified: cleaner.verified });
+          setPhase('found');
+          setTimeout(() => setPhase('confirmed'), 3000);
+          clearInterval(interval);
+        }
       }
     }, 5000);
     return () => clearInterval(interval);
