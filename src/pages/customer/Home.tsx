@@ -5,14 +5,13 @@ import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift, Shield
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
-import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
 import SimulatedMap, { generateCleanerMarkers } from '@/components/SimulatedMap';
 import StreakProgress from '@/components/StreakProgress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCleaners } from '@/hooks/useCleaners';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 import CoinBalance from '@/components/CoinBalance';
 import { toast } from 'sonner';
@@ -121,7 +120,6 @@ export default function CustomerHome() {
 
   return (
     <CustomerLayout>
-      <WelcomeCoupon open={showCoupon} onClose={() => setShowCoupon(false)} onClaim={() => setShowCoupon(false)} />
       
       {/* Offer claim pop-up */}
       <Dialog open={!!offerModal} onOpenChange={open => !open && setOfferModal(null)}>
