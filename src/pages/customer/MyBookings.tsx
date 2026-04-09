@@ -109,6 +109,18 @@ export default function MyBookings() {
     onError: () => toast.error('Failed to cancel booking'),
   });
 
+  const rescheduleBooking = useMutation({
+    mutationFn: async ({ id, date, time }: { id: string; date: string; time: string }) => {
+      const { error } = await supabase.from('bookings').update({ date, time }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      toast.success('Booking rescheduled!');
+    },
+    onError: () => toast.error('Failed to reschedule'),
+  });
+
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
   const past = bookings.filter(b => ['completed', 'cancelled'].includes(b.status));
 
@@ -142,7 +154,11 @@ export default function MyBookings() {
                       <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h</div>
                       <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}</div>
                     </div>
-                    {b.cleaner_name && <p className="text-xs text-foreground mt-2.5 font-bold">Cleaner: {b.cleaner_name}</p>}
+                    {b.cleaner_name && (
+                      <button onClick={() => navigate('/cleaner-detail', { state: { cleanerId: b.cleaner_id } })} className="text-xs text-primary mt-2.5 font-bold underline underline-offset-2">
+                        Cleaner: {b.cleaner_name} →
+                      </button>
+                    )}
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                       <span className="text-lg font-display font-black text-foreground">£{b.total_cost}</span>
