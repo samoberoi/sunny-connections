@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,8 +19,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
+import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
 
 type Category = 'cleaning' | 'housekeeping';
+
+const iconMap: Record<string, any> = {
+  Sparkles, Home, ShowerHead, UtensilsCrossed, Wind, WashingMachine, Bed, Shirt, Brush, Sofa, Trash2, ChefHat: UtensilsCrossed, LayoutGrid: Brush,
+};
 
 // Service-specific follow-up question config
 const serviceQuestions: Record<string, { label: string; question: string; options: number[]; pricePerUnit: number }> = {
@@ -28,32 +33,13 @@ const serviceQuestions: Record<string, { label: string; question: string; option
   bedroom: { label: 'Bedrooms', question: 'How many bedrooms?', options: [1, 2, 3, 4, 5], pricePerUnit: 3 },
   living: { label: 'Living Rooms', question: 'How many living rooms?', options: [1, 2, 3], pricePerUnit: 3 },
   kitchen: { label: 'Kitchens', question: 'How many kitchens?', options: [1, 2], pricePerUnit: 4 },
-  dusting: { label: 'Rooms', question: 'How many rooms to dust?', options: [2, 3, 4, 5, 6], pricePerUnit: 2 },
   deep: { label: 'Rooms', question: 'How many rooms for deep scrub?', options: [1, 2, 3, 4, 5], pricePerUnit: 5 },
   laundry: { label: 'Loads', question: 'How many loads of laundry?', options: [1, 2, 3, 4], pricePerUnit: 4 },
-  ironing: { label: 'Items (approx)', question: 'Approx how many items?', options: [10, 20, 30, 40], pricePerUnit: 0.3 },
   bedmaking: { label: 'Beds', question: 'How many beds?', options: [1, 2, 3, 4, 5], pricePerUnit: 2 },
   organise: { label: 'Rooms', question: 'How many rooms to organise?', options: [1, 2, 3, 4], pricePerUnit: 4 },
 };
 
-const serviceOptions: Record<Category, { id: string; icon: any; name: string; pricePerHour: number }[]> = {
-  cleaning: [
-    { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Cleaning', pricePerHour: 18 },
-    { id: 'bathroom', icon: ShowerHead, name: 'Bathroom Cleaning', pricePerHour: 16 },
-    { id: 'living', icon: Sofa, name: 'Living Room', pricePerHour: 14 },
-    { id: 'bedroom', icon: Bed, name: 'Bedroom', pricePerHour: 14 },
-    { id: 'dusting', icon: Wind, name: 'Dusting & Surfaces', pricePerHour: 12 },
-    { id: 'trash', icon: Trash2, name: 'Trash & Recycling', pricePerHour: 8 },
-    { id: 'deep', icon: Sparkles, name: 'Deep Scrub', pricePerHour: 22 },
-  ],
-  housekeeping: [
-    { id: 'laundry', icon: WashingMachine, name: 'Laundry & Folding', pricePerHour: 15 },
-    { id: 'ironing', icon: Shirt, name: 'Ironing', pricePerHour: 14 },
-    { id: 'bedmaking', icon: Bed, name: 'Bed Making', pricePerHour: 10 },
-    { id: 'organise', icon: Brush, name: 'Organise', pricePerHour: 16 },
-    { id: 'freshen', icon: Wind, name: 'Air & Freshen', pricePerHour: 8 },
-  ],
-};
+// Removed hardcoded serviceOptions - now fetched from DB
 
 const frequencies = [
   { value: 'none' as const, label: 'One-time', desc: 'Single visit' },
