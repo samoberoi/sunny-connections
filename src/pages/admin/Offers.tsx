@@ -124,7 +124,6 @@ export default function AdminOffers() {
                   <span>{offer.claimed_count}/{offer.max_claims} claimed</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> {offer.valid_from} → {offer.valid_until}</p>
-                </div>
               </motion.div>
             ))}
           </div>
