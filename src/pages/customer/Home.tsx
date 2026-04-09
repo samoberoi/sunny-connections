@@ -14,6 +14,37 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 
+function ActiveOffersBanner() {
+  const navigate = useNavigate();
+  const { data: offers = [] } = useQuery({
+    queryKey: ['active-offers'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase.from('offers').select('*').eq('active', true).lte('valid_from', today).gte('valid_until', today).limit(3);
+      return data || [];
+    },
+  });
+
+  if (offers.length === 0) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+      <h3 className="font-display font-bold text-foreground text-sm flex items-center gap-1.5">
+        <Gift className="h-4 w-4 text-primary-ink" strokeWidth={1.5} /> Special Offers
+      </h3>
+      {offers.map((offer: any) => (
+        <div key={offer.id} className="bg-primary/10 rounded-2xl p-4 flex items-center justify-between border border-primary/20">
+          <div>
+            <p className="text-sm font-bold text-foreground">{offer.title}</p>
+            <p className="text-[10px] text-muted-foreground">{offer.description} · {offer.discount_percent}% off</p>
+          </div>
+          {offer.code && <span className="font-mono font-bold text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-lg">{offer.code}</span>}
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
 export default function CustomerHome() {
   const [showCoupon, setShowCoupon] = useState(false);
   const navigate = useNavigate();
