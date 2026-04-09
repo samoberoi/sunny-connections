@@ -64,16 +64,24 @@ function NotificationBadge() {
 }
 
 export default function CustomerHome() {
-  const [showCoupon, setShowCoupon] = useState(false);
   const [offerModal, setOfferModal] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: cleaners } = useCleaners();
+  const queryClient = useQueryClient();
 
+  // Realtime coin balance refresh
   useEffect(() => {
-    const seen = sessionStorage.getItem('coupon_shown');
-    if (!seen) { setShowCoupon(true); sessionStorage.setItem('coupon_shown', '1'); }
-  }, []);
+    if (!user?.id) return;
+    const channel = supabase
+      .channel('home-coin-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'coin_transactions', filter: `customer_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['coin-balance'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
+
 
   // Check for unclaimed offers
   const { data: unclaimedOffers = [] } = useQuery({
