@@ -53,6 +53,25 @@ export default function Login() {
     const success = await verifyOtp(otp);
     setIsLoading(false);
     if (!success) { toast.error('Invalid OTP. Use 1111 for testing.'); return; }
+
+    // Admin access guard: check user_roles table
+    if (role === 'admin') {
+      const { data: session } = await (await import('@/integrations/supabase/client')).supabase.auth.getSession();
+      const userId = session?.session?.user?.id;
+      if (userId) {
+        const { data: adminRole } = await (await import('@/integrations/supabase/client')).supabase
+          .from('user_roles').select('id').eq('user_id', userId).eq('role', 'admin').maybeSingle();
+        if (!adminRole) {
+          toast.error('Unauthorized — admin access only');
+          await (await import('@/integrations/supabase/client')).supabase.auth.signOut();
+          setIsLoading(false);
+          setStep('phone');
+          setOtp('');
+          return;
+        }
+      }
+    }
+
     toast.success('Welcome to Clean Fit! 🎉');
     const onboardingKey = `onboarding_${role}_complete`;
     const seen = localStorage.getItem(onboardingKey);
