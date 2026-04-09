@@ -133,7 +133,7 @@ export default function AdminBookings() {
             {selected.tier && selected.tier !== 'standard' && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Tier</span>
-                <span className="text-amber-600 font-bold">👑 Premium</span>
+                <span className="text-primary-ink font-bold">👑 Premium</span>
               </div>
             )}
             <div className="border-t border-border pt-2 flex justify-between items-center">
