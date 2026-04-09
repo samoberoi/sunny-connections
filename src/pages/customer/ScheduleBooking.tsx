@@ -575,6 +575,56 @@ export default function ScheduleBooking() {
                   </div>
                 </div>
 
+                {/* Payment Method */}
+                <div className="bg-card rounded-3xl p-5 mb-4 shadow-soft border border-border">
+                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" strokeWidth={1.5} /> Payment Method
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'card', label: 'Card', icon: CreditCard },
+                      { value: 'online', label: 'Online', icon: Smartphone },
+                      { value: 'cash', label: 'Cash', icon: Banknote },
+                    ].map(pm => (
+                      <motion.button key={pm.value} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(pm.value)}
+                        className={`py-3 rounded-2xl text-xs font-bold flex flex-col items-center gap-1.5 border transition-all ${
+                          paymentMethod === pm.value ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                        }`}>
+                        <pm.icon className="h-4 w-4" strokeWidth={1.5} />
+                        {pm.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CleanFit Coins */}
+                {coinBalance > 0 && (
+                  <motion.button initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    onClick={() => setUseCoins(!useCoins)}
+                    className={`w-full text-left rounded-3xl p-4 mb-4 flex items-center gap-3 border transition-all ${
+                      useCoins ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                    }`}>
+                    <Coins className="h-5 w-5 text-amber-600 shrink-0" strokeWidth={1.5} />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-foreground">Use CleanFit Coins</p>
+                      <p className="text-[10px] text-muted-foreground">{coinBalance} coins = £{(coinBalance / 10).toFixed(2)} discount</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useCoins ? 'bg-primary border-primary' : 'border-border'}`}>
+                      {useCoins && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={2} />}
+                    </div>
+                  </motion.button>
+                )}
+
+                {/* Referral Code */}
+                <div className="bg-card rounded-3xl p-4 mb-4 shadow-soft border border-border">
+                  <h3 className="font-display font-bold text-foreground text-xs mb-2 flex items-center gap-2">
+                    <Tag className="h-3.5 w-3.5" strokeWidth={1.5} /> Referral Code (optional)
+                  </h3>
+                  <Input placeholder="Enter referral code" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                    className="h-11 rounded-2xl border-border bg-background text-sm font-mono uppercase" />
+                </div>
+
+                {/* Price Breakdown */}
                 <div className="bg-foreground rounded-3xl p-5 mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-background/50">Base rate</span>
@@ -610,9 +660,23 @@ export default function ScheduleBooking() {
                       <span className="text-primary">-{discount}%</span>
                     </div>
                   )}
+                  {useCoins && coinPoundValue > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">🪙 Coins ({coinDiscount})</span>
+                      <span className="text-primary">-£{coinPoundValue}</span>
+                    </div>
+                  )}
                   <div className="border-t border-background/20 mt-2 pt-2 flex justify-between font-display font-black text-2xl">
                     <span className="text-background">Total</span>
                     <span className="text-primary">£{totalCost}</span>
+                  </div>
+                </div>
+
+                <Button onClick={handleBook} disabled={submitting} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
+                  {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
+                </Button>
+              </motion.div>
+            )}
                   </div>
                 </div>
 
