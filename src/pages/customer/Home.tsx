@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin } from 'lucide-react';
+import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import WelcomeCoupon from '@/components/WelcomeCoupon';
 import PageTransition from '@/components/PageTransition';
 import SimulatedMap, { generateCleanerMarkers } from '@/components/SimulatedMap';
+import StreakProgress from '@/components/StreakProgress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCleaners } from '@/hooks/useCleaners';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 
 export default function CustomerHome() {
@@ -97,6 +100,12 @@ export default function CustomerHome() {
                 <p className="text-[10px] text-background/40 mt-1">Instant</p>
               </motion.button>
             </motion.div>
+
+            {/* Streak Progress */}
+            <StreakProgress />
+
+            {/* Active Offers */}
+            <ActiveOffersBanner />
 
             {/* Stats row */}
             <motion.div variants={fadeUp} className="bg-foreground rounded-3xl p-5 flex justify-between items-center">
