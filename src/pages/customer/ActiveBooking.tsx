@@ -111,12 +111,12 @@ export default function ActiveBooking() {
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
                     {booking.cleaner_name[0]}
                   </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-xs">{booking.cleaner_name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {liveStatus === 'en-route' ? `Arriving in ~${eta} min` : liveStatus === 'in-progress' ? 'Cleaning' : 'Assigned'}
-                    </p>
-                  </div>
+                    <button onClick={() => navigate('/cleaner-detail', { state: { cleanerId: booking.cleaner_id } })} className="text-left">
+                      <p className="font-semibold text-foreground text-xs">{booking.cleaner_name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {liveStatus === 'en-route' ? `Arriving in ~${eta} min` : liveStatus === 'in-progress' ? 'Cleaning' : 'Assigned'}
+                      </p>
+                    </button>
                 </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => window.open('tel:+2222222222', '_self')} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
