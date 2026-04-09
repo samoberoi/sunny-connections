@@ -89,6 +89,7 @@ export default function ScheduleBooking() {
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
+  const { data: dbScheduledServices = [] } = useServicesByMode('scheduled');
 
   // Fetch saved addresses
   const { data: savedAddresses = [] } = useQuery({
@@ -126,9 +127,8 @@ export default function ScheduleBooking() {
     });
   };
 
-  const allServices = [...serviceOptions.cleaning, ...serviceOptions.housekeeping];
-  const selectedServiceDetails = allServices.filter(s => selectedServices.includes(s.id));
-  const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.pricePerHour, 0);
+  const selectedServiceDetails = dbScheduledServices.filter(s => selectedServices.includes(s.id));
+  const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.rate_per_hour, 0);
 
   // Calculate service-specific surcharges
   const serviceSurcharge = selectedServices.reduce((sum, svcId) => {
@@ -301,8 +301,9 @@ export default function ScheduleBooking() {
                     <button onClick={() => setCategory(null)} className="text-xs text-primary-ink font-bold mb-3 flex items-center gap-1">← Categories</button>
                     <p className="font-display font-bold text-foreground text-sm mb-3">{category === 'cleaning' ? '🧹 Cleaning' : '🏠 Housekeeping'}</p>
                     <div className="space-y-2">
-                      {serviceOptions[category].map((svc, i) => {
+                      {dbScheduledServices.filter(s => s.category === category).map((svc, i) => {
                         const isSelected = selectedServices.includes(svc.id);
+                        const IconComp = iconMap[svc.icon] || Sparkles;
                         return (
                           <motion.button key={svc.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                             whileTap={{ scale: 0.98 }} onClick={() => toggleService(svc.id)}
@@ -310,11 +311,11 @@ export default function ScheduleBooking() {
                               isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
                             }`}>
                             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'}`}>
-                              <svc.icon className="h-4 w-4" strokeWidth={1.5} />
+                              <IconComp className="h-4 w-4" strokeWidth={1.5} />
                             </div>
                             <div className="flex-1">
                               <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
-                              <p className="text-[10px] text-muted-foreground">£{svc.pricePerHour}/hr</p>
+                              <p className="text-[10px] text-muted-foreground">£{svc.rate_per_hour}/hr</p>
                             </div>
                             {isSelected && <CheckCircle2 className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />}
                           </motion.button>
