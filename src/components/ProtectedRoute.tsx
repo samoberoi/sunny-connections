@@ -18,6 +18,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsTraining, setNeedsTraining] = useState(false);
   const [showRoleIntro, setShowRoleIntro] = useState(false);
+  const [recheckCounter, setRecheckCounter] = useState(0);
 
   useEffect(() => {
     if (!user?.id) { setOnboardingChecked(true); return; }
@@ -53,7 +54,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       setOnboardingChecked(true);
     };
     check();
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, recheckCounter]);
 
   if (isLoading || !onboardingChecked) {
     return (
@@ -87,7 +88,11 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   // Show onboarding wizard for new users (skip for admin)
   if (needsOnboarding && user?.role !== 'admin') {
-    const handleComplete = () => setNeedsOnboarding(false);
+    const handleComplete = () => {
+      setNeedsOnboarding(false);
+      // Re-run the check so training gate activates for cleaners
+      setRecheckCounter(c => c + 1);
+    };
     if (user?.role === 'customer') return <CustomerOnboarding onComplete={handleComplete} />;
     if (user?.role === 'cleaner') return <CleanerOnboarding onComplete={handleComplete} />;
   }
