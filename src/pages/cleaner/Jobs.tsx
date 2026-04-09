@@ -35,6 +35,8 @@ export default function CleanerJobs() {
   const [notes, setNotes] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>('all');
+  const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
+  const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
