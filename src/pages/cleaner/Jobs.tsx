@@ -112,17 +112,10 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Filter available jobs by cleaner specialization using strict category matching
+  // Filter available jobs by cleaner specialization using direct name matching
   const available = allBookings.filter(b => {
     if (b.cleaner_id || b.status !== 'pending') return false;
-    if (cleanerRecord?.specialisations?.length > 0) {
-      const jobCategory = getServiceCategory(b.service_name || '');
-      const cleanerCategories = cleanerRecord.specialisations.map((s: string) => getSpecCategory(s));
-      // If job category is unknown, show to all. Otherwise must match.
-      if (jobCategory === 'unknown') return true;
-      return cleanerCategories.includes(jobCategory);
-    }
-    return true;
+    return jobMatchesSpecialisations(b.service_name || '', cleanerRecord?.specialisations || []);
   });
   const filteredAvailable = available.filter(b => {
     if (jobFilter === 'express') return isExpressBooking(b);
