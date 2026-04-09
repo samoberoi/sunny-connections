@@ -97,7 +97,12 @@ export default function ScheduleBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [referralCode, setReferralCode] = useState('');
+  const [useCoins, setUseCoins] = useState(false);
   const totalSteps = 6;
+
+  const { data: coinData } = useCoinBalance();
 
   // Fetch saved addresses
   const { data: savedAddresses = [] } = useQuery({
