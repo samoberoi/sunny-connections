@@ -80,6 +80,7 @@ export default function CleanerJobs() {
     }
   }, [selectedBooking, allBookings]);
 
+  useEffect(() => {
     const channel = supabase
       .channel('cleaner-bookings-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
