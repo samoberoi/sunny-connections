@@ -65,9 +65,11 @@ export type Database = {
           id: string
           notes: string | null
           otp: string
+          payment_method: string | null
           property_type: string
           rating: number | null
           recurring: Database["public"]["Enums"]["recurring_type"]
+          referral_code: string | null
           review: string | null
           service_id: string
           service_name: string
@@ -96,9 +98,11 @@ export type Database = {
           id?: string
           notes?: string | null
           otp?: string
+          payment_method?: string | null
           property_type?: string
           rating?: number | null
           recurring?: Database["public"]["Enums"]["recurring_type"]
+          referral_code?: string | null
           review?: string | null
           service_id: string
           service_name: string
@@ -127,9 +131,11 @@ export type Database = {
           id?: string
           notes?: string | null
           otp?: string
+          payment_method?: string | null
           property_type?: string
           rating?: number | null
           recurring?: Database["public"]["Enums"]["recurring_type"]
+          referral_code?: string | null
           review?: string | null
           service_id?: string
           service_name?: string
@@ -330,6 +336,36 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           active: boolean
@@ -363,6 +399,33 @@ export type Database = {
           id?: string
           max_uses?: number
           used_count?: number
+        }
+        Relationships: []
+      }
+      customer_coins: {
+        Row: {
+          balance: number
+          customer_id: string
+          id: string
+          total_earned: number
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          customer_id: string
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          customer_id?: string
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -499,6 +562,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_photos: {
+        Row: {
+          booking_id: string
+          id: string
+          photo_type: string
+          photo_url: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          booking_id: string
+          id?: string
+          photo_type: string
+          photo_url: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          booking_id?: string
+          id?: string
+          photo_type?: string
+          photo_url?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
