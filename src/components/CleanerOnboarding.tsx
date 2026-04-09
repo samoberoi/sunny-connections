@@ -7,10 +7,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const categories = ['House Cleaning', 'Housekeeping', 'Deep Clean', 'End of Tenancy', 'Office Cleaning'];
+const categories = ['Regular Cleaning', 'General Housekeeping', 'Deep Cleaning', 'End of Tenancy'];
 const specialisations = [
-  'Kitchen Cleaning', 'Bathroom Cleaning', 'Deep Clean', 'Laundry & Ironing',
-  'Bed Making', 'Organising', 'Window Cleaning', 'Carpet Cleaning',
+  'Kitchen Deep Clean', 'Deep Cleaning', 'Regular Cleaning', 'End of Tenancy',
+  'Laundry & Ironing', 'Bed Making & Linen Change', 'Organising & Decluttering', 'General Housekeeping',
 ];
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
