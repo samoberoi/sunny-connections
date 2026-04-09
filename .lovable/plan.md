@@ -1,60 +1,89 @@
 
 
-# Fix Recurring Job Display, Admin Coupon CRUD, Coupon Pop-ups, and Cleaner Job Flow
+# Comprehensive End-to-End Audit: Bug Report and Fix Plan
 
-## Issues to Fix
-
-1. **Cleaner Upcoming tab only shows 2 days** — The filter `upcomingFuture` uses `b.date > todayStr` which is correct, but the query `limit(200)` and the filter only include `['assigned', 'en-route']` statuses. The real issue is that the recurring booking generator (cron) likely only creates a few days ahead. We need to ensure all generated future bookings appear, and sort them by date ascending.
-
-2. **Admin Coupons page has no working Create/Edit/Toggle** — The Create button does nothing, the Switch toggle has no `onCheckedChange` handler, and the `useCoupons` hook only fetches active coupons (admins need all).
-
-3. **Coupons should show as customer pop-ups and be applicable during payment** — Currently only `offers` table powers pop-ups. Coupons need similar treatment: show as pop-up on app load, and allow coupon code entry during Express/Schedule booking payment step.
-
-4. **Cleaner job detail flow cleanup** — The flow already has Map → Profile → Call/Chat → "I'm On My Way" + Cancel → OTP. This is mostly correct but needs minor polish: ensure the "I'm on the way" and "Cancel" buttons are clearly visible as the primary action pair when a job is first accepted.
+## Audit Methodology
+Reviewed every page, component, hook, database table, RLS policy, and data flow across all three roles (Customer, Cleaner, Admin). Cross-referenced DB schema with frontend code.
 
 ---
 
-## Changes
+## Issues Found
 
-### 1. Fix Upcoming Jobs Sort & Display (`src/pages/cleaner/Jobs.tsx`)
-- Sort `upcomingFuture` by `b.date` ascending so nearest dates come first
-- Increase query limit from 200 to 500 to capture more future recurring bookings
-- Add date grouping headers (e.g., "Mon 14 Apr", "Tue 15 Apr") in the Upcoming tab for clarity
+### BUG 1: Express Booking does NOT apply coupon discount to actual booking cost
+**File:** `src/pages/customer/ExpressBooking.tsx` line 95
+**Problem:** `total_cost` is calculated as `service.rate_per_hour * service.min_duration` (the base price), ignoring the `couponDiscount` state. The `totalPrice` variable with discount is only used for display, not sent to DB.
+**Fix:** Change line 95 to use `totalPrice` instead of `basePrice` in the insert.
 
-### 2. Full Admin Coupon CRUD (`src/pages/admin/Coupons.tsx` + `src/hooks/useCoupons.ts`)
-- **useCoupons hook**: Remove `.eq('active', true)` filter so admins see all coupons; add `useAllCoupons()` variant
-- **Create Coupon**: Add a dialog with form fields: code, description, discount_percent, max_uses, expires_at. Insert into `coupons` table.
-- **Toggle Active/Inactive**: Wire `Switch onCheckedChange` to update `coupons.active` in DB
-- **Edit/Delete**: Optional edit button to modify coupon details
+### BUG 2: Express Booking does NOT apply offer discount to actual booking cost
+**File:** `src/pages/customer/ExpressBooking.tsx` line 95
+**Problem:** Same as above -- ActiveOffers and CouponCodeInput both write to `couponDiscount`, but only the display uses `totalPrice`. The DB insert uses `basePrice`.
+**Fix:** Use `totalPrice` in the insert and in the navigation state.
 
-### 3. Coupon Pop-up for Customers (`src/pages/customer/Home.tsx`)
-- Query active coupons alongside offers on Home page load
-- Show unclaimed coupons as pop-up modal (similar to offer pop-up)
-- Store claimed coupon codes in `localStorage` for use at checkout
-- Customer can dismiss or claim the coupon
+### BUG 3: CouponCodeInput wraps itself in a card container, creating double card nesting
+**File:** `src/components/CouponCodeInput.tsx` lines 55-77
+**Problem:** `CouponCodeInput` renders its own `bg-card rounded-3xl p-4 shadow-soft border` container. But in both `ExpressBooking.tsx` (line 231) and `ScheduleBooking.tsx` (line 624), it's already inside a parent card container. This creates ugly double-nested card UI.
+**Fix:** Remove the outer container from CouponCodeInput -- make it a bare input+button, let the parent control layout.
 
-### 4. Coupon Code at Checkout (`src/pages/customer/ExpressBooking.tsx` + `src/pages/customer/ScheduleBooking.tsx`)
-- Add a "Have a coupon?" input field in the payment step
-- Validate coupon code against `coupons` table (active, not expired, under max_uses)
-- Apply discount_percent to total_cost before booking creation
-- Increment `used_count` on the coupon after successful booking
+### BUG 4: ActiveOffers claims offer immediately on click (before booking is confirmed)
+**File:** `src/components/ActiveOffers.tsx` lines 49-68
+**Problem:** When a user clicks an offer in checkout, it immediately inserts into `offer_claims` and increments `claimed_count`. If the user abandons the booking, the offer is wasted. Should only claim after successful booking creation.
+**Fix:** Remove the DB insert from `applyOffer`. Instead, pass the `offer.id` back up and let the booking flow claim it after successful insert.
 
-### 5. Cleaner Job Detail Flow Polish (`src/pages/cleaner/Jobs.tsx`)
-- When status is `assigned`: show Map, then customer profile card with Call/Chat, then prominent "I'm On My Way" button + "Cancel" below it — already mostly done, just ensure the action buttons are below the profile card and above everything else
-- Minor: no functional changes needed, the flow is correct
+### BUG 5: Coupon `used_count` is never incremented after successful booking
+**File:** `src/pages/customer/ExpressBooking.tsx` and `ScheduleBooking.tsx`
+**Problem:** When a coupon is applied and booking is created, the `used_count` on the coupon is never incremented. This means coupons can be used infinitely.
+**Fix:** After successful booking insert, call `supabase.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('code', appliedCode)`.
+
+### BUG 6: Coin earning transaction type mismatch
+**File:** `src/pages/customer/RateService.tsx` line 84 uses `type: 'earned'`
+**File:** `src/pages/customer/Wallet.tsx` line 88 checks `tx.type === 'earn'`
+**Problem:** Coins are inserted with type `'earned'` but the Wallet UI checks for `'earn'`. The arrow icon and +/- display will be wrong for earned coins.
+**Fix:** Standardize to `'earned'` everywhere. Update Wallet to check `tx.type === 'earned'`.
+
+### BUG 7: Referral reward uses fragile ID prefix matching
+**File:** `src/pages/cleaner/Jobs.tsx` lines 237-240
+**Problem:** Referral code is `CLEAN` + first 6 chars of user ID. The lookup does `LIKE '${userIdPrefix}%'` on `profiles.user_id`. UUID prefixes are not unique enough for reliable matching. Multiple users could match.
+**Fix:** Use exact match: query `profiles` where `user_id` starts with the prefix, but also verify by reconstructing the expected code and comparing.
+
+### BUG 8: `MyBookings` filter for "Scheduled" is wrong
+**File:** `src/pages/customer/MyBookings.tsx` line 184
+**Problem:** Filter checks `b.recurring !== 'none'` to identify scheduled bookings. But one-time scheduled bookings have `recurring = 'none'` too. The real distinction is whether `service_name` starts with "Scheduled:" vs "Express:".
+**Fix:** Use `b.service_name?.toLowerCase().includes('scheduled')` for scheduled filter.
+
+### BUG 9: Schedule page shows "Daily" frequency option in memory but not in code
+**File:** `src/pages/customer/ScheduleBooking.tsx` lines 52-57
+**Problem:** The memory says "Daily, Weekly, etc." but the code only has `none`, `weekly`, `fortnightly`, `monthly`. No `daily` option exists. This is a feature gap mentioned in the user's earlier description.
+**Status:** Not a bug per se, but a missing feature. Will skip for now.
+
+### BUG 10: Cleaner Jobs page fetches ALL bookings (not just relevant ones)
+**File:** `src/pages/cleaner/Jobs.tsx` line 73
+**Problem:** Query fetches `select('*').order('created_at', { ascending: false }).limit(500)` with no filter. This returns ALL bookings in the system. For pending jobs this is intentional (to show available pool), but it's inefficient and will fail at scale.
+**Fix:** Split into two queries: one for pending (unassigned) jobs and one for the cleaner's own jobs. This also fixes potential RLS issues.
+
+### BUG 11: Wallet transaction icon logic wrong for referral type
+**File:** `src/pages/customer/Wallet.tsx` lines 88-94
+**Problem:** Only checks for `'earn'` type for the green icon. But referral bonuses use type `'referral'` (set in Jobs.tsx line 243). These show with the wrong (spend) icon.
+**Fix:** Check `['earned', 'referral'].includes(tx.type)` for the earning icon, and everything else as spend.
+
+### BUG 12: Cleaner Schedule page only shows first 5 upcoming jobs
+**File:** `src/pages/cleaner/Schedule.tsx` line 134
+**Problem:** `upcomingJobs.slice(0, 5)` truncates the list. For recurring weekly bookings, there could be 12+ instances. User expects to see all.
+**Fix:** Remove the `.slice(0, 5)` limit or add a "show all" toggle.
 
 ---
 
-## File Changes
+## File Changes Summary
 
-| Action | File | Description |
-|--------|------|-------------|
-| Edit | `src/hooks/useCoupons.ts` | Add `useAllCoupons()` for admin, keep `useCoupons()` for active only |
-| Edit | `src/pages/admin/Coupons.tsx` | Create coupon dialog, toggle switch handler, full CRUD |
-| Edit | `src/pages/customer/Home.tsx` | Add coupon pop-up alongside offers |
-| Edit | `src/pages/customer/ExpressBooking.tsx` | Add coupon code input in payment step with validation |
-| Edit | `src/pages/customer/ScheduleBooking.tsx` | Add coupon code input in payment step with validation |
-| Edit | `src/pages/cleaner/Jobs.tsx` | Sort upcoming by date asc, increase limit, add date group headers |
+| Action | File | Fix |
+|--------|------|-----|
+| Edit | `src/pages/customer/ExpressBooking.tsx` | Use `totalPrice` in DB insert; increment coupon `used_count` after booking |
+| Edit | `src/pages/customer/ScheduleBooking.tsx` | Increment coupon `used_count` after booking |
+| Edit | `src/components/CouponCodeInput.tsx` | Remove outer card wrapper; expose coupon code for parent to use |
+| Edit | `src/components/ActiveOffers.tsx` | Don't claim offer on click; pass offer ID back; claim after booking success |
+| Edit | `src/pages/customer/Wallet.tsx` | Fix type checks: `'earned'` and `'referral'` as earning types |
+| Edit | `src/pages/customer/MyBookings.tsx` | Fix scheduled filter to check service_name instead of recurring |
+| Edit | `src/pages/cleaner/Schedule.tsx` | Remove 5-job limit on upcoming jobs |
+| Edit | `src/pages/cleaner/Jobs.tsx` | Improve referral code lookup reliability |
 
-No database migrations needed — `coupons` table already exists with all required columns.
+No database migrations needed.
 
