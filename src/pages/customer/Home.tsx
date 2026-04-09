@@ -255,7 +255,20 @@ export default function CustomerHome() {
                 <p className="text-primary-foreground/60 text-[10px] font-bold uppercase tracking-[0.15em]">Refer a Mate</p>
                 <p className="text-primary-foreground text-2xl font-display font-black">First 3 for £50</p>
               </div>
-              <Button size="sm" onClick={() => navigate('/profile')} className="rounded-full font-bold bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-10 px-5">
+              <Button size="sm" onClick={() => {
+                const code = user?.id ? `CLEAN${user.id.slice(0, 6).toUpperCase()}` : 'CLEANFIT20';
+                const link = `${window.location.origin}/login?ref=${code}`;
+                const text = `Use my referral code ${code} to get 20% off your first clean with Clean Fit! 🧹✨ ${link}`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Clean Fit', text, url: link }).catch(() => {
+                    navigator.clipboard.writeText(link);
+                    toast.success('Link copied!');
+                  });
+                } else {
+                  navigator.clipboard.writeText(link);
+                  toast.success('Referral link copied!');
+                }
+              }} className="rounded-full font-bold bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-10 px-5">
                 Share <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </motion.div>

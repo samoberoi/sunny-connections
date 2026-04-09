@@ -45,7 +45,16 @@ export default function CleanerJobs() {
   useEffect(() => {
     setBeforePhotoUrl(null);
     setAfterPhotoUrl(null);
-  }, [selectedBooking]);
+    // Derive hasArrived from booking status
+    if (selectedBooking) {
+      const booking = allBookings.find((b: any) => b.id === selectedBooking);
+      if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
+        setHasArrived(true);
+      } else {
+        setHasArrived(false);
+      }
+    }
+  }, [selectedBooking, allBookings]);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
