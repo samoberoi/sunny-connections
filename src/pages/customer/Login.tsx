@@ -69,64 +69,64 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Lime header */}
-      <div className="bg-primary rounded-b-[2rem] px-6 pt-14 pb-28 relative">
-        <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full bg-primary-foreground/10 border border-primary-foreground/10 flex items-center justify-center mb-6">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+      {/* Lime header - compact */}
+      <div className="bg-primary rounded-b-[2rem] px-5 pt-10 pb-20 relative shrink-0">
+        <button onClick={() => navigate('/')} className="w-9 h-9 rounded-full bg-primary-foreground/10 border border-primary-foreground/10 flex items-center justify-center mb-4">
           <ArrowLeft className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
         </button>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-xl bg-primary-foreground flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary" strokeWidth={1.5} />
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-7 h-7 rounded-xl bg-primary-foreground flex items-center justify-center">
+            <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
           </div>
-          <span className="text-sm font-bold text-primary-foreground/60 uppercase tracking-wider">{role}</span>
+          <span className="text-xs font-bold text-primary-foreground/60 uppercase tracking-wider">{role}</span>
         </div>
-        <h1 className="text-3xl font-display font-black text-primary-foreground leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-display font-black text-primary-foreground leading-tight">
           Sign in to<br />{roleLabels[role]}
         </h1>
       </div>
 
-      {/* Card overlapping the header - higher z-index and more negative margin */}
-      <div className="px-6 -mt-16 relative z-20">
-        <div className="bg-card rounded-3xl p-6 shadow-elevated border border-border">
+      {/* Card overlapping the header */}
+      <div className="px-5 -mt-12 relative z-20 flex-1 min-h-0 overflow-y-auto">
+        <div className="bg-card rounded-3xl p-5 shadow-elevated border border-border">
           <AnimatePresence mode="wait">
             {step === 'phone' ? (
               <motion.div key="phone" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-                <p className="text-muted-foreground text-sm mb-5">Enter your mobile number</p>
-                <div className="relative mb-5">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <p className="text-muted-foreground text-sm mb-4">Enter your mobile number</p>
+                <div className="relative mb-4">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Smartphone className="h-4 w-4 text-foreground" strokeWidth={1.5} />
                   </div>
                   <Input value={displayPhone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={roleHints[role]}
                     inputMode="numeric" maxLength={12}
-                    className="pl-14 h-14 rounded-2xl border-2 border-border bg-background text-lg font-bold focus-visible:ring-primary/30 focus-visible:border-primary" />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">{phone.length}/10</span>
+                    className="pl-14 h-13 rounded-2xl border-2 border-border bg-background text-lg font-bold focus-visible:ring-primary/30 focus-visible:border-primary" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">{phone.length}/10</span>
                 </div>
                 <Button onClick={handleSendOTP} disabled={phone.length < 10 || isLoading}
-                  className="w-full h-14 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
+                  className="w-full h-13 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
                   {isLoading ? 'Sending...' : 'Send OTP'}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center mt-4">
+                <p className="text-xs text-muted-foreground text-center mt-3">
                   Test: <span className="font-mono font-bold text-foreground">{roleHints[role]}</span> · OTP: <span className="font-mono font-bold text-foreground">1111</span>
                 </p>
               </motion.div>
             ) : (
               <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-                <p className="text-muted-foreground text-sm mb-5">Enter the 4-digit code sent to {displayPhone}</p>
-                <div className="flex justify-center mb-6">
+                <p className="text-muted-foreground text-sm mb-4">Enter the 4-digit code sent to {displayPhone}</p>
+                <div className="flex justify-center mb-5">
                   <InputOTP maxLength={4} value={otp} onChange={setOtp}>
-                    <InputOTPGroup className="gap-3">
+                    <InputOTPGroup className="gap-2">
                       {[0, 1, 2, 3].map(i => (
-                        <InputOTPSlot key={i} index={i} className="w-16 h-16 rounded-2xl border-2 border-border bg-background text-xl font-bold focus:border-primary" />
+                        <InputOTPSlot key={i} index={i} className="w-14 h-14 rounded-2xl border-2 border-border bg-background text-xl font-bold focus:border-primary" />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
                 <Button onClick={handleVerify} disabled={otp.length !== 4 || isLoading}
-                  className="w-full h-14 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
+                  className="w-full h-13 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
                   {isLoading ? 'Verifying...' : 'Verify & Continue'}
                 </Button>
-                <button onClick={() => { setStep('phone'); setOtp(''); }} className="w-full text-center text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors">
+                <button onClick={() => { setStep('phone'); setOtp(''); }} className="w-full text-center text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors">
                   Change number
                 </button>
               </motion.div>

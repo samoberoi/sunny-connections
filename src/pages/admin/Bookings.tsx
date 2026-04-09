@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/EmptyState';
@@ -9,6 +8,7 @@ import { CalendarDays, MapPin, MoreHorizontal, XCircle, UserCheck } from 'lucide
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -67,85 +67,72 @@ export default function AdminBookings() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-black text-foreground">Live Bookings</h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time view of all bookings</p>
+      <div className="px-5 pt-6 pb-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h1 className="text-2xl font-display font-black text-foreground">Live Bookings</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Real-time view of all bookings</p>
+          </div>
+          <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-primary">Live</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold text-primary">Live</span>
-        </div>
-      </div>
 
-      {bookings.length === 0 ? (
-        <EmptyState icon={CalendarDays} title="No bookings yet" description="Bookings will appear here once customers start booking" />
-      ) : (
-        <div className="border border-border rounded-2xl overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Customer</TableHead>
-                <TableHead className="font-semibold">Service</TableHead>
-                <TableHead className="font-semibold">Cleaner</TableHead>
-                <TableHead className="font-semibold">Location</TableHead>
-                <TableHead className="font-semibold">Date</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold text-right">Total</TableHead>
-                <TableHead className="font-semibold w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bookings.map(b => (
-                <TableRow key={b.id} className="hover:bg-accent/50 transition-colors">
-                  <TableCell className="font-medium">{b.customer_name}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm">{b.service_name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{b.property_type} · {b.duration}h</p>
+        {bookings.length === 0 ? (
+          <EmptyState icon={CalendarDays} title="No bookings yet" description="Bookings will appear here once customers start booking" />
+        ) : (
+          <div className="space-y-3">
+            {bookings.map((b, i) => (
+              <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                className="bg-card rounded-2xl p-4 shadow-soft border border-border">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-bold text-foreground text-sm truncate">{b.customer_name}</h3>
+                      <Badge className={`text-[9px] rounded-lg font-medium border capitalize shrink-0 ${statusColors[b.status] || 'bg-muted text-foreground'}`}>
+                        {b.status.replace('-', ' ')}
+                      </Badge>
                     </div>
-                  </TableCell>
-                  <TableCell>{b.cleaner_name || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" strokeWidth={1.5} />
-                      {b.address_postcode}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{b.date} {b.time}</TableCell>
-                  <TableCell>
-                    <Badge className={`rounded-lg text-[10px] font-semibold border capitalize ${statusColors[b.status] || 'bg-muted text-foreground'}`}>
-                      {b.status.replace('-', ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-display font-black text-primary">£{b.total_cost}</TableCell>
-                  <TableCell>
-                    {!['completed', 'cancelled'].includes(b.status) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          {b.cleaner_id && (
-                            <DropdownMenuItem onClick={() => unassignCleaner.mutate(b.id)} className="text-xs">
-                              <UserCheck className="h-3.5 w-3.5 mr-2" /> Reassign Cleaner
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => cancelBooking.mutate(b.id)} className="text-xs text-destructive focus:text-destructive">
-                            <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel Booking
+                    <p className="text-xs text-muted-foreground">{b.service_name} · {b.property_type} · {b.duration}h</p>
+                  </div>
+                  {!['completed', 'cancelled'].includes(b.status) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl">
+                        {b.cleaner_id && (
+                          <DropdownMenuItem onClick={() => unassignCleaner.mutate(b.id)} className="text-xs">
+                            <UserCheck className="h-3.5 w-3.5 mr-2" /> Reassign
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                        )}
+                        <DropdownMenuItem onClick={() => cancelBooking.mutate(b.id)} className="text-xs text-destructive focus:text-destructive">
+                          <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{b.address_postcode}</span>
+                    <span>{b.date} {b.time}</span>
+                  </div>
+                  <span className="font-display font-black text-primary text-sm">£{b.total_cost}</span>
+                </div>
+                {b.cleaner_name && (
+                  <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                    Cleaner: <span className="font-semibold text-foreground">{b.cleaner_name}</span>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
     </AdminLayout>
   );
 }
