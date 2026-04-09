@@ -1,178 +1,134 @@
 
 
-# Comprehensive Regression Test Report -- CleanFit App
+# Fix Communication, Photo Display, Job Matching, and UX Flow Issues
 
-All screens across Customer, Cleaner, and Admin roles reviewed. Below are the findings organized by severity.
-
----
-
-## CRITICAL BUGS (5)
-
-### C1: Wallet coin description inconsistency
-**File**: `src/pages/customer/Wallet.tsx` line 71 vs `src/pages/customer/RateService.tsx` line 69
-- Wallet says "Earn 10 coins every time you rate" and "100 coins = £5 off"
-- RateService awards `Math.floor(total_cost / 5)` coins (1 coin per £5 spent), not 10 per rating
-- CoinBalance component shows "Worth £X" using `balance / 10` (10 coins = £1)
-- Three conflicting coin valuations: Wallet says 100:£5, CoinBalance says 10:£1, ScheduleBooking uses 10:£1
-- **Fix**: Align all text to "1 coin per £5 spent, 10 coins = £1 discount"
-
-### C2: Coin redemption math bug in ScheduleBooking
-**File**: `src/pages/customer/ScheduleBooking.tsx` line 163
-- `coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0` -- this caps coins at `preCoinCost * 10` which is WRONG
-- If preCoinCost is £50, it allows up to 500 coins. But it should cap at `preCoinCost * 10` only to prevent negative totals
-- Actually the issue is the opposite: it should be `Math.min(coinBalance, preCoinCost * 10)` to ensure coinPoundValue never exceeds preCoinCost. This is actually correct math, but the DISPLAY text in Wallet contradicts (100 coins = £5, vs code says 10 coins = £1)
-- **Fix**: Standardize the ratio across all files
-
-### C3: Express Booking missing payment method and referral code
-**File**: `src/pages/customer/ExpressBooking.tsx` line 103-107
-- ScheduleBooking has `payment_method` and `referral_code` fields in checkout (step 6)
-- ExpressBooking inserts booking WITHOUT `payment_method` or `referral_code` columns
-- Result: Express bookings always default to 'card', user has no choice
-- **Fix**: Add payment method selection and optional referral code to ExpressBooking confirm screen
-
-### C4: Admin cannot create new cleaners or customers
-- The admin panel shows customer/cleaner lists and can delete them
-- But there is NO "Add Customer" or "Add Cleaner" button in admin Customers or Cleaners pages
-- Admin can only manage existing users, not create new ones
-- **Fix**: Add "Invite Cleaner" and "Invite Customer" flows in admin pages
-
-### C5: ReferralCard shows hardcoded "0 referrals" and "£0.00 credit"
-**File**: `src/components/ReferralCard.tsx` lines 81-86
-- These values are hardcoded, not fetched from the database
-- There is no `referrals` table or tracking mechanism for completed referral conversions
-- The referral code on bookings (`referral_code` column) is never validated or processed
-- **Fix**: Create referral tracking (check `referral_code` on bookings, award coins on first completed booking by referred user)
+## Overview
+This plan addresses the core bugs across customer and cleaner views: broken chat/call, photo not reflecting, job specialization mismatch, missing map pathway, chat templates, and notification sounds.
 
 ---
 
-## HIGH SEVERITY (6)
+## 1. Fix Customer Chat & Call Buttons (SearchingCleaner + ActiveBooking)
 
-### H1: Notification insert fails for cleaner-to-customer notifications
-**File**: Multiple places (Jobs.tsx line 104-108, SearchingCleaner cancellation)
-- RLS policy: `WITH CHECK (auth.uid() = user_id)` -- a cleaner inserting a notification for a CUSTOMER will fail because `auth.uid()` != customer's `user_id`
-- Same issue in `Leaves.tsx` line 58-62: admin inserting notification for customer
-- This silently fails and notifications are never actually delivered
-- **Fix**: Change notifications INSERT policy to allow authenticated users to insert for any user, OR use a database function with SECURITY DEFINER
+**Problem**: In `SearchingCleaner.tsx` (lines 259-264), Call and Chat buttons have no `onClick` handlers. In `ActiveBooking.tsx`, the chat button passes `cleanerProfile?.phone` but the phone fetch may fail if cleaner_id isn't populated yet.
 
-### H2: `hasArrived` state not persisted in cleaner Jobs
-**File**: `src/pages/cleaner/Jobs.tsx` line 36
-- If cleaner refreshes page after tapping "I've Arrived" but before OTP verification, `hasArrived` resets to `false`
-- Cleaner sees "I'm On My Way" again instead of OTP input
-- **Fix**: Derive `hasArrived` from booking status or persist in sessionStorage
+**Fix**:
+- `SearchingCleaner.tsx`: Wire Call button to fetch cleaner's phone from `cleaners → user_id → profiles.phone`. Wire Chat button to navigate to `/chat` with `bookingId` and `otherName`.
+- `ActiveBooking.tsx`: Ensure chat navigates with correct booking ID. Auto-fetch phone on mount when cleaner is assigned.
 
-### H3: ActiveBooking auto-redirect to rate page has no delay/confirmation
-**File**: `src/pages/customer/ActiveBooking.tsx` lines 57-59
-- When cleaner marks job complete, customer is immediately navigated to `/rate-service`
-- No "Your cleaning is done!" confirmation screen, just an abrupt redirect
-- **Fix**: Show a brief completion animation before navigating
+**Files**: `src/pages/customer/SearchingCleaner.tsx`, `src/pages/customer/ActiveBooking.tsx`
 
-### H4: Cleaner Jobs page fetches ALL bookings, not just relevant ones
-**File**: `src/pages/cleaner/Jobs.tsx` line 65
-- `supabase.from('bookings').select('*').order(...)` without any filter
-- RLS limits what's returned, but this still fetches more data than needed
-- Could hit the 1000-row default limit
-- **Fix**: Add `.limit(200)` or explicit status/cleaner filters
+## 2. Fix Cleaner Call Button (Jobs.tsx)
 
-### H5: Admin Bookings page has no limit on query
-**File**: `src/pages/admin/Bookings.tsx` line 31
-- Fetches ALL bookings without limit. With scale, this will hit the 1000-row cap silently
-- **Fix**: Add `.limit(500)` and implement pagination
+**Problem**: The Call button in Jobs.tsx (line 271-275) fetches phone from `profiles` using `customer_id` as `user_id`, which is correct. But if the customer profile has no phone stored, it fails.
 
-### H6: `cleaner_leaves` join to `cleaners` table may fail
-**File**: `src/pages/admin/Leaves.tsx` line 18
-- Uses `.select('*, cleaners(name, user_id)')` which relies on an implicit FK from `cleaner_leaves.cleaner_id` to `cleaners.id`
-- No FK is defined according to the schema. This join may or may not work depending on PostgREST inference
-- **Fix**: Verify FK exists or use a separate query
+**Fix**: The fetch logic is correct. Ensure we also pass `otherPhone` when navigating to chat so the call button in Chat.tsx works too.
+
+**Files**: `src/pages/cleaner/Jobs.tsx`
+
+## 3. Fix Photo Not Reflecting on Cleaner Screen
+
+**Problem**: `PhotoCapture.tsx` uses `useState` with `existingUrl` as initial value, but `existingUrl` is only passed when the component mounts. When the photo uploads, it calls `onPhotoUploaded(url)` which sets `beforePhotoUrl`/`afterPhotoUrl` in Jobs.tsx -- this works. The real issue is that after uploading, the `preview` state is set but the `beforePhotoUrl` state in Jobs.tsx is reset by the `useEffect` on line 67-78 that clears photos on `selectedBooking` change. Need to fetch existing photos from `job_photos` table on job select instead of always resetting to null.
+
+**Fix**: In `Jobs.tsx`, when `selectedBooking` changes, query `job_photos` for existing before/after photos for that booking instead of blindly setting to null.
+
+**Files**: `src/pages/cleaner/Jobs.tsx`
+
+## 4. Fix "Start Cleaning" Button Stays Disabled
+
+**Problem**: After uploading a before photo, `beforePhotoUrl` should be set via `onPhotoUploaded`. But the `useEffect` on line 67 resets it to null when `allBookings` changes (since it depends on `allBookings`). The realtime subscription invalidates `allBookings` on every booking change, which triggers the reset.
+
+**Fix**: Remove `allBookings` from the dependency of the photo-reset `useEffect`, or better: fetch photos from DB when selecting a job. Derive `hasArrived` separately from photo state.
+
+**Files**: `src/pages/cleaner/Jobs.tsx`
+
+## 5. Fix Job Specialization Matching
+
+**Problem**: The matching logic (lines 91-110) uses loose string matching. A cleaner with "House Cleaning" specialization sees housekeeping jobs because the category match checks `jobService.includes('clean')` which matches "House Cleaning" but the broader check `s.includes('house cleaning')` returns true for any job containing "clean".
+
+**Fix**: Tighten the matching -- map service names to categories explicitly. "Housekeeping", "Laundry & Iron", "Bed Making", "Organisation" → housekeeping category. "Deep Clean", "Kitchen Blitz", "Bathroom Blitz" → cleaning category. Match cleaner specializations against these categories.
+
+**Files**: `src/pages/cleaner/Jobs.tsx`
+
+## 6. Simplify Customer ActiveBooking View
+
+**Problem**: User wants: map with pathway + ETA, cleaner profile with Call/Chat, Cancel button. Remove "Track Live" button. Remove the status timeline stepper (too many steps visible).
+
+**Fix**:
+- Replace the grid-based fake map with `SimulatedMap` component showing cleaner marker moving toward customer marker with a dashed "pathway" line
+- Show cleaner profile card with Call + Chat buttons prominently
+- Keep ETA banner and OTP section
+- Show before/after photos as they appear
+- Remove the status timeline stepper; replace with a simple status badge
+- Add Cancel button when status is pre-completion
+- Remove "Track Live" from SearchingCleaner; auto-navigate to ActiveBooking when cleaner is confirmed
+
+**Files**: `src/pages/customer/ActiveBooking.tsx`, `src/pages/customer/SearchingCleaner.tsx`
+
+## 7. Simplify Cleaner Job Detail View
+
+**Problem**: User wants: map with pathway to client, ETA, client profile with Call/Chat, Enter OTP, Cancel. No "Live Tracking" button.
+
+**Fix**:
+- Add `SimulatedMap` at top of job detail showing cleaner→client pathway
+- Show estimated time based on simulated distance
+- Keep existing Call/Chat/OTP/Photo flow
+- Ensure photos reflect on screen after upload (fix from #3/#4)
+
+**Files**: `src/pages/cleaner/Jobs.tsx`
+
+## 8. Add Chat Quick Templates for Cleaner
+
+**Problem**: Cleaner wants pre-written messages like "I am on the way", "Stuck in traffic", "I have arrived".
+
+**Fix**: Add a row of template chips above the chat input in `Chat.tsx`. When tapped, auto-fill and send the message. Also send a notification to the recipient.
+
+**Files**: `src/pages/customer/Chat.tsx`
+
+## 9. Chat Notification on New Message
+
+**Problem**: When a message is sent, the recipient gets no notification.
+
+**Fix**: After inserting a message in `Chat.tsx`, also insert a notification for the other party: "New message from {name}".
+
+**Files**: `src/pages/customer/Chat.tsx`
+
+## 10. Notification Sound
+
+**Problem**: No audio feedback when notifications arrive.
+
+**Fix**: Add a short notification sound (using Web Audio API or a small mp3). Play it when a new notification is detected via realtime subscription. Add to `Notifications.tsx` and also to the `ActiveBookingFloater` when status changes.
+
+**Files**: `src/pages/customer/Notifications.tsx`, `src/components/ActiveBookingFloater.tsx`, new utility `src/lib/notificationSound.ts`
+
+## 11. Auto-Navigate from SearchingCleaner to ActiveBooking
+
+**Problem**: After cleaner is found and confirmed, user has to tap "Track Live" to go to ActiveBooking.
+
+**Fix**: After the 3-second "found" animation, auto-navigate to `/active-booking` instead of showing a "Track Live" button.
+
+**Files**: `src/pages/customer/SearchingCleaner.tsx`
+
+## 12. Photos Reflect on Customer Dashboard in Real-Time
+
+**Problem**: Photos uploaded by cleaner don't auto-reflect on customer's ActiveBooking.
+
+**Fix**: Add realtime subscription on `job_photos` table for the active booking ID. Invalidate the `job-photos` query when new photos are inserted.
+
+**Files**: `src/pages/customer/ActiveBooking.tsx`
 
 ---
 
-## MEDIUM SEVERITY (8)
+## Summary of File Changes
 
-### M1: Login page `motion.div` ref warning
-Console shows: "Function components cannot be given refs" in Login.tsx AnimatePresence
-- **Fix**: Wrap inner content in `forwardRef` or use `motion.div` correctly
+| File | Changes |
+|------|---------|
+| `src/pages/customer/SearchingCleaner.tsx` | Wire Call/Chat buttons, auto-navigate to ActiveBooking |
+| `src/pages/customer/ActiveBooking.tsx` | Use SimulatedMap with pathway, simplify to profile+call+chat+cancel, realtime photos |
+| `src/pages/customer/Chat.tsx` | Add quick templates, send notification on message, fetch phone for call |
+| `src/pages/cleaner/Jobs.tsx` | Fix photo state persistence, tighten specialization matching, add map to job detail |
+| `src/components/ActiveBookingFloater.tsx` | Add notification sound on status change |
+| `src/lib/notificationSound.ts` | New: utility to play notification ding |
+| `src/pages/customer/Notifications.tsx` | Play sound on new notification |
 
-### M2: `cancelReason` defaults to first item, not empty
-**File**: `src/pages/customer/SearchingCleaner.tsx` line 30
-- `setCancelReason(cancelReasons[0])` pre-selects "Taking too long"
-- User may accidentally submit this without consciously choosing
-- **Fix**: Initialize to empty string, require explicit selection
-
-### M3: ScheduleBooking service-to-DB matching is fragile
-**File**: `src/pages/customer/ScheduleBooking.tsx` line 215
-- `dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase().split(' ')[0])))` 
-- Matching by first word of service name is unreliable (e.g., "Bed Making" matches "Bedroom")
-- **Fix**: Use exact name match or service category matching
-
-### M4: ETA is hardcoded to 12 minutes
-**File**: `src/pages/customer/ActiveBooking.tsx` line 27
-- Always starts at 12 minutes regardless of distance
-- **Fix**: Acceptable for MVP but should note this is simulated
-
-### M5: Wallet "How Coins Work" text says "100 coins = £5 off"
-**File**: `src/pages/customer/Wallet.tsx` line 73
-- CoinBalance shows `balance / 10` (10 coins = £1 = £10 per 100 coins)
-- ScheduleBooking uses same 10:£1 ratio
-- Wallet FAQ says 100:£5 (20:£1)
-- **Fix**: Change to "10 coins = £1 off" to match actual code
-
-### M6: Admin Dashboard query has no `.limit()`
-**File**: `src/pages/admin/Dashboard.tsx` line 14
-- All three queries (bookings, cleaners, enrolments) fetch everything without limit
-- **Fix**: Add limits
-
-### M7: StreakProgress component referenced but not visible in code audit
-- Used on Home page but unclear if it handles edge cases (no streak data, first month)
-
-### M8: `addresses` unique constraint may cause issues for different label types
-- Migration added `UNIQUE (user_id, label)` but users could have multiple "Home" addresses if they try
-- The ScheduleBooking code (line 247) correctly handles this with `maybeSingle()` + upsert pattern
-
----
-
-## LOW / UX IMPROVEMENTS (10)
-
-### L1: "View all →" on Home top cleaners navigates to `/services`, not a cleaners list page
-### L2: Share button on Home "Refer a Mate" banner goes to `/profile`, not directly shares
-### L3: No loading skeleton on Home page while data loads
-### L4: Cleaner Jobs page has no pull-to-refresh pattern
-### L5: Admin Reports page sorting by "Month Year" string parsing could fail for non-English locales
-### L6: No empty state illustration on SearchingCleaner page
-### L7: Customer Profile page `pt-14` creates large top gap
-### L8: Help page uses placeholder WhatsApp number `447000000000`
-### L9: Cleaner Dashboard "£X earned" badge shows weekly earnings, could confuse (should label "this week")
-### L10: Express Booking doesn't show coin balance or redemption option (available in Schedule but not Express)
-
----
-
-## SECURITY NOTES (2)
-
-### S1: Notification INSERT RLS blocks cross-user notifications (see H1)
-- This is the most impactful security/functionality conflict
-- Notifications from cleaner→customer and admin→customer all silently fail
-
-### S2: `delete-user` edge function access
-- Called with user's access token, but the function uses service role key internally
-- Need to verify the function checks that the caller is an admin before deleting
-
----
-
-## SUMMARY
-
-| Severity | Count | Action Required |
-|----------|-------|----------------|
-| Critical | 5 | Must fix before production |
-| High | 6 | Should fix before production |
-| Medium | 8 | Fix in next sprint |
-| Low/UX | 10 | Nice to have |
-| Security | 2 | Must fix (S1 blocks core feature) |
-| **Total** | **31** | |
-
-### Priority Fix Order
-1. **S1/H1**: Notification INSERT RLS -- this blocks the entire notification system from working
-2. **C1/C2/M5**: Coin system inconsistency -- three different ratios in the codebase
-3. **C3**: Express Booking missing payment options
-4. **C5**: Referral tracking not implemented (hardcoded zeros)
-5. **H2**: hasArrived state not persisted
-6. **H4/H5/M6**: Add query limits to prevent silent data truncation
+No database migrations needed -- all required tables and RLS policies exist.
 
