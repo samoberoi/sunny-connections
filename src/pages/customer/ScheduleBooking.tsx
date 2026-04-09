@@ -27,19 +27,25 @@ const iconMap: Record<string, any> = {
   Sparkles, Home, ShowerHead, UtensilsCrossed, Wind, WashingMachine, Bed, Shirt, Brush, Sofa, Trash2, ChefHat: UtensilsCrossed, LayoutGrid: Brush,
 };
 
-// Service-specific follow-up question config
-const serviceQuestions: Record<string, { label: string; question: string; options: number[]; pricePerUnit: number }> = {
-  bathroom: { label: 'Bathrooms', question: 'How many bathrooms?', options: [1, 2, 3, 4], pricePerUnit: 5 },
-  bedroom: { label: 'Bedrooms', question: 'How many bedrooms?', options: [1, 2, 3, 4, 5], pricePerUnit: 3 },
-  living: { label: 'Living Rooms', question: 'How many living rooms?', options: [1, 2, 3], pricePerUnit: 3 },
-  kitchen: { label: 'Kitchens', question: 'How many kitchens?', options: [1, 2], pricePerUnit: 4 },
-  deep: { label: 'Rooms', question: 'How many rooms for deep scrub?', options: [1, 2, 3, 4, 5], pricePerUnit: 5 },
-  laundry: { label: 'Loads', question: 'How many loads of laundry?', options: [1, 2, 3, 4], pricePerUnit: 4 },
-  bedmaking: { label: 'Beds', question: 'How many beds?', options: [1, 2, 3, 4, 5], pricePerUnit: 2 },
-  organise: { label: 'Rooms', question: 'How many rooms to organise?', options: [1, 2, 3, 4], pricePerUnit: 4 },
+// Name-based service question mapping
+const serviceNameQuestions: Record<string, { label: string; question: string; options: number[]; pricePerUnit: number }> = {
+  'Kitchen Deep Clean': { label: 'Kitchens', question: 'How many kitchens?', options: [1, 2, 3], pricePerUnit: 4 },
+  'Bathroom Refresh': { label: 'Bathrooms', question: 'How many bathrooms?', options: [1, 2, 3, 4], pricePerUnit: 5 },
+  'Bedroom Cleaning': { label: 'Bedrooms', question: 'How many bedrooms?', options: [1, 2, 3, 4, 5], pricePerUnit: 3 },
+  'Living Room Tidy': { label: 'Living Rooms', question: 'How many living rooms?', options: [1, 2, 3], pricePerUnit: 3 },
+  'Deep Cleaning': { label: 'Rooms', question: 'How many rooms?', options: [1, 2, 3, 4, 5, 6], pricePerUnit: 5 },
+  'Laundry & Ironing': { label: 'People', question: "How many people's laundry?", options: [1, 2, 3, 4, 5], pricePerUnit: 4 },
+  'Bed Making & Linen Change': { label: 'Beds', question: 'How many beds?', options: [1, 2, 3, 4, 5], pricePerUnit: 2 },
+  'Organising & Decluttering': { label: 'Rooms', question: 'How many rooms to organise?', options: [1, 2, 3, 4], pricePerUnit: 4 },
+  'Standard House Clean': { label: 'Rooms', question: 'How many rooms total?', options: [2, 3, 4, 5, 6, 7, 8], pricePerUnit: 3 },
+  'Full Express Clean': { label: 'Rooms', question: 'How many rooms total?', options: [2, 3, 4, 5, 6, 7, 8], pricePerUnit: 3 },
+  'General Housekeeping': { label: 'Rooms', question: 'How many rooms total?', options: [2, 3, 4, 5, 6, 7, 8], pricePerUnit: 3 },
+  'End of Tenancy': { label: 'Rooms', question: 'How many rooms total?', options: [2, 3, 4, 5, 6, 7, 8, 9, 10], pricePerUnit: 4 },
 };
 
-// Removed hardcoded serviceOptions - now fetched from DB
+function getQuestionForService(service: ServiceRow) {
+  return serviceNameQuestions[service.name] || null;
+}
 
 const frequencies = [
   { value: 'none' as const, label: 'One-time', desc: 'Single visit' },
@@ -73,8 +79,6 @@ export default function ScheduleBooking() {
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(2);
   const [propertyType, setPropertyType] = useState('house');
-  const [bedrooms, setBedrooms] = useState(2);
-  const [bathrooms, setBathrooms] = useState(1);
   const [propertySize, setPropertySize] = useState('medium');
   const [tier, setTier] = useState<'standard' | 'premium'>('standard');
   const [postcode, setPostcode] = useState('');
@@ -120,8 +124,9 @@ export default function ScheduleBooking() {
         setServiceQuantities(newQuantities);
         return prev.filter(s => s !== id);
       }
-      // Set default quantity
-      const q = serviceQuestions[id];
+      // Set default quantity based on name-based question
+      const svc = dbScheduledServices.find(s => s.id === id);
+      const q = svc ? getQuestionForService(svc) : null;
       if (q) setServiceQuantities(prev2 => ({ ...prev2, [id]: q.options[0] }));
       return [...prev, id];
     });
@@ -130,29 +135,32 @@ export default function ScheduleBooking() {
   const selectedServiceDetails = dbScheduledServices.filter(s => selectedServices.includes(s.id));
   const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.rate_per_hour, 0);
 
-  // Calculate service-specific surcharges
+  // Calculate service-specific surcharges using name-based mapping
   const serviceSurcharge = selectedServices.reduce((sum, svcId) => {
-    const q = serviceQuestions[svcId];
+    const svc = dbScheduledServices.find(s => s.id === svcId);
+    const q = svc ? getQuestionForService(svc) : null;
     if (!q) return sum;
     const qty = serviceQuantities[svcId] || q.options[0];
     return sum + (Math.max(0, qty - 1) * q.pricePerUnit);
   }, 0);
 
+  // Services that have follow-up questions
+  const serviceQuestionsToShow = selectedServices.filter(id => {
+    const svc = dbScheduledServices.find(s => s.id === id);
+    return svc && getQuestionForService(svc);
+  });
+
   const freq = frequencies.find(f => f.value === recurring);
   const discount = freq?.discount || 0;
   const sizeMultiplier = propertySizes.find(s => s.value === propertySize)?.multiplier || 1;
-  const bathroomSurcharge = Math.max(0, bathrooms - 1) * 5;
   const tierMultiplier = tier === 'premium' ? 1.3 : 1.0;
-  const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (bathroomSurcharge * duration) + (serviceSurcharge * duration);
+  const subtotal = (baseRate * duration * sizeMultiplier * tierMultiplier) + (serviceSurcharge * duration);
   const preCoinCost = Math.round(subtotal * (1 - discount / 100));
   const coinBalance = coinData?.balance || 0;
-  const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0; // max coins that make sense (10 coins = £1)
+  const coinDiscount = useCoins ? Math.min(coinBalance, preCoinCost * 10) : 0;
   const coinPoundValue = Math.floor(coinDiscount / 10);
   const totalCost = Math.max(0, preCoinCost - coinPoundValue);
   const selectedNames = selectedServiceDetails.map(s => s.name).join(', ');
-
-  // Service-specific questions for selected services
-  const serviceQuestionsToShow = selectedServices.filter(id => serviceQuestions[id]);
 
   const canAdvance = () => {
     switch (step) {
@@ -196,24 +204,21 @@ export default function ScheduleBooking() {
     if (!user || !date || !address || !postcode) return;
     setSubmitting(true);
     try {
-      // Use first selected service's DB ID directly
       const serviceId = selectedServiceDetails[0]?.id;
       if (!serviceId) { toast.error('No services selected'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
         address_city: 'London', total_cost: totalCost, property_type: propertyType, notes: notes || null,
-        tier, bedrooms, bathrooms, payment_method: paymentMethod, referral_code: referralCode || null,
+        tier, payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
 
-      // Notify customer: booking confirmed
       await supabase.from('notifications').insert({
         user_id: user.id, title: 'Booking Confirmed! 🎉',
         message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
       });
 
-      // Deduct coins if used
       if (useCoins && coinDiscount > 0 && user.id) {
         const actualCoinsUsed = Math.min(coinDiscount, coinBalance);
         await supabase.from('customer_coins').update({
@@ -226,7 +231,6 @@ export default function ScheduleBooking() {
         });
       }
 
-      // Save address if new
       if (!selectedAddressId && address && postcode) {
         const { data: existing } = await supabase.from('addresses').select('id').eq('user_id', user.id).eq('label', 'Home').maybeSingle();
         if (existing) {
@@ -263,7 +267,7 @@ export default function ScheduleBooking() {
           </div>
 
           <AnimatePresence mode="wait">
-            {/* Step 1: Category & Service Selection + Service-specific questions */}
+            {/* Step 1: Category & Service Selection + Smart Questions */}
             {step === 1 && (
               <motion.div key="step1" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 {!category ? (
@@ -320,16 +324,16 @@ export default function ScheduleBooking() {
                       })}
                     </div>
 
-                    {/* Service-specific follow-up questions */}
+                    {/* Smart service-specific follow-up questions */}
                     {serviceQuestionsToShow.length > 0 && (
                       <div className="mt-5 space-y-4">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quick Details</p>
                         {serviceQuestionsToShow.map(svcId => {
-                          const q = serviceQuestions[svcId];
-                          const svc = dbScheduledServices.find(s => s.id === svcId);
+                          const svc = dbScheduledServices.find(s => s.id === svcId)!;
+                          const q = getQuestionForService(svc)!;
                           return (
                             <div key={svcId} className="bg-card border border-border rounded-2xl p-4">
-                              <p className="text-xs font-bold text-foreground mb-2">{svc?.name}: {q.question}</p>
+                              <p className="text-xs font-bold text-foreground mb-2">{svc.name}: {q.question}</p>
                               <div className="flex gap-2">
                                 {q.options.map(n => (
                                   <button key={n} onClick={() => setServiceQuantities(prev => ({ ...prev, [svcId]: n }))}
@@ -337,7 +341,7 @@ export default function ScheduleBooking() {
                                       (serviceQuantities[svcId] || q.options[0]) === n
                                         ? 'bg-foreground text-background border-foreground'
                                         : 'border-border bg-card text-muted-foreground'
-                                    }`}>{n}{svcId === 'ironing' ? '' : ''}</button>
+                                    }`}>{n}</button>
                                 ))}
                               </div>
                             </div>
@@ -358,35 +362,11 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {/* Step 2: Property Details & Tier */}
+            {/* Step 2: Property Details & Tier (no bedrooms/bathrooms - captured contextually) */}
             {step === 2 && (
               <motion.div key="step2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5">
                 <h3 className="font-display font-bold text-foreground text-sm flex items-center gap-2"><Home className="h-4 w-4" strokeWidth={1.5} /> Tell us about your home</h3>
                 
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bedrooms</p>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <button key={n} onClick={() => setBedrooms(n)}
-                        className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
-                          bedrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                        }`}>{n}{n === 5 ? '+' : ''}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Bathrooms</p>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4].map(n => (
-                      <button key={n} onClick={() => setBathrooms(n)}
-                        className={`flex-1 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
-                          bathrooms === n ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                        }`}>{n}{n === 4 ? '+' : ''}</button>
-                    ))}
-                  </div>
-                </div>
-
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Size</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -480,7 +460,7 @@ export default function ScheduleBooking() {
               </motion.div>
             )}
 
-            {/* Step 5: Address with saved addresses */}
+            {/* Step 5: Address */}
             {step === 5 && (
               <motion.div key="step5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
@@ -500,7 +480,6 @@ export default function ScheduleBooking() {
                 <section className="mb-6">
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><MapPin className="h-4 w-4" strokeWidth={1.5} /> Address</h3>
 
-                  {/* Saved addresses */}
                   {savedAddresses.length > 0 && (
                     <div className="space-y-2 mb-3">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Saved Addresses</p>
@@ -557,7 +536,7 @@ export default function ScheduleBooking() {
                     {[
                       ['Services', selectedNames],
                       ['Tier', tier === 'premium' ? '👑 Premium' : 'Standard'],
-                      ['Property', `${propertyType} · ${bedrooms} bed · ${bathrooms} bath · ${propertySize}`],
+                      ['Property', `${propertyType} · ${propertySize}`],
                       ['Frequency', freq?.label],
                       ['Date', date?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' at ' + time],
                       ['Duration', `${duration} hours`],
@@ -630,12 +609,6 @@ export default function ScheduleBooking() {
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-background/50">Size ({propertySize})</span>
                       <span className="text-background">×{sizeMultiplier}</span>
-                    </div>
-                  )}
-                  {bathroomSurcharge > 0 && (
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-background/50">Extra bathrooms</span>
-                      <span className="text-background">+£{bathroomSurcharge * duration}</span>
                     </div>
                   )}
                   {serviceSurcharge > 0 && (
