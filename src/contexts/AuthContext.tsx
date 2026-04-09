@@ -30,6 +30,7 @@ interface AuthContextType {
   login: (phone: string, role: UserRole) => Promise<void>;
   verifyOtp: (otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -40,6 +41,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   verifyOtp: async () => false,
   logout: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -71,17 +73,20 @@ const syncProfileRecord = async (userId: string, profile: ProfilePayload) => {
     return;
   }
 
-  if ((updatedProfiles?.length ?? 0) > 0) {
-    return;
-  }
+  if ((updatedProfiles?.length ?? 0) > 0) return;
 
-  const { error: insertError } = await supabase
+  const { error: insertError } = await supabase.from('profiles').insert(payload);
+  if (insertError) console.error('Profile insert failed:', insertError);
+};
+
+const fetchAndBuildUser = async (authUserId: string, authUser: any): Promise<AppUser> => {
+  const { data: profile } = await supabase
     .from('profiles')
-    .insert(payload);
-
-  if (insertError) {
-    console.error('Profile insert failed:', insertError);
-  }
+    .select('*')
+    .eq('user_id', authUserId)
+    .maybeSingle();
+  if (profile) return buildUserFromProfile(authUser, profile);
+  return buildUserFromAuth(authUser);
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -94,62 +99,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!isMounted) return;
       setSession(nextSession);
     });
-
     void supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!isMounted) return;
       setSession(existingSession);
       setIsAuthReady(true);
     });
-
-    return () => subscription.unsubscribe();
+    return () => { isMounted = false; subscription.unsubscribe(); };
   }, []);
 
+  // Load user from profile when session changes
   useEffect(() => {
     if (!isAuthReady) return;
-
     let cancelled = false;
-
-    if (!session?.user) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
+    if (!session?.user) { setUser(null); setIsLoading(false); return; }
     setIsLoading(true);
-
-    void supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .maybeSingle()
-      .then(({ data: profile, error }) => {
-        if (cancelled) return;
-
-        if (error) {
-          console.error('Failed to load profile:', error);
-          setUser(buildUserFromAuth(session.user));
-          setIsLoading(false);
-          return;
-        }
-
-        if (profile) {
-          setUser(buildUserFromProfile(session.user, profile));
-        } else {
-          setUser(buildUserFromAuth(session.user));
-        }
-
-        setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    fetchAndBuildUser(session.user.id, session.user).then(u => {
+      if (!cancelled) { setUser(u); setIsLoading(false); }
+    });
+    return () => { cancelled = true; };
   }, [isAuthReady, session]);
+
+  // Realtime listener on profiles for current user - auto-refresh name/avatar changes
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const channel = supabase
+      .channel('my-profile-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `user_id=eq.${session.user.id}`,
+      }, (payload) => {
+        const p = payload.new as any;
+        setUser(prev => prev ? {
+          ...prev,
+          name: p.name || prev.name,
+          phone: p.phone || prev.phone,
+          email: p.email || prev.email,
+          avatar: p.avatar || prev.avatar,
+          role: normalizeRole(p.role),
+        } : prev);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [session?.user?.id]);
+
+  const refreshProfile = async () => {
+    if (!session?.user) return;
+    const u = await fetchAndBuildUser(session.user.id, session.user);
+    setUser(u);
+  };
 
   const login = async (phone: string, role: UserRole) => {
     setPendingPhone(phone);
@@ -167,40 +170,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let authUser: Session['user'] | null = null;
       let nextSession: Session | null = null;
 
-      const signInResult = await supabase.auth.signInWithPassword({
-        email,
-        password: DEFAULT_PASSWORD,
-      });
+      const signInResult = await supabase.auth.signInWithPassword({ email, password: DEFAULT_PASSWORD });
 
       if (signInResult.error) {
         const signUpResult = await supabase.auth.signUp({
           email,
           password: DEFAULT_PASSWORD,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { name, phone: pendingPhone, role },
-          },
+          options: { emailRedirectTo: window.location.origin, data: { name, phone: pendingPhone, role } },
         });
-
-        if (signUpResult.error) {
-          console.error('Auth error:', signUpResult.error);
-          return false;
-        }
-
+        if (signUpResult.error) { console.error('Auth error:', signUpResult.error); return false; }
         authUser = signUpResult.data.user;
         nextSession = signUpResult.data.session;
-
         if (authUser && !nextSession) {
-          const retryResult = await supabase.auth.signInWithPassword({
-            email,
-            password: DEFAULT_PASSWORD,
-          });
-
-          if (retryResult.error) {
-            console.error('Sign-in after signup failed:', retryResult.error);
-            return false;
-          }
-
+          const retryResult = await supabase.auth.signInWithPassword({ email, password: DEFAULT_PASSWORD });
+          if (retryResult.error) { console.error('Sign-in after signup failed:', retryResult.error); return false; }
           authUser = retryResult.data.user;
           nextSession = retryResult.data.session;
         }
@@ -210,49 +193,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (authUser) {
-        const nextUser: AppUser = {
-          id: authUser.id,
-          phone: pendingPhone,
-          name,
-          email,
-          role,
-          createdAt: authUser.created_at ?? new Date().toISOString(),
-        };
+        if (nextSession) setSession(nextSession);
 
-        setUser(nextUser);
-
-        if (nextSession) {
-          setSession(nextSession);
-        }
-
-        void syncProfileRecord(authUser.id, {
-          email,
-          name,
-          phone: pendingPhone,
-          role,
-        });
+        // Sync profile first, then fetch actual profile data
+        await syncProfileRecord(authUser.id, { email, name, phone: pendingPhone, role });
+        const freshUser = await fetchAndBuildUser(authUser.id, authUser);
+        setUser(freshUser);
 
         // Auto-create cleaner record for cleaner role
         if (role === 'cleaner') {
-          void supabase.from('cleaners').select('id').eq('user_id', authUser.id).maybeSingle().then(({ data: existing }) => {
-            if (!existing) {
-              void supabase.from('cleaners').insert({
-                user_id: authUser!.id,
-                name,
-                available: true,
-                verified: false,
-                rating: 0,
-                review_count: 0,
-                experience: 0,
-                specialisations: [],
-              });
-            }
-          });
+          const { data: existing } = await supabase.from('cleaners').select('id').eq('user_id', authUser.id).maybeSingle();
+          if (!existing) {
+            await supabase.from('cleaners').insert({
+              user_id: authUser.id, name, available: true, verified: false,
+              rating: 0, review_count: 0, experience: 0, specialisations: [],
+            });
+          }
         }
 
         return true;
       }
-
       return false;
     } catch (err) {
       console.error('verifyOtp unexpected error:', err);
@@ -268,13 +228,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user,
-      session,
-      isAuthenticated: !!user,
-      isLoading,
-      login,
-      verifyOtp,
-      logout,
+      user, session, isAuthenticated: !!user, isLoading,
+      login, verifyOtp, logout, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
