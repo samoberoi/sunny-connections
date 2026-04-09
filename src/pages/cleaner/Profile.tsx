@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy } from 'lucide-react';
+import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CleanerLayout from '@/components/layout/CleanerLayout';
@@ -10,6 +11,56 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+
+function CleanerJobHistory({ cleanerId }: { cleanerId: string }) {
+  const { data: history = [], isLoading } = useQuery({
+    queryKey: ['cleaner-job-history', cleanerId],
+    queryFn: async () => {
+      const { data } = await supabase.from('bookings').select('*').eq('cleaner_id', cleanerId).order('date', { ascending: false }).limit(20);
+      return data || [];
+    },
+    enabled: !!cleanerId,
+  });
+
+  if (isLoading) return null;
+  if (history.length === 0) return (
+    <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
+      <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Clock className="h-4 w-4" /> Job History</h3>
+      <p className="text-sm text-muted-foreground">No jobs completed yet</p>
+    </div>
+  );
+
+  return (
+    <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
+      <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Clock className="h-4 w-4" /> Job History</h3>
+      <div className="space-y-3 max-h-64 overflow-y-auto">
+        {history.map((b: any) => (
+          <div key={b.id} className="flex items-start gap-3 p-3 rounded-2xl bg-muted/50">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Calendar className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-foreground truncate">{b.service_name}</p>
+              <p className="text-[10px] text-muted-foreground">{format(new Date(b.date), 'dd MMM yyyy')} · {b.duration}h</p>
+              <p className="text-[10px] text-muted-foreground">Customer: {b.customer_name}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <Badge className={`rounded-full text-[9px] px-2 py-0.5 border-0 ${b.status === 'completed' ? 'bg-primary/15 text-primary' : b.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-muted text-muted-foreground'}`}>
+                {b.status}
+              </Badge>
+              {b.rating && (
+                <div className="flex items-center gap-0.5 mt-1 justify-end">
+                  <Star className="h-3 w-3 text-primary" fill="currentColor" />
+                  <span className="text-[10px] font-bold">{b.rating}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function CleanerProfile() {
   const { user, logout } = useAuth();
@@ -140,6 +191,9 @@ export default function CleanerProfile() {
               </div>
             </div>
           )}
+
+          {/* Job History */}
+          {cleaner && <CleanerJobHistory cleanerId={cleaner.id} />}
 
           <Button onClick={async () => { await logout(); navigate('/'); }} variant="outline"
             className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
