@@ -27,6 +27,9 @@ import MyBookings from "./pages/customer/MyBookings";
 import CustomerProfile from "./pages/customer/Profile";
 import Notifications from "./pages/customer/Notifications";
 import Chat from "./pages/customer/Chat";
+import Help from "./pages/customer/Help";
+import Wallet from "./pages/customer/Wallet";
+import CleanerDetail from "./pages/customer/CleanerDetail";
 
 // Cleaner
 import CleanerDashboard from "./pages/cleaner/Dashboard";
@@ -91,6 +94,9 @@ const App = () => {
               <Route path="/profile" element={<ProtectedRoute allowedRoles={['customer']}><CustomerProfile /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute allowedRoles={['customer']}><Notifications /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute allowedRoles={['customer', 'cleaner']}><Chat /></ProtectedRoute>} />
+              <Route path="/help" element={<ProtectedRoute allowedRoles={['customer']}><Help /></ProtectedRoute>} />
+              <Route path="/wallet" element={<ProtectedRoute allowedRoles={['customer']}><Wallet /></ProtectedRoute>} />
+              <Route path="/cleaner-detail" element={<ProtectedRoute allowedRoles={['customer']}><CleanerDetail /></ProtectedRoute>} />
 
               {/* Cleaner */}
               <Route path="/cleaner" element={<ProtectedRoute allowedRoles={['cleaner']}><CleanerDashboard /></ProtectedRoute>} />

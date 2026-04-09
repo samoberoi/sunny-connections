@@ -38,6 +38,59 @@ const cancelReasons = [
   'Other',
 ];
 
+const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+
+function RescheduleButton({ booking, onReschedule }: { booking: any; onReschedule: (date: string, time: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(new Date(booking.date));
+  const [time, setTime] = useState(booking.time?.slice(0, 5) || '10:00');
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="mt-3 w-full rounded-full text-xs h-10 border-2 border-primary/20 text-primary hover:bg-primary/5 font-bold">
+          <CalendarClock className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Reschedule
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="rounded-3xl">
+        <DialogHeader><DialogTitle className="font-display font-bold">Reschedule Booking</DialogTitle></DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div>
+            <p className="text-xs font-bold text-muted-foreground mb-2">New Date</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal rounded-2xl h-12", !date && "text-muted-foreground")}>
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  {date ? format(date, 'PPP') : 'Pick a date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={date} onSelect={setDate}
+                  disabled={d => d < new Date()} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-muted-foreground mb-2">New Time</p>
+            <div className="flex flex-wrap gap-2">
+              {timeSlots.map(t => (
+                <button key={t} onClick={() => setTime(t)}
+                  className={`px-3 py-2 rounded-full text-xs font-bold border transition-all ${time === t ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Button onClick={() => { if (date) { onReschedule(format(date, 'yyyy-MM-dd'), time + ':00'); setOpen(false); } }}
+            disabled={!date} className="w-full rounded-full font-bold h-12">
+            Confirm Reschedule
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function MyBookings() {
   const navigate = useNavigate();
   const { user } = useAuth();
