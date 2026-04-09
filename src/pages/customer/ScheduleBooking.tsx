@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Home, Clock, MapPin, CalendarDays, Repeat, ChevronLeft, ChevronRight,
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
-  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate
+  Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate, CreditCard, Banknote, Smartphone, Coins, Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useCoinBalance } from '@/components/CoinBalance';
 
 type Category = 'cleaning' | 'housekeeping';
 
