@@ -69,9 +69,22 @@ export default function CleanerDashboard() {
   const weekEarnings = bookings.filter(b => b.status === 'completed' && new Date(b.date) >= weekStart).reduce((s, b) => s + Number(b.total_cost), 0);
   const isOnline = cleanerRecord?.available;
 
+  // Filter pending jobs by cleaner specialisation
+  const filteredPending = useMemo(() => {
+    const specs = cleanerRecord?.specialisations || [];
+    if (!specs.length) return pendingJobs;
+    return pendingJobs.filter(b => {
+      const sLower = (b.service_name || '').toLowerCase().trim();
+      return specs.some((spec: string) => {
+        const specLower = spec.toLowerCase().trim();
+        return sLower === specLower || sLower.includes(specLower) || specLower.includes(sLower);
+      });
+    });
+  }, [pendingJobs, cleanerRecord?.specialisations]);
+
   const mapMarkers = useMemo(() => {
-    return generateClientMarkers(Math.min(pendingJobs.length || 3, 5));
-  }, [pendingJobs]);
+    return generateClientMarkers(Math.min(filteredPending.length || 3, 5));
+  }, [filteredPending]);
 
   return (
     <CleanerLayout>
