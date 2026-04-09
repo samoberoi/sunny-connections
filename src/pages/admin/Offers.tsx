@@ -118,11 +118,12 @@ export default function AdminOffers() {
                   </div>
                   <Switch checked={offer.active} onCheckedChange={(checked) => toggleOffer.mutate({ id: offer.id, active: checked })} />
                 </div>
-                <div className="flex items-center gap-4 mt-3 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1"><Percent className="h-3 w-3" /> {offer.discount_percent}% off</span>
                   {offer.code && <span className="font-mono font-bold text-foreground bg-primary/10 px-2 py-0.5 rounded">{offer.code}</span>}
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {offer.valid_from} → {offer.valid_until}</span>
                   <span>{offer.claimed_count}/{offer.max_claims} claimed</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> {offer.valid_from} → {offer.valid_until}</p>
                 </div>
               </motion.div>
             ))}
