@@ -718,7 +718,22 @@ export default function CleanerJobs() {
                 <EmptyState icon={CalendarDays} title={upcomingFilter === 'today' ? 'No jobs today' : 'No upcoming jobs'} description={upcomingFilter === 'today' ? 'Check upcoming for future jobs' : 'Accept a job to see it here'} />
               ) : (
                 <div className="space-y-2">
-                  {filteredUpcoming.map(b => <JobCard key={b.id} b={b} />)}
+                  {(() => {
+                    let lastDate = '';
+                    return filteredUpcoming.map(b => {
+                      const showHeader = b.date !== lastDate;
+                      lastDate = b.date;
+                      const dateLabel = new Date(b.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+                      return (
+                        <div key={b.id}>
+                          {showHeader && upcomingFilter === 'future' && (
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-3 mb-1.5 first:mt-0">{dateLabel}</p>
+                          )}
+                          <JobCard b={b} />
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </TabsContent>
