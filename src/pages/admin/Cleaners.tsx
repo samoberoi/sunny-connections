@@ -225,7 +225,8 @@ export default function AdminCleaners() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                )
+                )}
+
               </div>
             )}
           </DialogContent>
