@@ -1,89 +1,87 @@
 
 
-# Comprehensive End-to-End Audit: Bug Report and Fix Plan
+# Comprehensive UI/UX Polish, Notification Navigation, Leave Flow, and Report Generation
 
-## Audit Methodology
-Reviewed every page, component, hook, database table, RLS policy, and data flow across all three roles (Customer, Cleaner, Admin). Cross-referenced DB schema with frontend code.
-
----
-
-## Issues Found
-
-### BUG 1: Express Booking does NOT apply coupon discount to actual booking cost
-**File:** `src/pages/customer/ExpressBooking.tsx` line 95
-**Problem:** `total_cost` is calculated as `service.rate_per_hour * service.min_duration` (the base price), ignoring the `couponDiscount` state. The `totalPrice` variable with discount is only used for display, not sent to DB.
-**Fix:** Change line 95 to use `totalPrice` instead of `basePrice` in the insert.
-
-### BUG 2: Express Booking does NOT apply offer discount to actual booking cost
-**File:** `src/pages/customer/ExpressBooking.tsx` line 95
-**Problem:** Same as above -- ActiveOffers and CouponCodeInput both write to `couponDiscount`, but only the display uses `totalPrice`. The DB insert uses `basePrice`.
-**Fix:** Use `totalPrice` in the insert and in the navigation state.
-
-### BUG 3: CouponCodeInput wraps itself in a card container, creating double card nesting
-**File:** `src/components/CouponCodeInput.tsx` lines 55-77
-**Problem:** `CouponCodeInput` renders its own `bg-card rounded-3xl p-4 shadow-soft border` container. But in both `ExpressBooking.tsx` (line 231) and `ScheduleBooking.tsx` (line 624), it's already inside a parent card container. This creates ugly double-nested card UI.
-**Fix:** Remove the outer container from CouponCodeInput -- make it a bare input+button, let the parent control layout.
-
-### BUG 4: ActiveOffers claims offer immediately on click (before booking is confirmed)
-**File:** `src/components/ActiveOffers.tsx` lines 49-68
-**Problem:** When a user clicks an offer in checkout, it immediately inserts into `offer_claims` and increments `claimed_count`. If the user abandons the booking, the offer is wasted. Should only claim after successful booking creation.
-**Fix:** Remove the DB insert from `applyOffer`. Instead, pass the `offer.id` back up and let the booking flow claim it after successful insert.
-
-### BUG 5: Coupon `used_count` is never incremented after successful booking
-**File:** `src/pages/customer/ExpressBooking.tsx` and `ScheduleBooking.tsx`
-**Problem:** When a coupon is applied and booking is created, the `used_count` on the coupon is never incremented. This means coupons can be used infinitely.
-**Fix:** After successful booking insert, call `supabase.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('code', appliedCode)`.
-
-### BUG 6: Coin earning transaction type mismatch
-**File:** `src/pages/customer/RateService.tsx` line 84 uses `type: 'earned'`
-**File:** `src/pages/customer/Wallet.tsx` line 88 checks `tx.type === 'earn'`
-**Problem:** Coins are inserted with type `'earned'` but the Wallet UI checks for `'earn'`. The arrow icon and +/- display will be wrong for earned coins.
-**Fix:** Standardize to `'earned'` everywhere. Update Wallet to check `tx.type === 'earned'`.
-
-### BUG 7: Referral reward uses fragile ID prefix matching
-**File:** `src/pages/cleaner/Jobs.tsx` lines 237-240
-**Problem:** Referral code is `CLEAN` + first 6 chars of user ID. The lookup does `LIKE '${userIdPrefix}%'` on `profiles.user_id`. UUID prefixes are not unique enough for reliable matching. Multiple users could match.
-**Fix:** Use exact match: query `profiles` where `user_id` starts with the prefix, but also verify by reconstructing the expected code and comparing.
-
-### BUG 8: `MyBookings` filter for "Scheduled" is wrong
-**File:** `src/pages/customer/MyBookings.tsx` line 184
-**Problem:** Filter checks `b.recurring !== 'none'` to identify scheduled bookings. But one-time scheduled bookings have `recurring = 'none'` too. The real distinction is whether `service_name` starts with "Scheduled:" vs "Express:".
-**Fix:** Use `b.service_name?.toLowerCase().includes('scheduled')` for scheduled filter.
-
-### BUG 9: Schedule page shows "Daily" frequency option in memory but not in code
-**File:** `src/pages/customer/ScheduleBooking.tsx` lines 52-57
-**Problem:** The memory says "Daily, Weekly, etc." but the code only has `none`, `weekly`, `fortnightly`, `monthly`. No `daily` option exists. This is a feature gap mentioned in the user's earlier description.
-**Status:** Not a bug per se, but a missing feature. Will skip for now.
-
-### BUG 10: Cleaner Jobs page fetches ALL bookings (not just relevant ones)
-**File:** `src/pages/cleaner/Jobs.tsx` line 73
-**Problem:** Query fetches `select('*').order('created_at', { ascending: false }).limit(500)` with no filter. This returns ALL bookings in the system. For pending jobs this is intentional (to show available pool), but it's inefficient and will fail at scale.
-**Fix:** Split into two queries: one for pending (unassigned) jobs and one for the cleaner's own jobs. This also fixes potential RLS issues.
-
-### BUG 11: Wallet transaction icon logic wrong for referral type
-**File:** `src/pages/customer/Wallet.tsx` lines 88-94
-**Problem:** Only checks for `'earn'` type for the green icon. But referral bonuses use type `'referral'` (set in Jobs.tsx line 243). These show with the wrong (spend) icon.
-**Fix:** Check `['earned', 'referral'].includes(tx.type)` for the earning icon, and everything else as spend.
-
-### BUG 12: Cleaner Schedule page only shows first 5 upcoming jobs
-**File:** `src/pages/cleaner/Schedule.tsx` line 134
-**Problem:** `upcomingJobs.slice(0, 5)` truncates the list. For recurring weekly bookings, there could be 12+ instances. User expects to see all.
-**Fix:** Remove the `.slice(0, 5)` limit or add a "show all" toggle.
+## Summary
+Fix UI alignment/visibility issues across all screens, add notification tap navigation, add clear-all notifications, fix leave request flow with notifications, add photo upload to customer onboarding, enforce required fields, and generate a final Excel report of all functionality.
 
 ---
 
-## File Changes Summary
+## Issues & Fixes
 
-| Action | File | Fix |
-|--------|------|-----|
-| Edit | `src/pages/customer/ExpressBooking.tsx` | Use `totalPrice` in DB insert; increment coupon `used_count` after booking |
-| Edit | `src/pages/customer/ScheduleBooking.tsx` | Increment coupon `used_count` after booking |
-| Edit | `src/components/CouponCodeInput.tsx` | Remove outer card wrapper; expose coupon code for parent to use |
-| Edit | `src/components/ActiveOffers.tsx` | Don't claim offer on click; pass offer ID back; claim after booking success |
-| Edit | `src/pages/customer/Wallet.tsx` | Fix type checks: `'earned'` and `'referral'` as earning types |
-| Edit | `src/pages/customer/MyBookings.tsx` | Fix scheduled filter to check service_name instead of recurring |
-| Edit | `src/pages/cleaner/Schedule.tsx` | Remove 5-job limit on upcoming jobs |
-| Edit | `src/pages/cleaner/Jobs.tsx` | Improve referral code lookup reliability |
+### 1. Map overlay text visibility (Customer Home + Cleaner Dashboard)
+**Problem:** Text on the map header can be hard to read against light map tiles. The gradient overlay is too transparent.
+**Fix:** Add a stronger `bg-background/90` or `bg-black/40` backdrop behind header text on both `Home.tsx` and cleaner `Dashboard.tsx`. Add `text-shadow` or a pill background behind the "Hello, Name" and cleaner name to ensure readability regardless of map tile color.
 
-No database migrations needed.
+### 2. Notification tap → navigate to relevant section
+**Problem:** Tapping a notification only marks it as read; doesn't navigate anywhere.
+**Fix:** In `Notifications.tsx`, add `useNavigate` and on click: parse `n.type` — `booking` → `/my-bookings` (customer) or `/cleaner/jobs` (cleaner), `promo` → `/services`, `system` → stay. Also pass booking context in the notification `message` field to deep-link where possible.
+
+### 3. Clear all notifications button
+**Problem:** No way to clear/dismiss notifications in bulk.
+**Fix:** Add a "Clear All" button at the top of `Notifications.tsx` that updates all unread notifications to `read: true` for the current user.
+
+### 4. Admin can't see cleaner leave requests
+**Problem:** The admin Leaves page uses `.select('*, cleaners(name, user_id)')` — this works, but the query might fail if the `cleaners` join relation isn't recognized due to missing FK. Need to verify the join works.
+**Fix:** Verify the join. If it fails, switch to a two-step query: fetch leaves, then fetch cleaner names separately by matching `cleaner_id`.
+
+### 5. Leave request notifications
+**Problem:** When a cleaner submits a leave request, no notification is sent to the admin or affected customers.
+**Fix:** In `Schedule.tsx` `requestLeave` mutation's `onSuccess`, insert a notification for all admin users (query `user_roles` for admin role, then insert notifications). Also notify affected customers whose bookings fall within the leave dates.
+
+### 6. Customer onboarding: add photo upload, first/last name split, email field
+**Problem:** Onboarding only asks for a single "name" field and address. No photo, no email, no first/last name split.
+**Fix:** 
+- Split name into "First name" and "Last name" (both required).
+- Add optional photo upload (avatar) using the `job-photos` storage bucket or skip.
+- Add email field (optional).
+- Phone auto-filled from auth context (display only).
+- Keep address step as-is (already required).
+
+### 7. UI consistency: flat outline icons throughout
+**Problem:** Some icons use `fill` prop (e.g., Star icons), some use different stroke widths.
+**Fix:** Audit all pages, ensure all icons use `strokeWidth={1.5}` consistently. Remove `fill` from Star icons where used decoratively (keep fill only for active rating states). Use outline-only Lucide icons everywhere.
+
+### 8. Text/button visibility and contrast issues
+**Problem:** Some text (e.g., `text-background/40`, `text-muted-foreground/50`) is too faint. Some buttons on dark backgrounds lack contrast.
+**Fix:** Replace `text-background/40` with `text-background/60`, `text-muted-foreground/50` with `text-muted-foreground/70` across all files. Ensure all interactive elements have at least 4.5:1 contrast ratio.
+
+### 9. Reports page alignment
+**Problem:** Pie chart labels can overflow on mobile. Revenue bars may not align well.
+**Fix:** Reduce pie chart `outerRadius` to 70 for mobile, truncate labels further, and add `fontSize: 9` to pie labels. Ensure consistent padding.
+
+### 10. Reduce excessive scrolling
+**Problem:** Some pages have too much vertical content.
+**Fix:** Collapse sections like "Property Details" and "Cleaning History" on the profile page behind expandable/collapsible sections. Use tabs instead of stacked sections where appropriate.
+
+### 11. Generate final Excel report
+**Problem:** User wants a comprehensive Excel report of all functionality.
+**Fix:** Generate an XLSX file at `/mnt/documents/cleanfit_report.xlsx` with sheets: Features, Bug Fixes, UI Changes, Test Results.
+
+---
+
+## Technical Details
+
+### Files to edit:
+
+| File | Changes |
+|------|---------|
+| `src/pages/customer/Notifications.tsx` | Add navigation on tap by type, add "Clear All" button, add "Mark all read" mutation |
+| `src/pages/customer/Home.tsx` | Improve map header text visibility with stronger backdrop |
+| `src/pages/cleaner/Dashboard.tsx` | Same map header fix |
+| `src/components/CustomerOnboarding.tsx` | Split into first/last name, add optional avatar upload, add email, auto-show phone |
+| `src/pages/cleaner/Schedule.tsx` | Send notification to admins + affected customers on leave request |
+| `src/pages/admin/Leaves.tsx` | Verify join works, add fallback query if needed |
+| `src/pages/admin/Reports.tsx` | Fix pie chart sizing, label truncation, improve mobile layout |
+| `src/pages/customer/Profile.tsx` | Collapsible sections, icon consistency |
+| `src/pages/cleaner/Profile.tsx` | Icon consistency, contrast fixes |
+| `src/pages/cleaner/Earnings.tsx` | Contrast/visibility fixes |
+| `src/index.css` | Add text-shadow utility if needed |
+| Multiple files | Global: `strokeWidth={1.5}` consistency, remove Star fills, fix low-contrast text classes |
+| Script (exec) | Generate XLSX report with openpyxl |
+
+### No database migrations needed
+- Notifications table already supports insert for all users
+- Profile table already has `avatar` column
+- `job-photos` bucket already exists for uploads
 
