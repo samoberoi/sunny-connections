@@ -636,6 +636,12 @@ export default function ScheduleBooking() {
                       <span className="text-primary">-{discount}%</span>
                     </div>
                   )}
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-background/50">Coupon</span>
+                      <span className="text-primary">-{couponDiscount}%</span>
+                    </div>
+                  )}
                   {useCoins && coinPoundValue > 0 && (
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-background/50">🪙 Coins ({coinDiscount})</span>
