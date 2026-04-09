@@ -676,15 +676,6 @@ export default function ScheduleBooking() {
                   {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
-            )}
-                  </div>
-                </div>
-
-                <Button onClick={handleBook} disabled={submitting} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
-                  {submitting ? 'Booking...' : 'Confirm & Find Cleaner'} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
-                </Button>
-              </motion.div>
-            )}
           </AnimatePresence>
 
           {step < 6 && (
