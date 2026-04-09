@@ -115,7 +115,7 @@ export default function CleanerDashboard() {
             <div className="absolute bottom-6 left-5 right-5 z-20 flex items-center justify-between">
               <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-border">
                 <MapPin className="h-3.5 w-3.5 text-primary-ink" strokeWidth={2} />
-                <span className="text-[11px] font-bold text-foreground/70">{pendingJobs.length} requests nearby</span>
+                <span className="text-[11px] font-bold text-foreground/70">{filteredPending.length} requests nearby</span>
               </div>
               <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-border">
                 <span className="text-[11px] font-bold text-primary-ink">£{weekEarnings} this week</span>
@@ -130,7 +130,7 @@ export default function CleanerDashboard() {
               {[
                 { icon: Briefcase, label: 'Active', value: activeJobs.length },
                 { icon: Clock, label: 'Done', value: completedCount },
-                { icon: PoundSterling, label: 'Pending', value: pendingJobs.length },
+                { icon: PoundSterling, label: 'Pending', value: filteredPending.length },
               ].map((stat, i) => (
                 <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="bg-card rounded-3xl p-4 text-center shadow-soft border border-border">
@@ -172,7 +172,7 @@ export default function CleanerDashboard() {
             </section>
 
             {/* New Requests */}
-            {pendingJobs.length > 0 && (
+            {filteredPending.length > 0 && (
               <section className="pb-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ export default function CleanerDashboard() {
                   <button onClick={() => navigate('/cleaner/jobs')} className="text-[11px] font-bold text-primary-ink">View all →</button>
                 </div>
                 <div className="space-y-2.5">
-                  {pendingJobs.slice(0, 3).map(b => {
+                  {filteredPending.slice(0, 3).map(b => {
                     const isExpress = b.service_name?.toLowerCase().includes('express');
                     return (
                       <motion.div key={b.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} whileTap={{ scale: 0.98 }}
