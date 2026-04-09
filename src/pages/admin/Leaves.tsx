@@ -28,13 +28,50 @@ export default function AdminLeaves() {
     },
   });
 
+  const { data: allCleaners = [] } = useQuery({
+    queryKey: ['admin-leave-cleaners'],
+    queryFn: async () => {
+      const { data } = await supabase.from('cleaners').select('id, name, available');
+      return data || [];
+    },
+  });
+
   const updateLeave = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from('cleaner_leaves').update({ status }).eq('id', id);
       if (error) throw error;
+
+      // Auto-reassign bookings if approved
+      if (status === 'approved') {
+        const leave = leaves.find((l: any) => l.id === id);
+        if (leave) {
+          const conflicts = getConflicts(leave);
+          if (conflicts.length > 0) {
+            // Find an available replacement cleaner
+            const replacement = allCleaners.find((c: any) => c.id !== leave.cleaner_id && c.available);
+            if (replacement) {
+              for (const booking of conflicts) {
+                await supabase.from('bookings').update({
+                  cleaner_id: replacement.id, cleaner_name: replacement.name,
+                }).eq('id', booking.id);
+                // Notify customer
+                await supabase.from('notifications').insert({
+                  user_id: booking.customer_id,
+                  title: 'Cleaner Replacement',
+                  message: `Your regular cleaner is on leave. ${replacement.name} will cover your booking on ${booking.date}.`,
+                  type: 'booking',
+                });
+              }
+              // Update leave with replacement
+              await supabase.from('cleaner_leaves').update({ replacement_cleaner_id: replacement.id }).eq('id', id);
+            }
+          }
+        }
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-leave-bookings'] });
       toast.success(`Leave ${status}!`);
     },
   });
