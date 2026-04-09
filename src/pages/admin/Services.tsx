@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-const emptyService = { name: '', description: '', category: 'cleaning' as const, service_mode: 'both', rate_per_hour: 15, min_duration: 1, max_duration: 4, icon: 'Sparkles' };
+const emptyService = { name: '', description: '', category: 'cleaning' as 'cleaning' | 'housekeeping', service_mode: 'both', rate_per_hour: 15, min_duration: 1, max_duration: 4, icon: 'Sparkles' };
 
 export default function AdminServices() {
   const { data: services = [] } = useServices();
