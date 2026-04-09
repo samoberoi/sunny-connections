@@ -71,9 +71,9 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div className="relative min-h-[calc(100vh-4rem)]">
         {/* Sticky map - top half, same style as customer view */}
-        <div className="sticky top-0 z-0">
+        <div className="sticky top-0 z-[5]">
           <SimulatedMap markers={mapMarkers} height={380} className="">
-            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-background pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background pointer-events-none" />
           </SimulatedMap>
 
           {/* Header overlay */}
