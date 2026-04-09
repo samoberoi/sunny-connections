@@ -11,6 +11,23 @@ export interface ServiceRow {
   max_duration: number;
   icon: string;
   active: boolean;
+  service_mode: 'express' | 'scheduled' | 'both';
+}
+
+export function useServicesByMode(mode: 'express' | 'scheduled') {
+  return useQuery({
+    queryKey: ['services', mode],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('active', true)
+        .in('service_mode', [mode, 'both'])
+        .order('name');
+      if (error) throw error;
+      return data as ServiceRow[];
+    },
+  });
 }
 
 export function useServices() {
