@@ -42,8 +42,18 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Delete cleaner record if exists
-    await adminClient.from("cleaners").delete().eq("user_id", userId);
+    // Get cleaner id if exists
+    const { data: cleanerData } = await adminClient.from("cleaners").select("id").eq("user_id", userId).maybeSingle();
+    if (cleanerData) {
+      // Nullify FK references in bookings, leaves, availability, locations, favourites
+      await adminClient.from("bookings").update({ cleaner_id: null, cleaner_name: null, cleaner_avatar: null }).eq("cleaner_id", cleanerData.id);
+      await adminClient.from("cleaner_leaves").delete().eq("cleaner_id", cleanerData.id);
+      await adminClient.from("cleaner_availability").delete().eq("cleaner_id", cleanerData.id);
+      await adminClient.from("cleaner_locations").delete().eq("cleaner_id", cleanerData.id);
+      await adminClient.from("favourite_cleaners").delete().eq("cleaner_id", cleanerData.id);
+      // Now safe to delete cleaner
+      await adminClient.from("cleaners").delete().eq("id", cleanerData.id);
+    }
     // Delete profile
     await adminClient.from("profiles").delete().eq("user_id", userId);
     // Delete auth user
