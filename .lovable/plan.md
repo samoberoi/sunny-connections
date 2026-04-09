@@ -1,92 +1,78 @@
 
 
-# Fix Photo Navigation, Multi-Photo, Chat Templates, Real-Time Sync, and Scheduled Bookings
+# Fix Welcome Offer Pop-up and Referral Code Flow
 
-## Summary
-Fix 7 issues: photo upload navigating away from page, single-photo limitation, role-specific chat templates, real-time photo sync for customers, full-screen image viewer, scheduled booking display in MyBookings, and Today/Upcoming toggle for cleaner jobs.
-
----
-
-## 1. Fix Photo Upload Navigating Away (PhotoCapture.tsx + Jobs.tsx)
-
-**Root cause**: After `PhotoCapture` calls `onPhotoUploaded`, the realtime subscription on `bookings` table fires (from status changes or other updates), which invalidates `cleaner-all-bookings` query. This causes `allBookings` to re-render, and the `useEffect` on `selectedBooking` may reset state or trigger navigation.
-
-**Fix**:
-- In `PhotoCapture.tsx`: Remove `capture="environment"` from the file input (this forces camera on mobile and can cause page navigation on some browsers). Change to just `accept="image/*"`.
-- In `Jobs.tsx`: Ensure `completeJob` and `startJob` do NOT call `setSelectedBooking(null)` prematurely. Only `completeJob` should clear selection after success. Guard the photo-fetching `useEffect` to not overwrite if photos are already set locally.
-
-## 2. Support Multiple Photo Uploads (PhotoCapture.tsx)
-
-**Current**: Single photo per type (before/after). Component shows one preview and replaces it.
-
-**Fix**: Refactor `PhotoCapture` to accept `multiple` prop. Allow `input` to accept multiple files. Store an array of uploaded URLs. Display a horizontal scrollable gallery of thumbnails. Each can be tapped for full-screen view or deleted.
-
-**Changes**:
-- Add `multiple?: boolean` prop
-- Change `input` to `multiple` attribute when prop is true
-- Track `photos: string[]` state instead of single `preview`
-- Upload each file in sequence
-- Call `onPhotoUploaded` with the latest URL (parent still gets notified)
-- Show grid/row of thumbnails with delete buttons
-
-## 3. Full-Screen Image Viewer
-
-**New component**: `src/components/ImageViewer.tsx` -- a simple modal/dialog that shows an image full-screen with close button. Used in:
-- `PhotoCapture.tsx` -- tap a thumbnail to view full-screen
-- `ActiveBooking.tsx` -- tap before/after photos to view full-screen
-
-## 4. Role-Specific Chat Quick Templates (Chat.tsx)
-
-**Current**: Same templates for all users ("I am on the way", "Stuck in traffic", etc.)
-
-**Fix**: Determine user's role from the booking context. If `sender_id === booking.customer_id`, show customer templates. Otherwise show cleaner templates.
-
-- **Cleaner templates**: "I am on the way 🚗", "Stuck in traffic 🚦", "I have arrived 📍", "Please open the door 🚪", "Starting now 🧹"
-- **Customer templates**: "Okay, I'm here 🏠", "Please come fast ⏰", "Door is open 🚪", "Take your time 😊", "Thank you! 🙏"
-
-Fetch booking's `customer_id` once on mount to determine role.
-
-## 5. Real-Time Photo Sync for Customer (ActiveBooking.tsx)
-
-**Current**: Realtime subscription on `job_photos` exists (lines 101-112) and invalidates `job-photos` query. This should already work.
-
-**Fix**: The issue is likely that the `job_photos` realtime channel isn't receiving events because `job_photos` table may not be added to `supabase_realtime` publication. Need to add it via migration:
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.job_photos;
-```
-
-Also make photos tappable for full-screen viewing using the new `ImageViewer` component.
-
-## 6. Scheduled Bookings Toggle in MyBookings (MyBookings.tsx)
-
-**Current**: Shows "Upcoming" and "Past" sections with no filtering.
-
-**Fix**: Add a `ToggleGroup` at the top with three options: "Express", "Scheduled", "All". Filter upcoming bookings accordingly:
-- Express: `service_name` includes "express" or "blitz"
-- Scheduled: `recurring !== 'none'`
-- Show scheduled bookings with their recurring frequency badge and next occurrence dates
-
-## 7. Today/Upcoming Toggle for Cleaner Jobs (Jobs.tsx)
-
-**Current**: "Upcoming" tab shows all assigned/en-route jobs without date filtering.
-
-**Fix**: Add a sub-toggle inside the "Upcoming" tab: "Today" (default) and "Upcoming". Filter by comparing `booking.date` with today's date. Show a notification dot on "Upcoming" when there are future jobs.
-
-## 8. Daily Notification for Scheduled Jobs
-
-Add a check in the existing realtime/polling logic: when a cleaner has jobs for tomorrow, auto-insert a notification. This can be done client-side on cleaner dashboard load by checking if tomorrow's jobs exist and if a reminder notification was already sent (check notifications table).
+## Overview
+Three issues to fix:
+1. Remove hardcoded "First 3 visits for £100" welcome coupon -- only show admin-created offers
+2. Add referral code input step after customer onboarding (profile creation) for new users who arrive via referral link
+3. Wire referral reward: when referred user's first booking completes, referrer gets coins in real-time
 
 ---
 
-## File Changes
+## 1. Remove Hardcoded Welcome Coupon
+
+**File**: `src/pages/customer/Home.tsx`
+- Remove the `WelcomeCoupon` component usage (line 124) and the `showCoupon` state/effect (lines 68, 74-77)
+- The admin-created offers pop-up (lines 127-153 via `offerModal`) already works correctly -- keep it
+- Remove the import of `WelcomeCoupon`
+
+**File**: `src/components/WelcomeCoupon.tsx`
+- Can be deleted or left unused
+
+## 2. Capture `ref` Query Param from Referral Link
+
+**File**: `src/pages/customer/Login.tsx`
+- Read `ref` from `searchParams` on mount
+- Store it in `localStorage` as `pending_referral_code` so it persists through the login/signup flow
+
+## 3. Add Referral Code Step in Customer Onboarding
+
+**File**: `src/components/CustomerOnboarding.tsx`
+- Add a **Step 3** after address: "Got a Referral Code?"
+- Pre-fill with `localStorage.getItem('pending_referral_code')` if present
+- User can enter/edit the code and tap "Apply"
+- On apply: validate the code format (starts with "CLEAN"), show success message: "You'll get 20% off your first booking!"
+- Store the validated referral code in `localStorage` as `applied_referral_code`
+- Clear `pending_referral_code` from localStorage
+- Update `totalSteps` from 2 to 3
+
+## 4. Auto-Apply Referral Code in Booking
+
+**Files**: `src/pages/customer/ExpressBooking.tsx`, `src/pages/customer/ScheduleBooking.tsx`
+- On mount, check `localStorage.getItem('applied_referral_code')`
+- If present and this is the user's first booking (check bookings count), auto-fill the referral code field and show a banner: "Referral discount applied!"
+
+## 5. Referrer Gets Coins on Completion (Real-Time)
+
+**File**: `src/components/ReferralCard.tsx`
+- Already queries bookings with `referral_code` matching. The stats update on re-fetch.
+- Add a realtime subscription on `bookings` table filtered by `referral_code = userCode` and `status = completed` to auto-invalidate the query when a referred booking completes.
+
+**File**: `src/pages/customer/Home.tsx`
+- Add realtime subscription on `coin_transactions` for the current user to auto-refresh coin balance without page reload.
+
+## 6. Award Referrer Coins on Job Completion
+
+**Files**: `src/pages/cleaner/Jobs.tsx` (in `completeJob` function) or booking completion logic
+- After marking a booking as `completed`, check if it has a `referral_code`
+- If yes, look up which user owns that referral code (by matching `CLEAN` + first 6 chars of user ID)
+- Insert a `coin_transaction` for the referrer: +50 coins, type "referral", description "Referral bonus"
+- Update `customer_coins` balance for the referrer
+
+---
+
+## File Changes Summary
 
 | Action | File | Changes |
 |--------|------|---------|
-| Edit | `src/components/PhotoCapture.tsx` | Multi-photo support, remove `capture="environment"`, thumbnail gallery, full-screen tap |
-| Create | `src/components/ImageViewer.tsx` | Full-screen image modal component |
-| Edit | `src/pages/cleaner/Jobs.tsx` | Guard photo state reset, Today/Upcoming sub-toggle in Upcoming tab |
-| Edit | `src/pages/customer/ActiveBooking.tsx` | Tappable photos with ImageViewer, ensure realtime works |
-| Edit | `src/pages/customer/Chat.tsx` | Role-specific quick templates based on booking context |
-| Edit | `src/pages/customer/MyBookings.tsx` | Express/Scheduled/All toggle filter |
-| Migration | SQL | `ALTER PUBLICATION supabase_realtime ADD TABLE public.job_photos;` |
+| Edit | `src/pages/customer/Home.tsx` | Remove WelcomeCoupon, add realtime coin refresh |
+| Edit | `src/pages/customer/Login.tsx` | Capture `ref` param, store in localStorage |
+| Edit | `src/components/CustomerOnboarding.tsx` | Add Step 3: referral code input |
+| Edit | `src/pages/customer/ExpressBooking.tsx` | Auto-fill referral code from localStorage |
+| Edit | `src/pages/customer/ScheduleBooking.tsx` | Auto-fill referral code from localStorage |
+| Edit | `src/components/ReferralCard.tsx` | Add realtime subscription for stats |
+| Edit | `src/pages/cleaner/Jobs.tsx` | Award referrer coins on job completion |
+
+No database migrations needed.
 
