@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, CircleCheck, User, FileText, Briefcase, Users, ShieldCheck, Clock, CreditCard, FileCheck } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CircleCheck, User, FileText, Briefcase, Users, ShieldCheck, Clock, CreditCard, FileCheck, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import cleanerPortrait from '@/assets/cleaner-portrait.jpg';
+import { useServices } from '@/hooks/useServices';
 
 const steps = [
   { title: 'Personal Details', icon: User, desc: 'Tell us about yourself' },
@@ -23,7 +24,7 @@ const steps = [
 
 interface FormData {
   fullName: string; dob: string; phone: string; email: string; postcode: string;
-  rightToWork: string; idType: string; experience: number; specialisations: string;
+  rightToWork: string; idType: string; experience: number; selectedSpecs: string[];
   ref1Name: string; ref1Phone: string; ref1Relation: string;
   ref2Name: string; ref2Phone: string; ref2Relation: string;
   dbsConsent: boolean; selectedDays: string[]; hours: string;
