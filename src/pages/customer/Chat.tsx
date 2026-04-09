@@ -90,7 +90,7 @@ export default function Chat() {
           if (recipientId) {
             await supabase.from('notifications').insert({
               user_id: recipientId,
-              title: `New message from ${profile?.name || 'Someone'}`,
+              title: `New message from ${user?.name || 'Someone'}`,
               message: content.length > 60 ? content.slice(0, 57) + '...' : content,
               type: 'booking',
             });
