@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { CalendarDays, Tag, Bell } from 'lucide-react';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
@@ -6,6 +7,7 @@ import EmptyState from '@/components/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { playNotificationSound } from '@/lib/notificationSound';
 
 const typeIcons = { booking: CalendarDays, promo: Tag, system: Bell };
 
@@ -28,6 +30,7 @@ function groupByDate(notifications: any[]) {
 export default function Notifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const prevCountRef = useRef(0);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -38,6 +41,28 @@ export default function Notifications() {
     },
     enabled: !!user?.id,
   });
+
+  // Realtime notifications with sound
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`notifications-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          playNotificationSound();
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
+
+  // Play sound when count increases
+  useEffect(() => {
+    if (notifications.length > prevCountRef.current && prevCountRef.current > 0) {
+      playNotificationSound();
+    }
+    prevCountRef.current = notifications.length;
+  }, [notifications.length]);
 
   const markRead = useMutation({
     mutationFn: async (id: string) => { await supabase.from('notifications').update({ read: true }).eq('id', id); },

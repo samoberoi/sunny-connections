@@ -1,28 +1,32 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CircleCheck, Circle, MapPin, Clock, Phone, MessageCircle, Navigation, Timer, Star, Image } from 'lucide-react';
+import { CircleCheck, MapPin, Clock, Phone, MessageCircle, Timer, Image, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
+import SimulatedMap from '@/components/SimulatedMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { playNotificationSound } from '@/lib/notificationSound';
+import { Badge } from '@/components/ui/badge';
 
-const statuses = [
-  { key: 'pending', label: 'Booking Confirmed', desc: 'Looking for the best cleaner' },
-  { key: 'assigned', label: 'Cleaner Assigned', desc: 'Your cleaner has accepted the job' },
-  { key: 'en-route', label: 'En Route', desc: 'Your cleaner is on the way' },
-  { key: 'otp-verified', label: 'OTP Verified', desc: 'Cleaner has arrived and verified' },
-  { key: 'in-progress', label: 'In Progress', desc: 'Cleaning is underway' },
-  { key: 'completed', label: 'Completed', desc: 'Service complete!' },
-];
+const statusLabel: Record<string, string> = {
+  pending: 'Finding Cleaner',
+  assigned: 'Cleaner Assigned',
+  'en-route': 'On the Way',
+  'otp-verified': 'Verified',
+  'in-progress': 'Cleaning in Progress',
+  completed: 'Completed',
+};
 
 export default function ActiveBooking() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [liveStatus, setLiveStatus] = useState<string>('pending');
   const [eta, setEta] = useState(12);
   const [showComplete, setShowComplete] = useState(false);
@@ -43,7 +47,6 @@ export default function ActiveBooking() {
     enabled: !!(state?.bookingId || user?.id),
   });
 
-  // Fetch before/after photos for this booking
   const { data: jobPhotos = [] } = useQuery({
     queryKey: ['job-photos', booking?.id],
     queryFn: async () => {
@@ -54,12 +57,10 @@ export default function ActiveBooking() {
     enabled: !!booking?.id,
   });
 
-  // Fetch cleaner's phone from profiles table
   const { data: cleanerProfile } = useQuery({
     queryKey: ['cleaner-profile-phone', booking?.cleaner_id],
     queryFn: async () => {
       if (!booking?.cleaner_id) return null;
-      // Get the cleaner record to find user_id, then get profile for phone
       const { data: cleanerRec } = await supabase.from('cleaners').select('user_id').eq('id', booking.cleaner_id).maybeSingle();
       if (!cleanerRec?.user_id) return null;
       const { data: profile } = await supabase.from('profiles').select('phone').eq('user_id', cleanerRec.user_id).maybeSingle();
@@ -75,6 +76,7 @@ export default function ActiveBooking() {
     if (booking) setLiveStatus(booking.status);
   }, [booking]);
 
+  // Realtime booking status
   useEffect(() => {
     if (!booking?.id) return;
     const channel = supabase
@@ -83,6 +85,7 @@ export default function ActiveBooking() {
         (payload) => {
           const newStatus = (payload.new as any).status;
           setLiveStatus(newStatus);
+          playNotificationSound();
           if (newStatus === 'completed') {
             setShowComplete(true);
             setTimeout(() => {
@@ -94,7 +97,21 @@ export default function ActiveBooking() {
     return () => { supabase.removeChannel(channel); };
   }, [booking?.id, navigate]);
 
-  // ETA countdown when en-route
+  // Realtime photos - refresh when cleaner uploads
+  useEffect(() => {
+    if (!booking?.id) return;
+    const channel = supabase
+      .channel(`photos-${booking.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_photos', filter: `booking_id=eq.${booking.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['job-photos', booking.id] });
+          playNotificationSound();
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [booking?.id, queryClient]);
+
+  // ETA countdown
   useEffect(() => {
     if (liveStatus !== 'en-route') return;
     setEta(12);
@@ -107,29 +124,38 @@ export default function ActiveBooking() {
     return () => clearInterval(interval);
   }, [liveStatus]);
 
-  const currentIdx = statuses.findIndex(s => s.key === liveStatus);
-
   const handleCall = () => {
     const phone = cleanerProfile?.phone;
-    if (phone) {
-      window.open(`tel:${phone}`, '_self');
-    } else {
-      alert('Phone number not available yet.');
-    }
+    if (phone) window.open(`tel:${phone}`, '_self');
+    else alert('Phone number not available yet.');
   };
+
+  const handleChat = () => {
+    navigate('/chat', { state: { bookingId: booking?.id, otherName: booking?.cleaner_name, otherPhone: cleanerProfile?.phone } });
+  };
+
+  const handleCancel = async () => {
+    if (booking?.id) {
+      await supabase.from('bookings').update({ status: 'cancelled' as any }).eq('id', booking.id);
+    }
+    navigate('/home', { replace: true });
+  };
+
+  const mapMarkers = booking?.cleaner_name
+    ? [
+        { id: 'self', x: 55, y: 65, label: 'You', type: 'self' as const },
+        { id: 'cleaner', x: liveStatus === 'in-progress' ? 54 : 30, y: liveStatus === 'in-progress' ? 64 : 25, label: booking.cleaner_name, type: 'cleaner' as const, pulse: true },
+      ]
+    : [{ id: 'self', x: 55, y: 65, label: 'You', type: 'self' as const }];
 
   return (
     <CustomerLayout>
       <PageTransition>
-        {/* Completion celebration overlay */}
+        {/* Completion celebration */}
         <AnimatePresence>
           {showComplete && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center px-8 text-center"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center px-8 text-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 12 }}
                 className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center mb-6">
                 <CircleCheck className="h-10 w-10 text-primary" strokeWidth={1.5} />
@@ -141,57 +167,26 @@ export default function ActiveBooking() {
         </AnimatePresence>
 
         <div className="px-5 pt-6 pb-6">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5">
             <BackButton to="/home" />
             <h1 className="text-xl font-display font-black text-foreground">Booking Status</h1>
+            <Badge className="ml-auto text-[10px] rounded-lg font-semibold border-0 bg-primary/10 text-primary capitalize">
+              {statusLabel[liveStatus] || liveStatus}
+            </Badge>
           </div>
 
-          {/* Simulated Map */}
-          <div className="relative bg-accent rounded-2xl overflow-hidden mb-5" style={{ height: 180 }}>
-            <div className="absolute inset-0 opacity-[0.06]" style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px)`,
-              backgroundSize: '30px 30px',
-            }} />
-            {liveStatus !== 'pending' && (
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute top-1/3 left-1/3 w-9 h-9 rounded-full bg-primary shadow-elevated flex items-center justify-center"
-              >
-                <Navigation className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
-              </motion.div>
+          {/* Map with pathway */}
+          <SimulatedMap markers={mapMarkers} height={200} className="rounded-2xl mb-5">
+            {booking?.cleaner_name && liveStatus !== 'in-progress' && (
+              <svg className="absolute inset-0 w-full h-full z-[5] pointer-events-none">
+                <line x1="30%" y1="25%" x2="55%" y2="65%" stroke="hsl(var(--primary))" strokeWidth="2" strokeDasharray="8 4" opacity="0.5" />
+              </svg>
             )}
-            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-primary" />
-            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 rounded-full bg-primary animate-pulse-ring" />
+          </SimulatedMap>
 
-            {booking?.cleaner_name && (
-              <div className="absolute bottom-3 left-3 right-3 glass-card-elevated rounded-xl px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
-                    {booking.cleaner_name[0]}
-                  </div>
-                    <button onClick={() => navigate('/cleaner-detail', { state: { cleanerId: booking.cleaner_id } })} className="text-left">
-                      <p className="font-semibold text-foreground text-xs">{booking.cleaner_name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {liveStatus === 'en-route' ? `Arriving in ~${eta} min` : liveStatus === 'in-progress' ? 'Cleaning' : 'Assigned'}
-                      </p>
-                    </button>
-                </div>
-                <div className="flex gap-1.5">
-                  <button onClick={handleCall} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
-                    <Phone className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
-                  </button>
-                  <button onClick={() => navigate('/chat', { state: { bookingId: booking?.id, otherName: booking?.cleaner_name, otherPhone: cleanerProfile?.phone } })} className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-accent transition-colors">
-                    <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ETA banner for en-route */}
+          {/* ETA banner */}
           {liveStatus === 'en-route' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-accent border border-primary/20 rounded-2xl p-4 mb-5 flex items-center gap-3">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-accent border border-primary/20 rounded-2xl p-4 mb-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Timer className="h-5 w-5 text-primary" strokeWidth={1.5} />
               </div>
@@ -202,16 +197,40 @@ export default function ActiveBooking() {
             </motion.div>
           )}
 
+          {/* Cleaner profile card with call/chat */}
+          {booking?.cleaner_name && (
+            <div className="border border-border rounded-2xl p-5 mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
+                  {booking.cleaner_name[0]}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display font-bold text-foreground">{booking.cleaner_name}</h3>
+                  <p className="text-xs text-muted-foreground">{booking.service_name} · {booking.duration}h</p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" size="sm" onClick={handleCall} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                  <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleChat} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                  <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Chat
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* OTP section */}
           {(liveStatus === 'en-route' || liveStatus === 'assigned') && booking?.otp && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary rounded-2xl p-5 mb-5 text-center">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary rounded-2xl p-5 mb-4 text-center">
               <p className="text-xs text-primary-foreground/60 mb-2 font-medium uppercase tracking-wider">Share code with cleaner</p>
               <div className="text-3xl font-display font-black tracking-[0.4em] text-primary-foreground">{booking.otp}</div>
             </motion.div>
           )}
 
-          {/* Job Photos - Before/After */}
+          {/* Job Photos */}
           {(beforePhoto || afterPhoto) && (
-            <div className="mb-5">
+            <div className="mb-4">
               <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-1.5">
                 <Image className="h-4 w-4" strokeWidth={1.5} /> Job Photos
               </h3>
@@ -232,31 +251,28 @@ export default function ActiveBooking() {
             </div>
           )}
 
-          {/* Status timeline */}
-          <div className="border border-border rounded-2xl p-6 mb-6">
-            {statuses.map((status, i) => {
-              const done = i <= currentIdx;
-              const current = i === currentIdx;
-              return (
-                <div key={status.key} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    {done ? (
-                      <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400 }}>
-                        <CircleCheck className={`h-5 w-5 text-primary ${current ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
-                      </motion.div>
-                    ) : (
-                      <Circle className="h-5 w-5 text-border" strokeWidth={1.5} />
-                    )}
-                    {i < statuses.length - 1 && <div className={`w-px h-8 transition-colors duration-300 ${done ? 'bg-primary' : 'bg-border'}`} />}
-                  </div>
-                  <div className="pb-3">
-                    <p className={`font-semibold text-sm ${done ? 'text-foreground' : 'text-muted-foreground/40'}`}>{status.label}</p>
-                    <p className={`text-xs ${done ? 'text-muted-foreground' : 'text-muted-foreground/20'}`}>{status.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Booking info */}
+          <div className="border border-border rounded-2xl p-5 mb-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+              <span>{booking?.address_line1}, {booking?.address_postcode}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+              <span>{booking?.date} at {booking?.time} · {booking?.duration}h</span>
+            </div>
+            <div className="border-t border-border pt-2 flex justify-between font-display font-black text-lg">
+              <span>Total</span>
+              <span className="text-primary">£{booking?.total_cost}</span>
+            </div>
           </div>
+
+          {/* Cancel / Rate buttons */}
+          {['pending', 'assigned', 'en-route'].includes(liveStatus) && (
+            <Button variant="ghost" onClick={handleCancel} className="w-full text-destructive font-semibold text-sm">
+              <XCircle className="h-4 w-4 mr-1.5" /> Cancel Booking
+            </Button>
+          )}
 
           {liveStatus === 'completed' && !showComplete && (
             <Button onClick={() => navigate('/rate-service', { state: { bookingId: booking?.id } })} className="w-full h-14 font-semibold text-base rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
