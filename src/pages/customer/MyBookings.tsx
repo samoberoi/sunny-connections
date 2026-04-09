@@ -181,7 +181,7 @@ export default function MyBookings() {
       const name = (b.service_name || '').toLowerCase();
       return name.includes('express') || name.includes('blitz');
     }
-    if (bookingFilter === 'scheduled') return b.recurring !== 'none';
+    if (bookingFilter === 'scheduled') return (b.service_name || '').toLowerCase().includes('scheduled');
     return true;
   });
   const past = bookings.filter(b => ['completed', 'cancelled'].includes(b.status));

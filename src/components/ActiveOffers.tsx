@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 
 interface ActiveOffersProps {
-  onApplyOffer: (discount: number) => void;
+  onApplyOffer: (discount: number, offerId?: string) => void;
 }
 
 export default function ActiveOffers({ onApplyOffer }: ActiveOffersProps) {
@@ -46,25 +46,14 @@ export default function ActiveOffers({ onApplyOffer }: ActiveOffersProps) {
 
   if (availableOffers.length === 0) return null;
 
-  const applyOffer = async (offer: any) => {
+  const applyOffer = (offer: any) => {
     if (appliedId === offer.id) {
       setAppliedId(null);
       onApplyOffer(0);
       return;
     }
     setAppliedId(offer.id);
-    onApplyOffer(offer.discount_percent);
-
-    // Claim the offer
-    if (user?.id) {
-      await supabase.from('offer_claims').insert({
-        customer_id: user.id,
-        offer_id: offer.id,
-      });
-      await supabase.from('offers').update({
-        claimed_count: (offer.claimed_count || 0) + 1,
-      }).eq('id', offer.id);
-    }
+    onApplyOffer(offer.discount_percent, offer.id);
     toast.success(`🎉 ${offer.discount_percent}% off applied!`);
   };
 

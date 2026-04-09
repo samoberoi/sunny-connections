@@ -131,7 +131,7 @@ export default function CleanerSchedule() {
               </div>
             ) : (
               <div className="space-y-2">
-                {upcomingJobs.slice(0, 5).map(job => (
+                {upcomingJobs.map(job => (
                   <div key={job.id} className="bg-card rounded-2xl p-4 shadow-soft border border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
                       <Calendar className="h-4 w-4 text-foreground" strokeWidth={1.5} />
