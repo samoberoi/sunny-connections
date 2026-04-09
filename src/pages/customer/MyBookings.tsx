@@ -165,6 +165,11 @@ export default function MyBookings() {
                       <span className="text-[10px] text-muted-foreground capitalize">{b.recurring !== 'none' ? b.recurring : 'One-time'}</span>
                     </div>
 
+                    {/* Reschedule */}
+                    {['pending', 'assigned'].includes(b.status) && (
+                      <RescheduleButton booking={b} onReschedule={(date, time) => rescheduleBooking.mutate({ id: b.id, date, time })} />
+                    )}
+
                     {/* Cancel with reason */}
                     {['pending', 'assigned'].includes(b.status) && (
                       <Dialog>
