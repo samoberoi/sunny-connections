@@ -3,6 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, CalendarDays, User, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ActiveBookingFloater from '@/components/ActiveBookingFloater';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const navItems = [
   { to: '/home', icon: Home, label: 'Home' },
@@ -13,10 +16,31 @@ const navItems = [
 
 export default function CustomerLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const hideFloater = ['/active-booking', '/searching-cleaner', '/rate-service'].some(p => pathname.startsWith(p));
+
+  const { data: hasActiveBooking } = useQuery({
+    queryKey: ['has-active-booking', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('customer_id', user.id)
+        .not('status', 'in', '("completed","cancelled")')
+        .limit(1)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 5000,
+  });
+
+  const showFloater = !hideFloater && hasActiveBooking;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 pb-24">{children}</div>
+      <div className={`flex-1 ${showFloater ? 'pb-44' : 'pb-24'}`}>{children}</div>
       {!hideFloater && <ActiveBookingFloater />}
       <nav className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-foreground rounded-[2rem] shadow-elevated">
