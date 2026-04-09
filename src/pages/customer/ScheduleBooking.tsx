@@ -218,6 +218,28 @@ export default function ScheduleBooking() {
       }).select().single();
       if (error) throw error;
 
+      // Generate future recurring instances
+      if (recurring !== 'none' && date) {
+        const intervalDays = recurring === 'weekly' ? 7 : recurring === 'fortnightly' ? 14 : 30;
+        const futureCount = recurring === 'weekly' ? 11 : recurring === 'fortnightly' ? 7 : 5; // ~3 months
+        const futureBookings = [];
+        for (let i = 1; i <= futureCount; i++) {
+          const futureDate = new Date(date);
+          futureDate.setDate(futureDate.getDate() + intervalDays * i);
+          futureBookings.push({
+            customer_id: user.id, customer_name: user.name, service_id: serviceId,
+            service_name: `Scheduled: ${selectedNames}`,
+            date: futureDate.toISOString().split('T')[0], time, duration, recurring,
+            address_line1: address, address_postcode: postcode, address_city: 'London',
+            total_cost: totalCost, property_type: propertyType, notes: notes || null,
+            tier, payment_method: paymentMethod, referral_code: referralCode || null,
+          });
+        }
+        if (futureBookings.length > 0) {
+          await supabase.from('bookings').insert(futureBookings);
+        }
+      }
+
       await supabase.from('notifications').insert({
         user_id: user.id, title: 'Booking Confirmed! 🎉',
         message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
