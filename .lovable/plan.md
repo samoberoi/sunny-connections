@@ -1,78 +1,87 @@
 
 
-# Fix Welcome Offer Pop-up and Referral Code Flow
+# Restructure Service Hierarchy: Express/Schedule → House Cleaning/Housekeeping → Specializations
 
-## Overview
-Three issues to fix:
-1. Remove hardcoded "First 3 visits for £100" welcome coupon -- only show admin-created offers
-2. Add referral code input step after customer onboarding (profile creation) for new users who arrive via referral link
-3. Wire referral reward: when referred user's first booking completes, referrer gets coins in real-time
+## Problem
+The app has mismatched service names across different views. The database has services like "Regular Cleaning" which doesn't exist as a real offering. Cleaner onboarding uses hardcoded categories that don't match the DB. Express and Schedule booking flows have their own hardcoded service lists that are disconnected from the database.
+
+## Architecture
+
+The hierarchy should be:
+
+```text
+Service Mode (Express / Scheduled)
+  └── Service Type (House Cleaning / Housekeeping)
+       └── Specializations (from DB services table)
+            e.g. House Cleaning: Kitchen Deep Clean, Deep Cleaning, End of Tenancy, Bathroom Refresh, etc.
+            e.g. Housekeeping: Laundry & Ironing, Bed Making & Linen Change, General Housekeeping, Organising & Decluttering
+```
+
+## Changes
+
+### 1. Update Database Services (data fix)
+- Rename "Regular Cleaning" → remove or rename to something meaningful like "Standard House Clean"
+- Ensure all services in DB have correct `category` of either `cleaning` or `housekeeping`
+- Add any missing services that appear in Express/Schedule booking hardcoded lists (e.g., "Bathroom Refresh", "Living Room Tidy", "Air & Freshen")
+
+### 2. Add `service_mode` Column to Services Table (migration)
+Add a column `service_mode` (text, default `'both'`) with values: `'express'`, `'scheduled'`, or `'both'`. This lets the admin control which services appear in which booking mode.
+
+### 3. Refactor Cleaner Onboarding (`CleanerOnboarding.tsx`)
+**Step 2** becomes a 3-part selection:
+1. **Service Mode**: "Express Cleaning" and/or "Scheduled Cleaning" (two cards with descriptions, multi-select)
+2. **Service Type**: "House Cleaning" and/or "Housekeeping" (two cards, multi-select)
+3. **Specializations**: Dynamically fetched from DB `services` table, filtered by the selected category (cleaning/housekeeping). If both types selected, combine and show all. Multi-select.
+
+Save the selected service mode preference to the cleaner record (new column `service_modes text[] default '{}'`).
+
+### 4. Refactor Express Booking (`ExpressBooking.tsx`)
+- Instead of hardcoded `expressServices`, fetch from DB: `services` where `service_mode IN ('express', 'both')` and `active = true`
+- Keep the category toggle (House Cleaning / Housekeeping) but populate services from DB
+- Map DB service names to icons using an icon mapping dictionary
+
+### 5. Refactor Schedule Booking (`ScheduleBooking.tsx`)
+- Replace hardcoded `serviceOptions` with DB fetch: `services` where `service_mode IN ('scheduled', 'both')` and `active = true`
+- Group by `category` for the cleaning/housekeeping toggle
+
+### 6. Admin Services Page (`admin/Services.tsx`)
+- Make "Add Service" functional: dialog/form with name, description, category (cleaning/housekeeping), service_mode (express/scheduled/both), rate, duration
+- Make "Edit" button functional: same form pre-filled
+- Add "Delete" button with confirmation
+- Show `service_mode` badge on each card
+
+### 7. Cleaner Job Matching
+- The existing `jobMatchesSpecialisations` helper already matches by service name. Since we're syncing all names from DB, this will work automatically once cleaner specialisations match DB service names.
+
+### 8. Customer Home Page (`Home.tsx`)
+- The quick-action cards ("Express Clean", "Schedule Clean") already exist and navigate correctly -- no changes needed here.
+
+### 9. Enrolment Register (`enrol/Register.tsx`)
+- Update step 2 (Experience) to also fetch specializations from DB instead of using hardcoded comma-separated input.
 
 ---
 
-## 1. Remove Hardcoded Welcome Coupon
+## Database Changes
 
-**File**: `src/pages/customer/Home.tsx`
-- Remove the `WelcomeCoupon` component usage (line 124) and the `showCoupon` state/effect (lines 68, 74-77)
-- The admin-created offers pop-up (lines 127-153 via `offerModal`) already works correctly -- keep it
-- Remove the import of `WelcomeCoupon`
+**Migration 1**: Add `service_mode` column and `service_modes` to cleaners
+```sql
+ALTER TABLE services ADD COLUMN IF NOT EXISTS service_mode text NOT NULL DEFAULT 'both';
+ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS service_modes text[] NOT NULL DEFAULT '{}';
+```
 
-**File**: `src/components/WelcomeCoupon.tsx`
-- Can be deleted or left unused
-
-## 2. Capture `ref` Query Param from Referral Link
-
-**File**: `src/pages/customer/Login.tsx`
-- Read `ref` from `searchParams` on mount
-- Store it in `localStorage` as `pending_referral_code` so it persists through the login/signup flow
-
-## 3. Add Referral Code Step in Customer Onboarding
-
-**File**: `src/components/CustomerOnboarding.tsx`
-- Add a **Step 3** after address: "Got a Referral Code?"
-- Pre-fill with `localStorage.getItem('pending_referral_code')` if present
-- User can enter/edit the code and tap "Apply"
-- On apply: validate the code format (starts with "CLEAN"), show success message: "You'll get 20% off your first booking!"
-- Store the validated referral code in `localStorage` as `applied_referral_code`
-- Clear `pending_referral_code` from localStorage
-- Update `totalSteps` from 2 to 3
-
-## 4. Auto-Apply Referral Code in Booking
-
-**Files**: `src/pages/customer/ExpressBooking.tsx`, `src/pages/customer/ScheduleBooking.tsx`
-- On mount, check `localStorage.getItem('applied_referral_code')`
-- If present and this is the user's first booking (check bookings count), auto-fill the referral code field and show a banner: "Referral discount applied!"
-
-## 5. Referrer Gets Coins on Completion (Real-Time)
-
-**File**: `src/components/ReferralCard.tsx`
-- Already queries bookings with `referral_code` matching. The stats update on re-fetch.
-- Add a realtime subscription on `bookings` table filtered by `referral_code = userCode` and `status = completed` to auto-invalidate the query when a referred booking completes.
-
-**File**: `src/pages/customer/Home.tsx`
-- Add realtime subscription on `coin_transactions` for the current user to auto-refresh coin balance without page reload.
-
-## 6. Award Referrer Coins on Job Completion
-
-**Files**: `src/pages/cleaner/Jobs.tsx` (in `completeJob` function) or booking completion logic
-- After marking a booking as `completed`, check if it has a `referral_code`
-- If yes, look up which user owns that referral code (by matching `CLEAN` + first 6 chars of user ID)
-- Insert a `coin_transaction` for the referrer: +50 coins, type "referral", description "Referral bonus"
-- Update `customer_coins` balance for the referrer
-
----
+**Data Update**: Rename "Regular Cleaning" to "Standard House Clean" (or delete and recreate with proper name). Add missing services like "Bathroom Refresh", "Living Room Tidy" if they don't exist.
 
 ## File Changes Summary
 
-| Action | File | Changes |
-|--------|------|---------|
-| Edit | `src/pages/customer/Home.tsx` | Remove WelcomeCoupon, add realtime coin refresh |
-| Edit | `src/pages/customer/Login.tsx` | Capture `ref` param, store in localStorage |
-| Edit | `src/components/CustomerOnboarding.tsx` | Add Step 3: referral code input |
-| Edit | `src/pages/customer/ExpressBooking.tsx` | Auto-fill referral code from localStorage |
-| Edit | `src/pages/customer/ScheduleBooking.tsx` | Auto-fill referral code from localStorage |
-| Edit | `src/components/ReferralCard.tsx` | Add realtime subscription for stats |
-| Edit | `src/pages/cleaner/Jobs.tsx` | Award referrer coins on job completion |
-
-No database migrations needed.
+| Action | File | Description |
+|--------|------|-------------|
+| Migration | SQL | Add `service_mode` to services, `service_modes` to cleaners |
+| Data | SQL | Rename/sync service names, set service_mode values |
+| Edit | `src/hooks/useServices.ts` | Add `service_mode` to `ServiceRow` type |
+| Edit | `src/components/CleanerOnboarding.tsx` | 3-part selection: mode → type → DB specializations |
+| Edit | `src/pages/customer/ExpressBooking.tsx` | Fetch services from DB instead of hardcoded list |
+| Edit | `src/pages/customer/ScheduleBooking.tsx` | Fetch services from DB instead of hardcoded list |
+| Edit | `src/pages/admin/Services.tsx` | Add/Edit/Delete service functionality with mode field |
+| Edit | `src/pages/enrol/Register.tsx` | Fetch specializations from DB |
+| Edit | `src/pages/customer/Services.tsx` | Show service_mode badge |
 
