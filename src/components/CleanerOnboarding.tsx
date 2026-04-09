@@ -1,17 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Wrench, Clock, ChevronRight, ChevronLeft, Check, MapPin, Briefcase, Locate, Eye } from 'lucide-react';
+import { User, Wrench, Clock, ChevronRight, ChevronLeft, Check, MapPin, Briefcase, Locate, Eye, Zap, CalendarDays, Sparkles, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-const categories = ['Regular Cleaning', 'General Housekeeping', 'Deep Cleaning', 'End of Tenancy'];
-const specialisations = [
-  'Kitchen Deep Clean', 'Deep Cleaning', 'Regular Cleaning', 'End of Tenancy',
-  'Laundry & Ironing', 'Bed Making & Linen Change', 'Organising & Decluttering', 'General Housekeeping',
-];
+import { useServices } from '@/hooks/useServices';
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const timeSlots = ['Morning', 'Afternoon', 'Evening'];
@@ -22,6 +17,7 @@ interface CleanerOnboardingProps {
 
 export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps) {
   const { user, refreshProfile } = useAuth();
+  const { data: allServices = [] } = useServices();
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -29,17 +25,26 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
   const [addressLine, setAddressLine] = useState('');
   const [postcode, setPostcode] = useState('');
   const [experience, setExperience] = useState(0);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedModes, setSelectedModes] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>(['Morning', 'Afternoon']);
   const [preferredHours, setPreferredHours] = useState('8');
   const [saving, setSaving] = useState(false);
   const [detecting, setDetecting] = useState(false);
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const toggleItem = <T,>(list: T[], item: T, setter: (v: T[]) => void) =>
     setter(list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
+
+  // Filter specializations based on selected types
+  const availableSpecs = allServices.filter(s => {
+    if (selectedTypes.length === 0) return false;
+    const typeMatch = (selectedTypes.includes('cleaning') && s.category === 'cleaning') ||
+                      (selectedTypes.includes('housekeeping') && s.category === 'housekeeping');
+    return typeMatch;
+  });
 
   const autoDetect = async () => {
     setDetecting(true);
@@ -75,7 +80,8 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
         address_line1: addressLine,
         address_postcode: postcode,
         experience,
-        specialisations: [...selectedCategories, ...selectedSpecs],
+        specialisations: selectedSpecs,
+        service_modes: selectedModes,
       }).eq('user_id', user.id);
 
       const { data: cleaner } = await supabase.from('cleaners').select('id').eq('user_id', user.id).maybeSingle();
@@ -90,12 +96,8 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
         await supabase.from('cleaner_availability').insert(rows);
       }
 
-      // Refresh profile so name updates immediately (fixes "Hi, New" issue)
       await refreshProfile();
-
       toast.success('Profile set up! Let\'s start training 📚');
-      // Don't call onComplete here - the ProtectedRoute will detect onboarding is done
-      // and then show CleanerTrainingGate since training is not complete yet
       onComplete();
     } catch { toast.error('Something went wrong'); }
     finally { setSaving(false); }
@@ -103,17 +105,18 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
 
   const fadeVariants = { enter: { opacity: 0, x: 30 }, center: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -30 } };
 
-  const stepIcons = [User, Briefcase, Wrench, Clock, Eye];
-  const stepTitles = ['Personal Info', 'Experience & Interests', 'Specialisations', 'Availability', 'Review & Confirm'];
-  const stepDescs = ['Tell us about yourself', 'Your background & services', 'Select what you\'re great at', 'When can you work?', 'Check everything looks good'];
+  const stepIcons = [User, Zap, Briefcase, Wrench, Clock, Eye];
+  const stepTitles = ['Personal Info', 'Service Mode', 'Service Type & Experience', 'Specialisations', 'Availability', 'Review & Confirm'];
+  const stepDescs = ['Tell us about yourself', 'How do you want to work?', 'What type of services?', 'Select what you\'re great at', 'When can you work?', 'Check everything looks good'];
 
   const canAdvance = () => {
     switch (step) {
       case 1: return firstName.trim().length > 0;
-      case 2: return selectedCategories.length > 0;
-      case 3: return selectedSpecs.length > 0;
-      case 4: return selectedDays.length > 0 && selectedTimes.length > 0;
-      case 5: return true;
+      case 2: return selectedModes.length > 0;
+      case 3: return selectedTypes.length > 0;
+      case 4: return selectedSpecs.length > 0;
+      case 5: return selectedDays.length > 0 && selectedTimes.length > 0;
+      case 6: return true;
       default: return false;
     }
   };
@@ -143,6 +146,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
 
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         <AnimatePresence mode="wait">
+          {/* Step 1: Personal Info */}
           {step === 1 && (
             <motion.div key="cs1" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -162,7 +166,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
-                  <Button variant="ghost" size="sm" onClick={autoDetect} disabled={detecting} className="text-[10px] font-bold text-primary-ink h-7 px-2">
+                  <Button variant="ghost" size="sm" onClick={autoDetect} disabled={detecting} className="text-[10px] font-bold text-primary h-7 px-2">
                     <Locate className="h-3 w-3 mr-1" /> {detecting ? 'Detecting...' : 'Auto-detect'}
                   </Button>
                 </div>
@@ -172,6 +176,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
+          {/* Step 2: Service Mode */}
           {step === 2 && (
             <motion.div key="cs2" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
@@ -181,6 +186,41 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
                 <div>
                   <h3 className="font-display font-bold text-foreground">{stepTitles[1]}</h3>
                   <p className="text-xs text-muted-foreground">{stepDescs[1]}</p>
+                </div>
+              </div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select one or both</p>
+              {[
+                { key: 'express', icon: Zap, label: 'Express Cleaning', desc: 'On-demand, same-day jobs. Customers book and you respond quickly.' },
+                { key: 'scheduled', icon: CalendarDays, label: 'Scheduled Cleaning', desc: 'Pre-booked recurring or one-time jobs. Plan your week ahead.' },
+              ].map((mode, i) => (
+                <motion.button key={mode.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  whileTap={{ scale: 0.98 }} onClick={() => toggleItem(selectedModes, mode.key, setSelectedModes)}
+                  className={`w-full text-left border rounded-3xl p-5 flex items-center gap-4 shadow-soft transition-all ${
+                    selectedModes.includes(mode.key) ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
+                  }`}>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${selectedModes.includes(mode.key) ? 'bg-primary text-primary-foreground' : 'bg-primary/15'}`}>
+                    <mode.icon className="h-6 w-6" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-display font-bold text-foreground">{mode.label}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">{mode.desc}</p>
+                  </div>
+                  {selectedModes.includes(mode.key) && <Check className="h-5 w-5 text-primary shrink-0" />}
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Step 3: Service Type & Experience */}
+          {step === 3 && (
+            <motion.div key="cs3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Briefcase className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-foreground">{stepTitles[2]}</h3>
+                  <p className="text-xs text-muted-foreground">{stepDescs[2]}</p>
                 </div>
               </div>
               <div>
@@ -195,56 +235,77 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
                 </div>
               </div>
               <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Interested in (select all)</p>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map(c => (
-                    <button key={c} onClick={() => toggleItem(selectedCategories, c, setSelectedCategories)}
-                      className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 ${
-                        selectedCategories.includes(c) ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>
-                      {selectedCategories.includes(c) && <Check className="h-3 w-3" />}
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 3 && (
-            <motion.div key="cs3" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Wrench className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">{stepTitles[2]}</h3>
-                  <p className="text-xs text-muted-foreground">{stepDescs[2]}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {specialisations.map(s => (
-                  <button key={s} onClick={() => toggleItem(selectedSpecs, s, setSelectedSpecs)}
-                    className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 ${
-                      selectedSpecs.includes(s) ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Service Type (select one or both)</p>
+                {[
+                  { key: 'cleaning', icon: Sparkles, label: 'House Cleaning', desc: 'Kitchen, bathroom, deep clean & more' },
+                  { key: 'housekeeping', icon: Bed, label: 'Housekeeping', desc: 'Laundry, ironing, bed making & organising' },
+                ].map((type, i) => (
+                  <motion.button key={type.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                    whileTap={{ scale: 0.98 }} onClick={() => toggleItem(selectedTypes, type.key, setSelectedTypes)}
+                    className={`w-full text-left border rounded-3xl p-4 flex items-center gap-4 shadow-soft mb-2 transition-all ${
+                      selectedTypes.includes(type.key) ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
                     }`}>
-                    {selectedSpecs.includes(s) && <Check className="h-3 w-3" />}
-                    {s}
-                  </button>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${selectedTypes.includes(type.key) ? 'bg-primary text-primary-foreground' : 'bg-primary/15'}`}>
+                      <type.icon className="h-5 w-5" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-foreground text-sm">{type.label}</h4>
+                      <p className="text-[11px] text-muted-foreground">{type.desc}</p>
+                    </div>
+                    {selectedTypes.includes(type.key) && <Check className="h-5 w-5 text-primary shrink-0" />}
+                  </motion.button>
                 ))}
               </div>
             </motion.div>
           )}
 
+          {/* Step 4: Specialisations from DB */}
           {step === 4 && (
             <motion.div key="cs4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Wrench className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-foreground">{stepTitles[3]}</h3>
+                  <p className="text-xs text-muted-foreground">{stepDescs[3]}</p>
+                </div>
+              </div>
+              {availableSpecs.length > 0 && (
+                <button onClick={() => {
+                  const allNames = availableSpecs.map(s => s.name);
+                  setSelectedSpecs(selectedSpecs.length === allNames.length ? [] : allNames);
+                }} className="text-xs font-bold text-primary">
+                  {selectedSpecs.length === availableSpecs.length ? 'Deselect All' : 'Select All'}
+                </button>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {availableSpecs.map(s => (
+                  <button key={s.id} onClick={() => toggleItem(selectedSpecs, s.name, setSelectedSpecs)}
+                    className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                      selectedSpecs.includes(s.name) ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
+                    }`}>
+                    {selectedSpecs.includes(s.name) && <Check className="h-3 w-3" />}
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+              {availableSpecs.length === 0 && (
+                <p className="text-sm text-muted-foreground">Please go back and select a service type first.</p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Step 5: Availability */}
+          {step === 5 && (
+            <motion.div key="cs5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
                   <Clock className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">{stepTitles[3]}</h3>
-                  <p className="text-xs text-muted-foreground">{stepDescs[3]}</p>
+                  <h3 className="font-display font-bold text-foreground">{stepTitles[4]}</h3>
+                  <p className="text-xs text-muted-foreground">{stepDescs[4]}</p>
                 </div>
               </div>
               <div>
@@ -283,15 +344,16 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {step === 5 && (
-            <motion.div key="cs5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4 pt-4">
+          {/* Step 6: Review */}
+          {step === 6 && (
+            <motion.div key="cs6" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4 pt-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
                   <Eye className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">{stepTitles[4]}</h3>
-                  <p className="text-xs text-muted-foreground">{stepDescs[4]}</p>
+                  <h3 className="font-display font-bold text-foreground">{stepTitles[5]}</h3>
+                  <p className="text-xs text-muted-foreground">{stepDescs[5]}</p>
                 </div>
               </div>
               <div className="bg-card rounded-3xl p-5 border border-border shadow-soft space-y-3">
@@ -310,8 +372,12 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
                   <p className="text-sm font-bold text-foreground">{experience} years</p>
                 </div>
                 <div className="pt-2 border-t border-border">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Interests</p>
-                  <div className="flex flex-wrap gap-1">{selectedCategories.map(c => <span key={c} className="bg-primary/10 text-foreground text-[10px] rounded-full px-2 py-0.5 font-medium">{c}</span>)}</div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Service Mode</p>
+                  <div className="flex flex-wrap gap-1">{selectedModes.map(m => <span key={m} className="bg-primary/10 text-foreground text-[10px] rounded-full px-2 py-0.5 font-medium capitalize">{m}</span>)}</div>
+                </div>
+                <div className="pt-2 border-t border-border">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Service Type</p>
+                  <div className="flex flex-wrap gap-1">{selectedTypes.map(t => <span key={t} className="bg-primary/10 text-foreground text-[10px] rounded-full px-2 py-0.5 font-medium capitalize">{t === 'cleaning' ? 'House Cleaning' : 'Housekeeping'}</span>)}</div>
                 </div>
                 <div className="pt-2 border-t border-border">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Specialisations</p>

@@ -1,25 +1,21 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Clock, ChevronRight, Sparkles, Home, ShowerHead, Truck, Brush } from 'lucide-react';
+import { Search, Clock, ChevronRight, Sparkles, Home, ShowerHead, Truck, Brush, UtensilsCrossed, Wind, WashingMachine, Bed, Sofa, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useServices } from '@/hooks/useServices';
 
-const categoryIcons: Record<string, any> = {
-  cleaning: Sparkles,
-  housekeeping: Home,
-};
-
 const iconMap: Record<string, any> = {
-  Sparkles, Home, ShowerHead, Truck, Brush,
+  Sparkles, Home, ShowerHead, Truck, Brush, UtensilsCrossed, Wind, WashingMachine, Bed, Sofa, Trash2, ChefHat: UtensilsCrossed, LayoutGrid: Brush,
 };
 
 const categories = [
   { key: 'all', label: 'All' },
-  { key: 'cleaning', label: 'Cleaning' },
+  { key: 'cleaning', label: 'House Cleaning' },
   { key: 'housekeeping', label: 'Housekeeping' },
 ];
 
@@ -41,6 +37,8 @@ export default function Services() {
     navigate('/schedule-booking', { state: { preSelectedService: serviceId, preSelectedServiceName: serviceName } });
   };
 
+  const modeLabel = (mode: string) => mode === 'express' ? '⚡ Express' : mode === 'scheduled' ? '📅 Scheduled' : '🔄 Both';
+
   return (
     <CustomerLayout>
       <PageTransition>
@@ -50,35 +48,22 @@ export default function Services() {
             <h1 className="text-2xl font-display font-black text-foreground">Services</h1>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-            <Input
-              placeholder="Search services..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-11 h-12 rounded-2xl bg-card border-border"
-            />
+            <Input placeholder="Search services..." value={search} onChange={e => setSearch(e.target.value)} className="pl-11 h-12 rounded-2xl bg-card border-border" />
           </div>
 
-          {/* Category tabs */}
           <div className="flex gap-2">
             {categories.map(c => (
-              <button
-                key={c.key}
-                onClick={() => setCategory(c.key)}
+              <button key={c.key} onClick={() => setCategory(c.key)}
                 className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
-                  category === c.key
-                    ? 'bg-foreground text-background'
-                    : 'bg-card border border-border text-muted-foreground'
-                }`}
-              >
+                  category === c.key ? 'bg-foreground text-background' : 'bg-card border border-border text-muted-foreground'
+                }`}>
                 {c.label}
               </button>
             ))}
           </div>
 
-          {/* Service cards */}
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
@@ -95,20 +80,17 @@ export default function Services() {
               {filtered.map((service, i) => {
                 const IconComp = iconMap[service.icon] || Sparkles;
                 return (
-                  <motion.button
-                    key={service.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => book(service.id, service.name)}
-                    className="w-full bg-card rounded-3xl p-5 shadow-soft border border-border text-left flex items-center gap-4"
-                  >
+                  <motion.button key={service.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                    whileTap={{ scale: 0.98 }} onClick={() => book(service.id, service.name)}
+                    className="w-full bg-card rounded-3xl p-5 shadow-soft border border-border text-left flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
                       <IconComp className="h-6 w-6 text-foreground" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display font-bold text-foreground text-sm">{service.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-display font-bold text-foreground text-sm">{service.name}</h3>
+                        <Badge variant="secondary" className="text-[8px] rounded-md shrink-0">{modeLabel((service as any).service_mode || 'both')}</Badge>
+                      </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{service.description}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-xs font-black text-foreground">From £{service.rate_per_hour}/hr</span>

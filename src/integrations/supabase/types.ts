@@ -293,6 +293,7 @@ export type Database = {
           name: string
           rating: number
           review_count: number
+          service_modes: string[]
           specialisations: string[]
           updated_at: string
           user_id: string | null
@@ -311,6 +312,7 @@ export type Database = {
           name: string
           rating?: number
           review_count?: number
+          service_modes?: string[]
           specialisations?: string[]
           updated_at?: string
           user_id?: string | null
@@ -329,6 +331,7 @@ export type Database = {
           name?: string
           rating?: number
           review_count?: number
+          service_modes?: string[]
           specialisations?: string[]
           updated_at?: string
           user_id?: string | null
@@ -787,6 +790,7 @@ export type Database = {
           min_duration: number
           name: string
           rate_per_hour: number
+          service_mode: string
           updated_at: string
         }
         Insert: {
@@ -800,6 +804,7 @@ export type Database = {
           min_duration?: number
           name: string
           rate_per_hour: number
+          service_mode?: string
           updated_at?: string
         }
         Update: {
@@ -813,6 +818,7 @@ export type Database = {
           min_duration?: number
           name?: string
           rate_per_hour?: number
+          service_mode?: string
           updated_at?: string
         }
         Relationships: []

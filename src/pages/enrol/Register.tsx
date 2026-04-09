@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, CircleCheck, User, FileText, Briefcase, Users, ShieldCheck, Clock, CreditCard, FileCheck } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CircleCheck, User, FileText, Briefcase, Users, ShieldCheck, Clock, CreditCard, FileCheck, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import cleanerPortrait from '@/assets/cleaner-portrait.jpg';
+import { useServices } from '@/hooks/useServices';
 
 const steps = [
   { title: 'Personal Details', icon: User, desc: 'Tell us about yourself' },
@@ -23,7 +24,7 @@ const steps = [
 
 interface FormData {
   fullName: string; dob: string; phone: string; email: string; postcode: string;
-  rightToWork: string; idType: string; experience: number; specialisations: string;
+  rightToWork: string; idType: string; experience: number; selectedSpecs: string[];
   ref1Name: string; ref1Phone: string; ref1Relation: string;
   ref2Name: string; ref2Phone: string; ref2Relation: string;
   dbsConsent: boolean; selectedDays: string[]; hours: string;
@@ -40,13 +41,14 @@ export default function Register() {
 
   const [form, setForm] = useState<FormData>({
     fullName: '', dob: '', phone: '', email: '', postcode: '', rightToWork: '', idType: 'Passport',
-    experience: 0, specialisations: '',
+    experience: 0, selectedSpecs: [],
     ref1Name: '', ref1Phone: '', ref1Relation: '',
     ref2Name: '', ref2Phone: '', ref2Relation: '',
     dbsConsent: false, selectedDays: [], hours: '',
     sortCode: '', accountNumber: '', accountHolder: '',
     agreedTerms: false, agreedData: false,
   });
+  const { data: allServices = [] } = useServices();
 
   const updateForm = (field: keyof FormData, value: any) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -71,7 +73,7 @@ export default function Register() {
           phone: form.phone, email: form.email, postcode: form.postcode,
           right_to_work: form.rightToWork || 'UK Citizen', id_type: form.idType,
           experience: form.experience,
-          specialisations: form.specialisations.split(',').map(s => s.trim()).filter(Boolean),
+          specialisations: form.selectedSpecs,
           reference_contacts: [
             { name: form.ref1Name, phone: form.ref1Phone, relation: form.ref1Relation },
             { name: form.ref2Name, phone: form.ref2Phone, relation: form.ref2Relation },
@@ -194,8 +196,19 @@ export default function Register() {
             {step === 2 && (
               <>
                 <Input placeholder="Years of cleaning experience" type="number" value={form.experience || ''} onChange={e => updateForm('experience', parseInt(e.target.value) || 0)} className={inputClass} />
-                <Input placeholder="Specialisations (comma separated)" value={form.specialisations} onChange={e => updateForm('specialisations', e.target.value)} className={inputClass} />
-                <p className="text-xs text-muted-foreground">e.g. Deep cleaning, End of tenancy, Office cleaning</p>
+                <p className="text-xs font-bold text-muted-foreground mt-2 mb-1">Specialisations (select all that apply)</p>
+                <div className="flex flex-wrap gap-2">
+                  {allServices.map(svc => (
+                    <motion.button key={svc.id} whileTap={{ scale: 0.95 }}
+                      onClick={() => updateForm('selectedSpecs', form.selectedSpecs.includes(svc.name) ? form.selectedSpecs.filter((s: string) => s !== svc.name) : [...form.selectedSpecs, svc.name])}
+                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                        form.selectedSpecs.includes(svc.name) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                      }`}>
+                      {form.selectedSpecs.includes(svc.name) && <Check className="h-3 w-3" />}
+                      {svc.name}
+                    </motion.button>
+                  ))}
+                </div>
               </>
             )}
             {step === 3 && (

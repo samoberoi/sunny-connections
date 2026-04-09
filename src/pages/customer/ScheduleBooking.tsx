@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,8 +19,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
+import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
 
 type Category = 'cleaning' | 'housekeeping';
+
+const iconMap: Record<string, any> = {
+  Sparkles, Home, ShowerHead, UtensilsCrossed, Wind, WashingMachine, Bed, Shirt, Brush, Sofa, Trash2, ChefHat: UtensilsCrossed, LayoutGrid: Brush,
+};
 
 // Service-specific follow-up question config
 const serviceQuestions: Record<string, { label: string; question: string; options: number[]; pricePerUnit: number }> = {
@@ -28,32 +33,13 @@ const serviceQuestions: Record<string, { label: string; question: string; option
   bedroom: { label: 'Bedrooms', question: 'How many bedrooms?', options: [1, 2, 3, 4, 5], pricePerUnit: 3 },
   living: { label: 'Living Rooms', question: 'How many living rooms?', options: [1, 2, 3], pricePerUnit: 3 },
   kitchen: { label: 'Kitchens', question: 'How many kitchens?', options: [1, 2], pricePerUnit: 4 },
-  dusting: { label: 'Rooms', question: 'How many rooms to dust?', options: [2, 3, 4, 5, 6], pricePerUnit: 2 },
   deep: { label: 'Rooms', question: 'How many rooms for deep scrub?', options: [1, 2, 3, 4, 5], pricePerUnit: 5 },
   laundry: { label: 'Loads', question: 'How many loads of laundry?', options: [1, 2, 3, 4], pricePerUnit: 4 },
-  ironing: { label: 'Items (approx)', question: 'Approx how many items?', options: [10, 20, 30, 40], pricePerUnit: 0.3 },
   bedmaking: { label: 'Beds', question: 'How many beds?', options: [1, 2, 3, 4, 5], pricePerUnit: 2 },
   organise: { label: 'Rooms', question: 'How many rooms to organise?', options: [1, 2, 3, 4], pricePerUnit: 4 },
 };
 
-const serviceOptions: Record<Category, { id: string; icon: any; name: string; pricePerHour: number }[]> = {
-  cleaning: [
-    { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Cleaning', pricePerHour: 18 },
-    { id: 'bathroom', icon: ShowerHead, name: 'Bathroom Cleaning', pricePerHour: 16 },
-    { id: 'living', icon: Sofa, name: 'Living Room', pricePerHour: 14 },
-    { id: 'bedroom', icon: Bed, name: 'Bedroom', pricePerHour: 14 },
-    { id: 'dusting', icon: Wind, name: 'Dusting & Surfaces', pricePerHour: 12 },
-    { id: 'trash', icon: Trash2, name: 'Trash & Recycling', pricePerHour: 8 },
-    { id: 'deep', icon: Sparkles, name: 'Deep Scrub', pricePerHour: 22 },
-  ],
-  housekeeping: [
-    { id: 'laundry', icon: WashingMachine, name: 'Laundry & Folding', pricePerHour: 15 },
-    { id: 'ironing', icon: Shirt, name: 'Ironing', pricePerHour: 14 },
-    { id: 'bedmaking', icon: Bed, name: 'Bed Making', pricePerHour: 10 },
-    { id: 'organise', icon: Brush, name: 'Organise', pricePerHour: 16 },
-    { id: 'freshen', icon: Wind, name: 'Air & Freshen', pricePerHour: 8 },
-  ],
-};
+// Removed hardcoded serviceOptions - now fetched from DB
 
 const frequencies = [
   { value: 'none' as const, label: 'One-time', desc: 'Single visit' },
@@ -103,6 +89,7 @@ export default function ScheduleBooking() {
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
+  const { data: dbScheduledServices = [] } = useServicesByMode('scheduled');
 
   // Fetch saved addresses
   const { data: savedAddresses = [] } = useQuery({
@@ -140,9 +127,8 @@ export default function ScheduleBooking() {
     });
   };
 
-  const allServices = [...serviceOptions.cleaning, ...serviceOptions.housekeeping];
-  const selectedServiceDetails = allServices.filter(s => selectedServices.includes(s.id));
-  const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.pricePerHour, 0);
+  const selectedServiceDetails = dbScheduledServices.filter(s => selectedServices.includes(s.id));
+  const baseRate = selectedServiceDetails.reduce((sum, s) => sum + s.rate_per_hour, 0);
 
   // Calculate service-specific surcharges
   const serviceSurcharge = selectedServices.reduce((sum, svcId) => {
@@ -210,12 +196,9 @@ export default function ScheduleBooking() {
     if (!user || !date || !address || !postcode) return;
     setSubmitting(true);
     try {
-      // Match service by name from selected services
-      const { data: dbServices } = await supabase.from('services').select('id, name');
-      const matchedService = dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase() === sel.name.toLowerCase())) 
-        || dbServices?.find(s => selectedServiceDetails.some(sel => s.name.toLowerCase().includes(sel.name.toLowerCase())));
-      const serviceId = matchedService?.id || dbServices?.[0]?.id;
-      if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
+      // Use first selected service's DB ID directly
+      const serviceId = selectedServiceDetails[0]?.id;
+      if (!serviceId) { toast.error('No services selected'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
         date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
@@ -315,8 +298,9 @@ export default function ScheduleBooking() {
                     <button onClick={() => setCategory(null)} className="text-xs text-primary-ink font-bold mb-3 flex items-center gap-1">← Categories</button>
                     <p className="font-display font-bold text-foreground text-sm mb-3">{category === 'cleaning' ? '🧹 Cleaning' : '🏠 Housekeeping'}</p>
                     <div className="space-y-2">
-                      {serviceOptions[category].map((svc, i) => {
+                      {dbScheduledServices.filter(s => s.category === category).map((svc, i) => {
                         const isSelected = selectedServices.includes(svc.id);
+                        const IconComp = iconMap[svc.icon] || Sparkles;
                         return (
                           <motion.button key={svc.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                             whileTap={{ scale: 0.98 }} onClick={() => toggleService(svc.id)}
@@ -324,11 +308,11 @@ export default function ScheduleBooking() {
                               isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
                             }`}>
                             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'}`}>
-                              <svc.icon className="h-4 w-4" strokeWidth={1.5} />
+                              <IconComp className="h-4 w-4" strokeWidth={1.5} />
                             </div>
                             <div className="flex-1">
                               <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
-                              <p className="text-[10px] text-muted-foreground">£{svc.pricePerHour}/hr</p>
+                              <p className="text-[10px] text-muted-foreground">£{svc.rate_per_hour}/hr</p>
                             </div>
                             {isSelected && <CheckCircle2 className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />}
                           </motion.button>
@@ -342,7 +326,7 @@ export default function ScheduleBooking() {
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quick Details</p>
                         {serviceQuestionsToShow.map(svcId => {
                           const q = serviceQuestions[svcId];
-                          const svc = allServices.find(s => s.id === svcId);
+                          const svc = dbScheduledServices.find(s => s.id === svcId);
                           return (
                             <div key={svcId} className="bg-card border border-border rounded-2xl p-4">
                               <p className="text-xs font-bold text-foreground mb-2">{svc?.name}: {q.question}</p>
