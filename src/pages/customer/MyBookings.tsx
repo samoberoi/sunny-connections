@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -97,6 +98,7 @@ export default function MyBookings() {
   const queryClient = useQueryClient();
   const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
   const [cancelNotes, setCancelNotes] = useState<Record<string, string>>({});
+  const [bookingFilter, setBookingFilter] = useState<string>('all');
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['my-bookings', user?.id],
@@ -174,6 +176,14 @@ export default function MyBookings() {
   });
 
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
+  const filteredUpcoming = upcoming.filter(b => {
+    if (bookingFilter === 'express') {
+      const name = (b.service_name || '').toLowerCase();
+      return name.includes('express') || name.includes('blitz');
+    }
+    if (bookingFilter === 'scheduled') return b.recurring !== 'none';
+    return true;
+  });
   const past = bookings.filter(b => ['completed', 'cancelled'].includes(b.status));
 
   return (
@@ -190,8 +200,24 @@ export default function MyBookings() {
           {upcoming.length > 0 && (
             <section className="mb-6">
               <h3 className="font-display font-bold text-foreground text-sm mb-3">Upcoming</h3>
+              <div className="mb-3">
+                <ToggleGroup type="single" value={bookingFilter} onValueChange={v => setBookingFilter(v || 'all')} className="bg-muted/30 rounded-xl p-1 w-full">
+                  <ToggleGroupItem value="all" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                    All ({upcoming.length})
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="express" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                    <Zap className="h-3 w-3 mr-1 text-amber-600" /> Express
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="scheduled" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                    <CalendarDays className="h-3 w-3 mr-1" /> Scheduled
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              {filteredUpcoming.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No {bookingFilter} bookings</p>
+              ) : (
               <div className="space-y-3">
-                {upcoming.map(b => (
+                {filteredUpcoming.map(b => (
                   <div key={b.id} className="bg-card rounded-3xl p-5 shadow-soft border border-border">
                     <div className="flex justify-between items-start mb-3">
                       <div>
