@@ -1,116 +1,48 @@
 
 
-# Premium Feature Upgrade -- Industry Standard Alignment
+# Fix 5 Critical/High-Severity Bugs
 
-Based on analysis of Urban Company, Housekeep, and similar on-demand cleaning platforms, here are the missing standard features and UX improvements to make Clean Fit production-grade.
+## Bug 1: Login phone validation rejects 5-digit test numbers
 
----
+**File**: `src/pages/customer/Login.tsx`
 
-## 1. Service Browsing Page (Missing -- High Priority)
+Line 36 requires `phone.length < 10`. Change to `phone.length < 5` so test numbers like `11111`, `22222` work. Also update `roleHints` on line 33 to show 5-digit hints (`11111`, `22222`, `0000000000`). Update `handlePhoneChange` (line 27) to allow up to 11 digits instead of exactly 10, so both 5-digit test numbers and real 10-digit numbers work.
 
-Currently `Services.tsx` just redirects to schedule-booking. Industry apps have a dedicated **service catalogue** page with categories, descriptions, pricing, and visual cards.
+## Bug 2: SearchingCleaner uses invalid PostgREST join `cleaners(*)`
 
-**Build**: New `customer/Services.tsx` with:
-- Category tabs (Cleaning, Housekeeping, Deep Clean, Move-in/Move-out)
-- Visual service cards with icons, starting prices, estimated duration
-- "Book Now" CTA per service that pre-selects the service in ScheduleBooking
-- Search/filter bar at top
+**File**: `src/pages/customer/SearchingCleaner.tsx`
 
----
+Lines 51 and 97 use `.select('*, cleaners(*)')` which fails because `bookings` has no FK to `cleaners`. Fix: select only booking columns, then if `cleaner_id` exists, fetch the cleaner in a separate query (same pattern already used in the realtime handler on line 81). Replace both occurrences.
 
-## 2. Favourite Cleaners Page (Missing)
+## Bug 3: Photo state not reset when switching jobs
 
-The `favourite_cleaners` table exists but there is no dedicated UI to browse and manage favourites. Urban Company and Housekeep let users "Request same cleaner" prominently.
+**File**: `src/pages/cleaner/Jobs.tsx`
 
-**Build**: Add a **Favourites** section accessible from Profile or a new tab. Show favourite cleaners with rating, availability badge, and "Book Again" button that pre-fills ScheduleBooking with that cleaner preference.
+`beforePhotoUrl` and `afterPhotoUrl` (lines 38-39) persist when `selectedBooking` changes. Add a `useEffect` that resets both to `null` whenever `selectedBooking` changes.
 
----
+## Bug 4: Missing admin UPDATE RLS policy on bookings
 
-## 3. Help & Support / FAQ Section (Missing -- Standard Feature)
+**Database migration**: Add policy so admins can update any booking (for cancel/reassign operations):
+```sql
+CREATE POLICY "Admins can update all bookings"
+ON public.bookings FOR UPDATE
+TO authenticated
+USING (has_role(auth.uid(), 'admin'::app_role))
+WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+```
 
-Every cleaning app has an in-app help center. Currently Clean Fit has no support page.
+## Bug 5: ReferralCard Share/WhatsApp buttons already wired
 
-**Build**: New `customer/Help.tsx` with:
-- Searchable FAQ accordion (cancellation policy, pricing, safety, rescheduling)
-- "Contact Support" button (opens WhatsApp or email)
-- Link from Profile page
-
----
-
-## 4. Rescheduling a Booking (Missing)
-
-Users can cancel but cannot reschedule. Industry standard allows changing date/time of upcoming bookings.
-
-**Build**: In `MyBookings.tsx`, add a "Reschedule" button for bookings with status `pending` or `assigned`. Opens a date/time picker sheet that updates the booking record.
+The `ReferralCard.tsx` code already has working `shareWhatsApp` and `shareNative` handlers. The buttons are correctly wired with `onClick`. This is actually not a bug -- the buttons work. No changes needed here.
 
 ---
 
-## 5. Cleaner Profile Detail View (Missing for Customers)
+## Summary
 
-When a cleaner is assigned, customers should be able to tap the cleaner name/avatar to see their full profile: rating breakdown, experience, specialisations, reviews, verified badge.
-
-**Build**: New `customer/CleanerDetail.tsx` or a bottom sheet in `ActiveBooking.tsx` and `MyBookings.tsx`.
-
----
-
-## 6. Service Guarantee Banner (Missing -- Trust Feature)
-
-Urban Company prominently shows "100% Quality Assured" and Housekeep has "5-star service guaranteed". Clean Fit has trust badges but no guarantee policy page.
-
-**Build**: Add a "CleanFit Guarantee" card on the Home page and a dedicated guarantee info sheet explaining re-clean policy, damage protection, and refund process.
-
----
-
-## 7. Estimated Arrival Time (ETA) on Active Booking (Improvement)
-
-The active booking screen should show a live ETA countdown when the cleaner is en-route, not just a status label.
-
-**Build**: In `ActiveBooking.tsx`, calculate ETA from cleaner location data and show "Arriving in ~X min" with a progress bar.
-
----
-
-## 8. Customer Wallet Page (Missing)
-
-CoinBalance component exists on home but there is no dedicated wallet page showing transaction history, earn/spend breakdown, and redemption rules.
-
-**Build**: New `customer/Wallet.tsx` with:
-- Current balance prominently displayed
-- Transaction history list (earned, spent, dates)
-- "How coins work" explainer section
-- Link from Home CoinBalance card and Profile
-
----
-
-## 9. Admin Analytics Enhancements
-
-**Add**: Customer retention rate, average booking value, cleaner utilization rate, and top-performing cleaners leaderboard to `admin/Reports.tsx`.
-
----
-
-## 10. Cleaner Earnings Breakdown (Enhancement)
-
-Current earnings page likely shows basic totals. Industry standard shows daily/weekly/monthly toggles, per-job breakdown, tips, bonuses, and payout schedule.
-
-**Build**: Enhance `cleaner/Earnings.tsx` with period filters, job-by-job breakdown with before/after photos, and projected earnings.
-
----
-
-## Technical Summary
-
-| Action | File | Purpose |
-|--------|------|---------|
-| Rewrite | `customer/Services.tsx` | Full service catalogue with categories and cards |
-| New | `customer/Help.tsx` | FAQ and support page |
-| New | `customer/Wallet.tsx` | Coin transaction history and balance |
-| New | `customer/CleanerDetail.tsx` | Cleaner profile view for customers |
-| Edit | `customer/MyBookings.tsx` | Add reschedule functionality |
-| Edit | `customer/Home.tsx` | Add guarantee banner, improve service browsing link |
-| Edit | `customer/ActiveBooking.tsx` | Add ETA display and cleaner profile link |
-| Edit | `customer/Profile.tsx` | Add links to Help, Wallet, Favourites |
-| Edit | `cleaner/Earnings.tsx` | Period filters and per-job breakdown |
-| Edit | `admin/Reports.tsx` | Retention and utilization metrics |
-| Edit | `App.tsx` | Add new routes |
-| Edit | `CustomerLayout.tsx` | Potentially add Services tab to bottom nav |
-
-No database changes needed -- all required tables already exist.
+| Fix | File | Change |
+|-----|------|--------|
+| Phone validation | `Login.tsx` | Accept 5+ digit numbers |
+| PostgREST join | `SearchingCleaner.tsx` | Separate cleaner fetch instead of join |
+| Photo state reset | `Jobs.tsx` | useEffect to clear photos on job switch |
+| Admin UPDATE policy | Migration SQL | New RLS policy on bookings |
 
