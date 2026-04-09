@@ -1,117 +1,116 @@
 
 
-# Comprehensive App Hardening -- Security, Notifications, and End-to-End Flow Fix
+# Premium Feature Upgrade -- Industry Standard Alignment
 
-This plan addresses admin access control, notification automation, user management, and end-to-end flow validation across all roles.
-
----
-
-## Phase 1: Super Admin Access Control
-
-**Problem**: Anyone can navigate to `/admin/login` and create an admin account with any phone number.
-
-**Solution**:
-- In `Login.tsx`, when `role === 'admin'`, after OTP verification check if the user has an `admin` role in the `user_roles` table. If not, block login with an error toast ("Unauthorized -- admin access only") and sign them out.
-- Add an **Admin Management** page (`admin/Admins.tsx`) accessible from the More menu, where existing admins can add new admin phone numbers (insert into `user_roles` with role `admin`) and view/remove existing admins.
-- Seed the first admin via the database insert tool so the current test admin (phone `0000000000`) has a `user_roles` entry.
-- Add route `/admin/admins` in `App.tsx` and link in `AdminLayout.tsx` More menu.
-
-**Files**: `Login.tsx`, `AuthContext.tsx`, new `admin/Admins.tsx`, `AdminLayout.tsx`, `App.tsx`
+Based on analysis of Urban Company, Housekeep, and similar on-demand cleaning platforms, here are the missing standard features and UX improvements to make Clean Fit production-grade.
 
 ---
 
-## Phase 2: Admin User Management (Delete Users/Cleaners)
+## 1. Service Browsing Page (Missing -- High Priority)
 
-**Problem**: Admin cannot delete customers or cleaners.
+Currently `Services.tsx` just redirects to schedule-booking. Industry apps have a dedicated **service catalogue** page with categories, descriptions, pricing, and visual cards.
 
-**Solution**:
-- Add a "Delete User" button in the customer detail dialog (`admin/Customers.tsx`) and cleaner detail dialog (`admin/Cleaners.tsx`).
-- Deletion calls a new edge function `delete-user` that uses the service role key to delete the auth user (which cascades to profiles via trigger). For cleaners, also delete the cleaner record.
-- Add RLS policy for admin DELETE on `profiles` and `cleaners` tables via migration.
-
-**Files**: `admin/Customers.tsx`, `admin/Cleaners.tsx`, new edge function `supabase/functions/delete-user/index.ts`, migration for DELETE policies
-
----
-
-## Phase 3: Automated Notifications System
-
-**Problem**: No automatic notifications are sent for booking lifecycle events.
-
-**Solution**: Add notification insertion at key points in the existing client-side code:
-
-1. **Booking created** -- notify customer: "Your booking is confirmed, searching for a cleaner."
-2. **Cleaner assigned** -- notify customer: "Your cleaner {name} has been assigned!"
-3. **Cleaner en-route** -- notify customer: "Your cleaner is on the way!"
-4. **Job completed** -- notify customer: "Your cleaning is done! Rate your experience."
-5. **Cleaner declined** -- notify customer: "Your cleaner couldn't make it. Searching for a new one."
-6. **Leave replacement** -- notify customer: "Your regular cleaner is on leave. {replacement} will cover."
-7. **Upcoming booking reminder** -- create an edge function triggered by pg_cron that runs daily, finds bookings for tomorrow, and inserts reminder notifications.
-
-Insert notifications inline in `Jobs.tsx` mutations, `SearchingCleaner.tsx`, `ScheduleBooking.tsx`, and the new cron function.
-
-**Files**: `cleaner/Jobs.tsx`, `customer/ScheduleBooking.tsx`, `customer/SearchingCleaner.tsx`, new edge function `supabase/functions/booking-reminders/index.ts`
+**Build**: New `customer/Services.tsx` with:
+- Category tabs (Cleaning, Housekeeping, Deep Clean, Move-in/Move-out)
+- Visual service cards with icons, starting prices, estimated duration
+- "Book Now" CTA per service that pre-selects the service in ScheduleBooking
+- Search/filter bar at top
 
 ---
 
-## Phase 4: Offer Pop-up for End Users
+## 2. Favourite Cleaners Page (Missing)
 
-**Problem**: Admin-created offers show on home page but don't proactively alert users.
+The `favourite_cleaners` table exists but there is no dedicated UI to browse and manage favourites. Urban Company and Housekeep let users "Request same cleaner" prominently.
 
-**Solution**:
-- In `CustomerHome`, check for unclaimed active offers on mount. If found, show a modal/dialog with the offer details and a "Claim" button that inserts into `offer_claims`.
-- Track claimed offers so the pop-up only shows once per offer.
-
-**Files**: `customer/Home.tsx`
+**Build**: Add a **Favourites** section accessible from Profile or a new tab. Show favourite cleaners with rating, availability badge, and "Book Again" button that pre-fills ScheduleBooking with that cleaner preference.
 
 ---
 
-## Phase 5: Booking Flow Hardening
+## 3. Help & Support / FAQ Section (Missing -- Standard Feature)
 
-Ensure end-to-end flows work correctly:
+Every cleaning app has an in-app help center. Currently Clean Fit has no support page.
 
-1. **Recurring bookings**: In `ScheduleBooking.tsx`, when a recurring plan is selected, create the initial booking. A daily cron edge function generates future bookings based on frequency.
-2. **Cleaner leave auto-reassignment**: In `admin/Leaves.tsx`, when a leave is approved and the cleaner has active recurring bookings during the leave period, auto-assign a replacement cleaner and notify the customer.
-3. **Cancel from floater**: Already implemented in `ActiveBookingFloater.tsx`. Verify the cancel mutation updates booking status to `cancelled`.
-4. **Map cleaner movement**: The `SearchingCleaner.tsx` already subscribes to realtime booking changes. Enhance the "found" phase to poll `cleaner_locations` and update the map marker position for the assigned cleaner.
-
-**Files**: `admin/Leaves.tsx`, `SearchingCleaner.tsx`, `ActiveBookingFloater.tsx`, new edge function `supabase/functions/recurring-bookings/index.ts`
+**Build**: New `customer/Help.tsx` with:
+- Searchable FAQ accordion (cancellation policy, pricing, safety, rescheduling)
+- "Contact Support" button (opens WhatsApp or email)
+- Link from Profile page
 
 ---
 
-## Phase 6: UI/UX Consistency Audit
+## 4. Rescheduling a Booking (Missing)
 
-- Verify all screens use consistent padding (`px-5`), border radius (`rounded-2xl/3xl`), and the same bottom navbar offset (`pb-24`).
-- Ensure no horizontal scroll on any screen (already have `overflow-x: hidden` globally).
-- Verify the coin system works: earn coins on rating, redeem on checkout.
-- Confirm the Refer a Mate share button triggers WhatsApp/copy link.
-- Verify before/after photo flow: cleaner uploads before photo to start, after photo to complete, customer sees both on rating screen.
+Users can cancel but cannot reschedule. Industry standard allows changing date/time of upcoming bookings.
+
+**Build**: In `MyBookings.tsx`, add a "Reschedule" button for bookings with status `pending` or `assigned`. Opens a date/time picker sheet that updates the booking record.
 
 ---
 
-## Database Changes
+## 5. Cleaner Profile Detail View (Missing for Customers)
 
-1. **Migration**: Add DELETE policies on `profiles` and `cleaners` for admins.
-2. **Insert**: Seed admin user_role for the test admin account.
-3. **Edge functions**: `delete-user`, `booking-reminders`, `recurring-bookings`.
+When a cleaner is assigned, customers should be able to tap the cleaner name/avatar to see their full profile: rating breakdown, experience, specialisations, reviews, verified badge.
 
-## Summary of Files
+**Build**: New `customer/CleanerDetail.tsx` or a bottom sheet in `ActiveBooking.tsx` and `MyBookings.tsx`.
+
+---
+
+## 6. Service Guarantee Banner (Missing -- Trust Feature)
+
+Urban Company prominently shows "100% Quality Assured" and Housekeep has "5-star service guaranteed". Clean Fit has trust badges but no guarantee policy page.
+
+**Build**: Add a "CleanFit Guarantee" card on the Home page and a dedicated guarantee info sheet explaining re-clean policy, damage protection, and refund process.
+
+---
+
+## 7. Estimated Arrival Time (ETA) on Active Booking (Improvement)
+
+The active booking screen should show a live ETA countdown when the cleaner is en-route, not just a status label.
+
+**Build**: In `ActiveBooking.tsx`, calculate ETA from cleaner location data and show "Arriving in ~X min" with a progress bar.
+
+---
+
+## 8. Customer Wallet Page (Missing)
+
+CoinBalance component exists on home but there is no dedicated wallet page showing transaction history, earn/spend breakdown, and redemption rules.
+
+**Build**: New `customer/Wallet.tsx` with:
+- Current balance prominently displayed
+- Transaction history list (earned, spent, dates)
+- "How coins work" explainer section
+- Link from Home CoinBalance card and Profile
+
+---
+
+## 9. Admin Analytics Enhancements
+
+**Add**: Customer retention rate, average booking value, cleaner utilization rate, and top-performing cleaners leaderboard to `admin/Reports.tsx`.
+
+---
+
+## 10. Cleaner Earnings Breakdown (Enhancement)
+
+Current earnings page likely shows basic totals. Industry standard shows daily/weekly/monthly toggles, per-job breakdown, tips, bonuses, and payout schedule.
+
+**Build**: Enhance `cleaner/Earnings.tsx` with period filters, job-by-job breakdown with before/after photos, and projected earnings.
+
+---
+
+## Technical Summary
 
 | Action | File | Purpose |
 |--------|------|---------|
-| Edit | `Login.tsx` | Block non-admin users from admin login |
-| Edit | `AuthContext.tsx` | Check admin role on login |
-| New | `admin/Admins.tsx` | Admin management page |
-| Edit | `AdminLayout.tsx` | Add Admins link to More menu |
-| Edit | `App.tsx` | Add /admin/admins route |
-| Edit | `admin/Customers.tsx` | Add delete user button |
-| Edit | `admin/Cleaners.tsx` | Add delete cleaner button |
-| Edit | `admin/Leaves.tsx` | Auto-reassignment on leave approval |
-| Edit | `cleaner/Jobs.tsx` | Insert notifications on status changes |
-| Edit | `customer/ScheduleBooking.tsx` | Insert booking notification |
-| Edit | `customer/SearchingCleaner.tsx` | Real-time cleaner location on map |
-| Edit | `customer/Home.tsx` | Offer claim pop-up |
-| New | Edge: `delete-user` | Delete auth user (service role) |
-| New | Edge: `booking-reminders` | Daily reminder notifications |
-| New | Edge: `recurring-bookings` | Generate recurring booking instances |
-| Migration | DELETE policies | Admin can delete profiles/cleaners |
+| Rewrite | `customer/Services.tsx` | Full service catalogue with categories and cards |
+| New | `customer/Help.tsx` | FAQ and support page |
+| New | `customer/Wallet.tsx` | Coin transaction history and balance |
+| New | `customer/CleanerDetail.tsx` | Cleaner profile view for customers |
+| Edit | `customer/MyBookings.tsx` | Add reschedule functionality |
+| Edit | `customer/Home.tsx` | Add guarantee banner, improve service browsing link |
+| Edit | `customer/ActiveBooking.tsx` | Add ETA display and cleaner profile link |
+| Edit | `customer/Profile.tsx` | Add links to Help, Wallet, Favourites |
+| Edit | `cleaner/Earnings.tsx` | Period filters and per-job breakdown |
+| Edit | `admin/Reports.tsx` | Retention and utilization metrics |
+| Edit | `App.tsx` | Add new routes |
+| Edit | `CustomerLayout.tsx` | Potentially add Services tab to bottom nav |
+
+No database changes needed -- all required tables already exist.
 
