@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Sparkles, Home, Shirt, UtensilsCrossed, MapPin, ChevronRight, Brush, WashingMachine, Bed, Wind, ShowerHead, Locate, CheckCircle2 } from 'lucide-react';
+import { Zap, Sparkles, Home, MapPin, ChevronRight, Bed, Locate, CheckCircle2, UtensilsCrossed, ShowerHead, Wind, WashingMachine, Brush, Sofa, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -11,28 +11,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useServicesByMode } from '@/hooks/useServices';
 
 type Category = 'cleaning' | 'housekeeping';
 
-const expressServices: Record<Category, { id: string; icon: any; name: string; desc: string; price: number; duration: number }[]> = {
-  cleaning: [
-    { id: 'kitchen', icon: UtensilsCrossed, name: 'Kitchen Blitz', desc: 'Counters, hob, sink & floor', price: 45, duration: 1.5 },
-    { id: 'bathroom', icon: ShowerHead, name: 'Bathroom Refresh', desc: 'Toilet, shower, tiles & mirrors', price: 40, duration: 1 },
-    { id: 'living', icon: Home, name: 'Living Room Tidy', desc: 'Vacuum, dust & surfaces', price: 35, duration: 1 },
-    { id: 'full', icon: Zap, name: 'Full Express Clean', desc: 'Kitchen + bathroom + living', price: 85, duration: 2.5 },
-    { id: 'deep', icon: Sparkles, name: 'Deep Clean', desc: 'Intensive scrub & appliances', price: 95, duration: 3 },
-  ],
-  housekeeping: [
-    { id: 'laundry', icon: WashingMachine, name: 'Laundry & Iron', desc: 'Wash, dry, fold & iron', price: 50, duration: 2 },
-    { id: 'bedmaking', icon: Bed, name: 'Bed Making', desc: 'Fresh sheets & pillows', price: 30, duration: 0.5 },
-    { id: 'organise', icon: Brush, name: 'Organise', desc: 'Wardrobe, shelves & drawers', price: 55, duration: 2 },
-    { id: 'airing', icon: Wind, name: 'Air & Freshen', desc: 'Ventilate & deodorise', price: 25, duration: 0.5 },
-  ],
+const iconMap: Record<string, any> = {
+  Sparkles, Home, ShowerHead, UtensilsCrossed, Wind, WashingMachine, Bed, Brush, Sofa, Trash2, ChefHat: UtensilsCrossed, LayoutGrid: Brush,
 };
 
 export default function ExpressBooking() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: dbServices = [] } = useServicesByMode('express');
   const [category, setCategory] = useState<Category | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [postcode, setPostcode] = useState('');
@@ -44,10 +34,9 @@ export default function ExpressBooking() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
 
-  const services = category ? expressServices[category] : [];
-  const service = services.find(s => s.id === selected);
+  const services = category ? dbServices.filter(s => s.category === category) : [];
+  const service = dbServices.find(s => s.id === selected);
 
-  // Fetch saved addresses
   const { data: savedAddresses = [] } = useQuery({
     queryKey: ['my-addresses', user?.id],
     queryFn: async () => {
@@ -58,7 +47,6 @@ export default function ExpressBooking() {
     enabled: !!user?.id,
   });
 
-  // Auto-fill first saved address
   useEffect(() => {
     if (savedAddresses.length > 0 && !address && !postcode) {
       const home = savedAddresses.find((a: any) => a.label === 'Home') || savedAddresses[0];
@@ -98,21 +86,18 @@ export default function ExpressBooking() {
     setSubmitting(true);
     try {
       const now = new Date();
-      const { data: dbServices } = await supabase.from('services').select('id, name');
-      const matchedService = dbServices?.find(s => s.name.toLowerCase() === service.name.toLowerCase())
-        || dbServices?.find(s => s.name.toLowerCase().includes(service.name.toLowerCase()));
-      const serviceId = matchedService?.id || dbServices?.[0]?.id;
-      if (!serviceId) { toast.error('No services available'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
-        customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Express: ${service.name}`,
-        date: now.toISOString().split('T')[0], time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.duration),
-        recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: service.price, property_type: 'house',
+        customer_id: user.id, customer_name: user.name, service_id: service.id, service_name: `Express: ${service.name}`,
+        date: now.toISOString().split('T')[0], time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration),
+        recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: service.rate_per_hour * service.min_duration, property_type: 'house',
         payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
-      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.duration), address, postcode, totalCost: service.price, otp: booking.otp, isExpress: true } });
+      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration), address, postcode, totalCost: service.rate_per_hour * service.min_duration, otp: booking.otp, isExpress: true } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
+
+  const totalPrice = service ? service.rate_per_hour * service.min_duration : 0;
 
   return (
     <CustomerLayout>
@@ -152,27 +137,30 @@ export default function ExpressBooking() {
             </section>
           )}
 
-          {/* Services */}
+          {/* Services from DB */}
           {category && (
             <section className="mb-6">
               <button onClick={() => { setCategory(null); setSelected(null); }} className="text-xs text-primary font-bold mb-3 flex items-center gap-1">← Categories</button>
               <div className="space-y-2.5">
-                {services.map((svc, i) => (
-                  <motion.button key={svc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    whileTap={{ scale: 0.98 }} onClick={() => setSelected(svc.id)}
-                    className={`w-full text-left border rounded-3xl p-5 flex items-center gap-4 transition-all shadow-soft ${
-                      selected === svc.id ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
-                    }`}>
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'}`}>
-                      <svc.icon className="h-5 w-5" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
-                      <p className="text-[11px] text-muted-foreground">{svc.desc} · ~{svc.duration}h</p>
-                    </div>
-                    <span className="text-xl font-display font-black text-foreground">£{svc.price}</span>
-                  </motion.button>
-                ))}
+                {services.map((svc, i) => {
+                  const IconComp = iconMap[svc.icon] || Sparkles;
+                  return (
+                    <motion.button key={svc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                      whileTap={{ scale: 0.98 }} onClick={() => setSelected(svc.id)}
+                      className={`w-full text-left border rounded-3xl p-5 flex items-center gap-4 transition-all shadow-soft ${
+                        selected === svc.id ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card'
+                      }`}>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${selected === svc.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-foreground'}`}>
+                        <IconComp className="h-5 w-5" strokeWidth={1.5} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-foreground text-sm">{svc.name}</h4>
+                        <p className="text-[11px] text-muted-foreground">{svc.description} · ~{svc.min_duration}h</p>
+                      </div>
+                      <span className="text-xl font-display font-black text-foreground">£{Math.round(svc.rate_per_hour * svc.min_duration)}</span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </section>
           )}
@@ -241,7 +229,7 @@ export default function ExpressBooking() {
               <div className="bg-foreground rounded-3xl p-5 mb-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-background/50">{service.name}</span>
-                  <span className="text-background">~{service.duration}h</span>
+                  <span className="text-background">~{service.min_duration}h</span>
                 </div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-background/50">Payment</span>
@@ -249,7 +237,7 @@ export default function ExpressBooking() {
                 </div>
                 <div className="flex justify-between font-display font-black text-2xl">
                   <span className="text-background">Total</span>
-                  <span className="text-primary">£{service.price}</span>
+                  <span className="text-primary">£{totalPrice}</span>
                 </div>
               </div>
 
@@ -261,7 +249,7 @@ export default function ExpressBooking() {
               ) : (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-3xl p-5 text-center space-y-4 bg-card">
                   <p className="font-display font-bold text-foreground text-lg">Confirm?</p>
-                  <p className="text-sm text-muted-foreground">£{service.price} for {service.name}</p>
+                  <p className="text-sm text-muted-foreground">£{totalPrice} for {service.name}</p>
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1 h-12 rounded-full">Cancel</Button>
                     <Button onClick={handleBook} disabled={submitting} className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-bold">
