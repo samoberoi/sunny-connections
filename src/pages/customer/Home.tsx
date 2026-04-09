@@ -133,6 +133,9 @@ export default function CustomerHome() {
               </motion.button>
             </motion.div>
 
+            {/* CleanFit Coins */}
+            <CoinBalance />
+
             {/* Streak Progress */}
             <StreakProgress />
 
