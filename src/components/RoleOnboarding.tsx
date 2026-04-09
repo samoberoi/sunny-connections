@@ -65,12 +65,8 @@ export default function RoleOnboarding({ role, userName, onComplete }: RoleOnboa
 
   return (
     <div className="fixed inset-0 z-[200] bg-background flex flex-col">
-      {/* Skip */}
       <div className="flex justify-between items-center p-5">
         <p className="text-xs text-muted-foreground font-bold">{current + 1} of {slides.length}</p>
-        <button onClick={onComplete} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
-          Skip
-        </button>
       </div>
 
       <div className="flex-1 flex flex-col px-8 justify-center">
