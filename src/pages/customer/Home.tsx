@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift } from 'lucide-react';
+import { Bell, User, CalendarDays, Zap, Star, ChevronRight, MapPin, Gift, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -203,6 +203,17 @@ export default function CustomerHome() {
             {/* Streak Progress */}
             <StreakProgress />
 
+            {/* CleanFit Guarantee */}
+            <motion.div variants={fadeUp} className="bg-primary/10 rounded-3xl p-5 border border-primary/20 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0">
+                <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-foreground text-sm">CleanFit Guarantee</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">100% satisfaction guaranteed. Not happy? We'll re-clean for free or give a full refund.</p>
+              </div>
+            </motion.div>
+
             {/* Active Offers */}
             <ActiveOffersBanner />
 
@@ -245,7 +256,8 @@ export default function CustomerHome() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 * i, duration: 0.35 }}
-                    className="bg-card rounded-3xl p-4 min-w-[120px] text-center shrink-0 shadow-soft border border-border"
+                    onClick={() => navigate('/cleaner-detail', { state: { cleanerId: cleaner.id } })}
+                    className="bg-card rounded-3xl p-4 min-w-[120px] text-center shrink-0 shadow-soft border border-border cursor-pointer active:scale-95 transition-transform"
                   >
                     <div className="w-14 h-14 rounded-full bg-foreground mx-auto mb-2 flex items-center justify-center text-background font-bold text-lg">
                       {cleaner.name[0]}
