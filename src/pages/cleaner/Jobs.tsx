@@ -563,7 +563,15 @@ export default function CleanerJobs() {
             </div>
             <div>
               <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-              <p className="text-[11px] text-muted-foreground capitalize">{b.property_type}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] text-muted-foreground capitalize">{b.property_type}</p>
+                {b._recurringCount > 1 && (
+                  <Badge className="text-[8px] rounded-md font-medium border-0 bg-primary/10 text-primary">
+                    <Repeat className="h-2.5 w-2.5 mr-0.5" strokeWidth={1.5} />
+                    {b.recurring} · {b._recurringCount} sessions
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           <span className="text-base font-display font-black text-primary">£{b.total_cost}</span>
