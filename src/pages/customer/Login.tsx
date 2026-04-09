@@ -24,16 +24,16 @@ export default function Login() {
 
   const handlePhoneChange = (value: string) => {
     const digits = value.replace(/[^0-9]/g, '');
-    if (digits.length <= 10) setPhone(digits);
+    if (digits.length <= 11) setPhone(digits);
   };
 
   const displayPhone = phone.length > 0 ? phone.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1 $2 $3').trim() : '';
 
   const roleLabels: Record<UserRole, string> = { customer: 'Clean Fit', cleaner: 'Clean Fit Pro', admin: 'Admin Panel' };
-  const roleHints: Record<UserRole, string> = { customer: '1111111111', cleaner: '2222222222', admin: '0000000000' };
+  const roleHints: Record<UserRole, string> = { customer: '11111', cleaner: '22222', admin: '0000000000' };
 
   const handleSendOTP = async () => {
-    if (phone.length < 10) { toast.error('Please enter a valid 10-digit mobile number'); return; }
+    if (phone.length < 5) { toast.error('Please enter a valid mobile number (min 5 digits)'); return; }
     setIsLoading(true);
     await login(phone, role);
     setIsLoading(false);
@@ -121,7 +121,7 @@ export default function Login() {
                     className="pl-14 h-13 rounded-2xl border-2 border-border bg-background text-lg font-bold focus-visible:ring-primary/30 focus-visible:border-primary" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">{phone.length}/10</span>
                 </div>
-                <Button onClick={handleSendOTP} disabled={phone.length < 10 || isLoading}
+                <Button onClick={handleSendOTP} disabled={phone.length < 5 || isLoading}
                   className="w-full h-13 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
                   {isLoading ? 'Sending...' : 'Send OTP'}
                 </Button>

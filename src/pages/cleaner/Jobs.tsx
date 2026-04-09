@@ -38,6 +38,12 @@ export default function CleanerJobs() {
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
 
+  // Reset photo state when switching jobs
+  useEffect(() => {
+    setBeforePhotoUrl(null);
+    setAfterPhotoUrl(null);
+  }, [selectedBooking]);
+
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
     queryFn: async () => {
