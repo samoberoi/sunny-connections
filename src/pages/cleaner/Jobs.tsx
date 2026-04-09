@@ -41,20 +41,6 @@ export default function CleanerJobs() {
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
 
-  // Reset photo state when switching jobs
-  useEffect(() => {
-    setBeforePhotoUrl(null);
-    setAfterPhotoUrl(null);
-    // Derive hasArrived from booking status
-    if (selectedBooking) {
-      const booking = allBookings.find((b: any) => b.id === selectedBooking);
-      if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
-        setHasArrived(true);
-      } else {
-        setHasArrived(false);
-      }
-    }
-  }, [selectedBooking, allBookings]);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
