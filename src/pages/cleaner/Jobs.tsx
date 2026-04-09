@@ -129,10 +129,32 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const available = allBookings.filter(b => {
+  const allAvailable = allBookings.filter(b => {
     if (b.cleaner_id || b.status !== 'pending') return false;
     return jobMatchesSpecialisations(b.service_name || '', cleanerRecord?.specialisations || []);
   });
+
+  // Group recurring bookings: show only the earliest instance per customer+service+recurring combo
+  const available = (() => {
+    const grouped = new Map<string, any[]>();
+    allAvailable.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.customer_id}|${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
+    });
+    const result: any[] = [];
+    grouped.forEach(bookings => {
+      const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      const representative = { ...sorted[0], _recurringCount: bookings.length, _siblingIds: bookings.map((bb: any) => bb.id) };
+      result.push(representative);
+    });
+    return result;
+  })();
+
   const filteredAvailable = available.filter(b => {
     if (jobFilter === 'express') return isExpressBooking(b);
     if (jobFilter === 'schedule') return !isExpressBooking(b);
