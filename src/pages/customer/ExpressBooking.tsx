@@ -9,6 +9,7 @@ import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useServicesByMode } from '@/hooks/useServices';
@@ -33,6 +34,7 @@ export default function ExpressBooking() {
   const [detecting, setDetecting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const services = category ? dbServices.filter(s => s.category === category) : [];
   const service = dbServices.find(s => s.id === selected);
@@ -97,7 +99,8 @@ export default function ExpressBooking() {
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
 
-  const totalPrice = service ? service.rate_per_hour * service.min_duration : 0;
+  const basePrice = service ? service.rate_per_hour * service.min_duration : 0;
+  const totalPrice = couponDiscount > 0 ? Math.round(basePrice * (1 - couponDiscount / 100)) : basePrice;
 
   return (
     <CustomerLayout>
@@ -219,6 +222,7 @@ export default function ExpressBooking() {
                   </button>
                 ))}
               </div>
+              <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
               <Input placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())} className="h-12 rounded-2xl border-2 border-border bg-card text-sm" />
             </motion.section>
           )}
