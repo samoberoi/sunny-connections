@@ -293,24 +293,44 @@ export default function CleanerJobs() {
               )}
 
               {selectedJob.status === 'otp-verified' && (
-                <motion.div key="verified" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
-                  <CircleCheck className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="font-semibold text-foreground text-sm mb-1">OTP Verified!</p>
-                  <p className="text-[11px] text-muted-foreground mb-4">Ready to start</p>
-                  <Button onClick={startJob} className="w-full h-11 rounded-2xl font-semibold text-sm">
+                <motion.div key="verified" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
+                  <div className="bg-muted/30 rounded-2xl p-6 text-center">
+                    <CircleCheck className="h-6 w-6 text-primary-ink mx-auto mb-2" strokeWidth={1.5} />
+                    <p className="font-semibold text-foreground text-sm mb-1">OTP Verified!</p>
+                    <p className="text-[11px] text-muted-foreground mb-3">Take a "before" photo to start</p>
+                  </div>
+                  <PhotoCapture
+                    bookingId={selectedJob.id}
+                    photoType="before"
+                    userId={user!.id}
+                    onPhotoUploaded={(url) => setBeforePhotoUrl(url)}
+                    existingUrl={beforePhotoUrl || undefined}
+                  />
+                  <Button onClick={startJob} disabled={!beforePhotoUrl}
+                    className="w-full h-11 rounded-2xl font-semibold text-sm disabled:opacity-40">
                     Start Cleaning 🧹
                   </Button>
                 </motion.div>
               )}
 
               {selectedJob.status === 'in-progress' && (
-                <motion.div key="in-progress" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="font-semibold text-foreground text-sm">In Progress</span>
+                <motion.div key="in-progress" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
+                  <div className="bg-muted/30 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                      <span className="font-semibold text-foreground text-sm">In Progress</span>
+                    </div>
+                    <Textarea placeholder="Completion notes..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border/50 mb-3 resize-none text-sm" />
                   </div>
-                  <Textarea placeholder="Completion notes..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="rounded-xl border-border/50 mb-3 resize-none text-sm" />
-                  <Button onClick={completeJob} className="w-full h-11 rounded-2xl font-semibold text-sm">
+                  <PhotoCapture
+                    bookingId={selectedJob.id}
+                    photoType="after"
+                    userId={user!.id}
+                    onPhotoUploaded={(url) => setAfterPhotoUrl(url)}
+                    existingUrl={afterPhotoUrl || undefined}
+                  />
+                  <Button onClick={completeJob} disabled={!afterPhotoUrl}
+                    className="w-full h-11 rounded-2xl font-semibold text-sm disabled:opacity-40">
                     Mark Complete ✅
                   </Button>
                 </motion.div>
