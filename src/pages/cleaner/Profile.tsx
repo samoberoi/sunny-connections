@@ -240,7 +240,7 @@ export default function CleanerProfile() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-background">{cleaner.experience} yrs</p>
-                  <p className="text-[10px] text-background/40">Experience</p>
+                  <p className="text-[10px] text-background/60">Experience</p>
                 </div>
               </div>
             </div>

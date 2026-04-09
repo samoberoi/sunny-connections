@@ -187,14 +187,14 @@ export default function CustomerHome() {
           <div className="sticky top-0 z-0">
             <SimulatedMap markers={mapMarkers} height={420} className="">
               {/* Gradient fade at bottom for smooth content transition */}
-              <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-transparent to-background pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-transparent to-background pointer-events-none" />
             </SimulatedMap>
 
             {/* Header overlay on map */}
             <div className="absolute top-0 left-0 right-0 px-6 pt-14 z-20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-display font-black text-foreground leading-none">
+                  <h1 className="text-3xl font-display font-black text-white leading-none drop-shadow-md">
                     Hello,<br />{firstName}
                   </h1>
                 </div>
@@ -240,7 +240,7 @@ export default function CustomerHome() {
                   <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={1.5} />
                 </div>
                 <h4 className="font-display font-black text-background text-base leading-tight">Express<br/>Clean</h4>
-                <p className="text-[10px] text-background/40 mt-1">Instant</p>
+                <p className="text-[10px] text-background/60 mt-1">Instant</p>
               </motion.button>
             </motion.div>
 
@@ -274,7 +274,7 @@ export default function CustomerHome() {
               ].map((stat, i) => (
                 <div key={stat.label} className="text-center">
                   <div className={`text-xl font-display font-black ${i === 0 ? 'text-primary' : 'text-background'}`}>{stat.value}</div>
-                  <div className="text-[9px] text-background/40 font-medium mt-0.5">{stat.label}</div>
+                  <div className="text-[9px] text-background/60 font-medium mt-0.5">{stat.label}</div>
                 </div>
               ))}
             </motion.div>

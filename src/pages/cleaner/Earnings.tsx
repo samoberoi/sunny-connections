@@ -93,7 +93,7 @@ export default function CleanerEarnings() {
           <div className="flex bg-foreground rounded-full p-1">
             {ranges.map(r => (
               <motion.button key={r.key} whileTap={{ scale: 0.97 }} onClick={() => setRange(r.key)}
-                className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all ${range === r.key ? 'bg-primary text-primary-foreground' : 'text-background/40'}`}>
+                className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all ${range === r.key ? 'bg-primary text-primary-foreground' : 'text-background/60'}`}>
                 {r.label}
               </motion.button>
             ))}
@@ -101,15 +101,15 @@ export default function CleanerEarnings() {
 
           {/* Balance */}
           <div className="bg-foreground rounded-3xl p-6 text-center">
-            <p className="text-[10px] text-background/40 font-bold uppercase tracking-wider mb-1">
+            <p className="text-[10px] text-background/60 font-bold uppercase tracking-wider mb-1">
               {range === 'week' ? 'This Week' : range === 'month' ? 'This Month' : 'Total'}
             </p>
             <div className="flex items-baseline justify-center gap-1">
               <span className="text-5xl font-display font-black text-primary">£{totalEarnings}</span>
-              <span className="text-sm text-background/30">.00</span>
+              <span className="text-sm text-background/50">.00</span>
             </div>
             {projectedMonthly && (
-              <p className="text-[10px] text-background/40 mt-1">Projected: £{projectedMonthly} this month</p>
+              <p className="text-[10px] text-background/60 mt-1">Projected: £{projectedMonthly} this month</p>
             )}
           </div>
 
@@ -130,14 +130,14 @@ export default function CleanerEarnings() {
 
           {/* Chart */}
           <div className="bg-foreground rounded-3xl p-5">
-            <h3 className="text-xs font-bold text-background/40 uppercase tracking-wider mb-4">Weekly</h3>
+            <h3 className="text-xs font-bold text-background/60 uppercase tracking-wider mb-4">Weekly</h3>
             <div className="flex items-end gap-2 h-36">
               {weeklyData.map(d => (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
-                  <span className="text-[9px] font-bold text-background/40">£{d.amount}</span>
+                  <span className="text-[9px] font-bold text-background/60">£{d.amount}</span>
                   <motion.div initial={{ height: 0 }} animate={{ height: `${max > 0 ? (d.amount / max) * 100 : 0}%` }}
                     className="w-full rounded-xl bg-primary" style={{ minHeight: '4px' }} />
-                  <span className="text-[9px] font-bold text-background/40">{d.day}</span>
+                  <span className="text-[9px] font-bold text-background/60">{d.day}</span>
                 </div>
               ))}
             </div>

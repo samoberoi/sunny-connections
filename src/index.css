@@ -156,4 +156,7 @@
   .pill-btn {
     @apply rounded-full px-5 py-2.5 text-xs font-semibold transition-all duration-200;
   }
+  .drop-shadow-md {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
 }
