@@ -157,12 +157,6 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
             <>Let's Go! 🎉</>
           )}
         </Button>
-        {step === 2 && (
-          <Button variant="ghost" onClick={handleSave} disabled={saving}
-            className="w-full h-10 text-sm font-medium text-muted-foreground">
-            Skip for now
-          </Button>
-        )}
       </div>
     </div>
   );
