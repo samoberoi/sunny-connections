@@ -29,7 +29,7 @@ const statusStyles: Record<string, string> = {
   cancelled: 'bg-destructive/10 text-destructive',
 };
 
-const cancelReasons = [
+const CANCEL_REASONS = [
   'Change of plans',
   'Found another service',
   'Cleaner taking too long',

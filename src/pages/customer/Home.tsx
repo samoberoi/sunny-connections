@@ -48,6 +48,22 @@ function ActiveOffersBanner() {
   );
 }
 
+function NotificationBadge() {
+  const { user } = useAuth();
+  const { data: count = 0 } = useQuery({
+    queryKey: ['unread-notification-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('read', false);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000,
+  });
+  if (!count) return null;
+  return <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">{count > 9 ? '9+' : count}</span>;
+}
+
 export default function CustomerHome() {
   const [showCoupon, setShowCoupon] = useState(false);
   const [offerModal, setOfferModal] = useState<any>(null);
