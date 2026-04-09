@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star } from 'lucide-react';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -15,6 +15,7 @@ import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import EmptyState from '@/components/EmptyState';
 import SimulatedMap from '@/components/SimulatedMap';
+import ImageViewer from '@/components/ImageViewer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,14 +28,11 @@ const isExpressBooking = (b: any) => {
   return name.includes('express') || name.includes('blitz');
 };
 
-// Match jobs to cleaner specializations by checking if the booking's service_name
-// matches any of the cleaner's stored specialisations (which now use exact DB service names).
 function jobMatchesSpecialisations(serviceName: string, specialisations: string[]): boolean {
-  if (!specialisations || specialisations.length === 0) return true; // no filter = see all
+  if (!specialisations || specialisations.length === 0) return true;
   const sLower = serviceName.toLowerCase().trim();
   return specialisations.some(spec => {
     const specLower = spec.toLowerCase().trim();
-    // Exact match or substring containment in either direction
     return sLower === specLower || sLower.includes(specLower) || specLower.includes(sLower);
   });
 }
@@ -51,6 +49,8 @@ export default function CleanerJobs() {
   const [upcomingFilter, setUpcomingFilter] = useState<string>('today');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
+  const [expandedDoneId, setExpandedDoneId] = useState<string | null>(null);
+  const [viewerImage, setViewerImage] = useState<string | null>(null);
 
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
@@ -76,7 +76,24 @@ export default function CleanerJobs() {
     enabled: !!cleanerRecord,
   });
 
-  // Fetch existing photos from DB when switching jobs (instead of resetting to null)
+  // Fetch photos for done jobs
+  const { data: donePhotos = {} } = useQuery({
+    queryKey: ['done-job-photos', cleanerRecord?.id],
+    queryFn: async () => {
+      const completedIds = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && b.status === 'completed').map(b => b.id);
+      if (completedIds.length === 0) return {};
+      const { data } = await supabase.from('job_photos').select('*').in('booking_id', completedIds.slice(0, 50));
+      const map: Record<string, { before?: string; after?: string }> = {};
+      data?.forEach(p => {
+        if (!map[p.booking_id]) map[p.booking_id] = {};
+        if (p.photo_type === 'before') map[p.booking_id].before = p.photo_url;
+        if (p.photo_type === 'after') map[p.booking_id].after = p.photo_url;
+      });
+      return map;
+    },
+    enabled: !!cleanerRecord && allBookings.length > 0,
+  });
+
   useEffect(() => {
     if (!selectedBooking) {
       setBeforePhotoUrl(null);
@@ -90,7 +107,6 @@ export default function CleanerJobs() {
     } else {
       setHasArrived(false);
     }
-    // Fetch existing photos from DB
     const fetchPhotos = async () => {
       const { data } = await supabase.from('job_photos').select('*').eq('booking_id', selectedBooking);
       if (data) {
@@ -101,7 +117,7 @@ export default function CleanerJobs() {
       }
     };
     fetchPhotos();
-  }, [selectedBooking]); // Only depend on selectedBooking, NOT allBookings
+  }, [selectedBooking]);
 
   useEffect(() => {
     const channel = supabase
@@ -113,7 +129,6 @@ export default function CleanerJobs() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Filter available jobs by cleaner specialization using direct name matching
   const available = allBookings.filter(b => {
     if (b.cleaner_id || b.status !== 'pending') return false;
     return jobMatchesSpecialisations(b.service_name || '', cleanerRecord?.specialisations || []);
@@ -138,11 +153,30 @@ export default function CleanerJobs() {
   const acceptJob = useMutation({
     mutationFn: async (bookingId: string) => {
       if (!cleanerRecord || !user) return;
-      const { data: booking } = await supabase.from('bookings').select('customer_id').eq('id', bookingId).single();
+      const { data: booking } = await supabase.from('bookings').select('*').eq('id', bookingId).single();
       const { error } = await supabase.from('bookings').update({
         cleaner_id: cleanerRecord.id, cleaner_name: user.name, status: 'assigned' as any,
       }).eq('id', bookingId);
       if (error) throw error;
+
+      // Auto-assign recurring bookings from same customer with same service
+      if (booking && booking.recurring !== 'none') {
+        const { data: pendingSiblings } = await supabase.from('bookings').select('id')
+          .eq('customer_id', booking.customer_id)
+          .eq('service_name', booking.service_name)
+          .eq('recurring', booking.recurring)
+          .eq('status', 'pending')
+          .is('cleaner_id', null)
+          .neq('id', bookingId);
+        if (pendingSiblings && pendingSiblings.length > 0) {
+          const siblingIds = pendingSiblings.map(s => s.id);
+          await supabase.from('bookings').update({
+            cleaner_id: cleanerRecord.id, cleaner_name: user.name, status: 'assigned' as any,
+          }).in('id', siblingIds);
+          toast.success(`Also assigned ${siblingIds.length} future recurring jobs`);
+        }
+      }
+
       if (booking?.customer_id) {
         await supabase.from('notifications').insert({
           user_id: booking.customer_id, title: 'Cleaner Assigned!',
@@ -198,22 +232,17 @@ export default function CleanerJobs() {
     if (!selectedJob) return;
     updateStatus.mutate({ id: selectedJob.id, status: 'completed' });
 
-    // Award referrer coins if referral_code exists
     if (selectedJob.referral_code) {
       try {
         const code = selectedJob.referral_code;
-        // Referral codes are CLEAN + first 6 chars of user_id (uppercase)
         const userIdPrefix = code.replace(/^CLEAN/i, '').toLowerCase();
-        // Find the referrer by matching user_id prefix
         const { data: profiles } = await supabase.from('profiles').select('user_id').like('user_id', `${userIdPrefix}%`);
         const referrerId = profiles?.[0]?.user_id;
         if (referrerId && referrerId !== selectedJob.customer_id) {
-          // Credit 50 coins to referrer
           await supabase.from('coin_transactions').insert({
             customer_id: referrerId, amount: 50, type: 'referral',
             description: 'Referral bonus — friend completed first clean', booking_id: selectedJob.id,
           });
-          // Update or create coin balance
           const { data: existing } = await supabase.from('customer_coins').select('*').eq('customer_id', referrerId).maybeSingle();
           if (existing) {
             await supabase.from('customer_coins').update({
@@ -224,14 +253,12 @@ export default function CleanerJobs() {
               customer_id: referrerId, balance: 50, total_earned: 50, total_spent: 0,
             });
           }
-          // Notify referrer
           await supabase.from('notifications').insert({
             user_id: referrerId, title: 'Referral Bonus! 🎉',
             message: 'Your friend completed their first clean. +50 coins!', type: 'promo',
           });
         }
       } catch (e) { console.error('Referral reward error', e); }
-      // Clear the applied referral code from customer's localStorage (they won't see this, but good hygiene)
     }
 
     toast.success('Job completed! 💪');
@@ -256,8 +283,7 @@ export default function CleanerJobs() {
 
   const handleChatCustomer = async () => {
     if (!selectedJob) return;
-    const { data: prof } = await supabase.from('profiles').select('phone').eq('user_id', selectedJob.customer_id).maybeSingle();
-    navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name, otherPhone: prof?.phone } });
+    navigate('/chat', { state: { bookingId: selectedJob.id, otherName: selectedJob.customer_name } });
   };
 
   const PropIcon = selectedJob ? (propertyIcons[selectedJob.property_type] || Home) : Home;
@@ -289,7 +315,6 @@ export default function CleanerJobs() {
               )}
             </div>
 
-            {/* Map with pathway */}
             {['assigned', 'en-route'].includes(selectedJob.status) && (
               <SimulatedMap markers={mapMarkers} height={180} className="rounded-2xl">
                 <svg className="absolute inset-0 w-full h-full z-[5] pointer-events-none">
@@ -302,7 +327,6 @@ export default function CleanerJobs() {
               </SimulatedMap>
             )}
 
-            {/* Customer Card */}
             <div className="bg-muted/30 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-lg">
@@ -345,7 +369,6 @@ export default function CleanerJobs() {
               </div>
             </div>
 
-            {/* Contact */}
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleCallCustomer} className="flex-1 rounded-xl text-xs h-10 border-border/50 text-foreground">
                 <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
@@ -355,7 +378,6 @@ export default function CleanerJobs() {
               </Button>
             </div>
 
-            {/* Status Actions */}
             <AnimatePresence mode="wait">
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
@@ -484,10 +506,8 @@ export default function CleanerJobs() {
               )}
             </AnimatePresence>
 
-            {/* Cancel for en-route */}
             {['en-route'].includes(selectedJob.status) && (
               <Button variant="ghost" onClick={() => {
-                // Return to assigned
                 updateStatus.mutate({ id: selectedJob.id, status: 'assigned' });
                 setHasArrived(false);
               }} className="w-full text-destructive font-semibold text-xs">
@@ -554,6 +574,80 @@ export default function CleanerJobs() {
             </span>
           </div>
         )}
+      </motion.div>
+    );
+  };
+
+  // ─── Done Card with expanded details ───
+  const DoneCard = ({ b }: { b: any }) => {
+    const isExpress = isExpressBooking(b);
+    const isExpanded = expandedDoneId === b.id;
+    const photos = donePhotos[b.id];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={() => setExpandedDoneId(isExpanded ? null : b.id)}
+        className="bg-muted/30 rounded-2xl p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
+            <Badge className={`text-[8px] rounded-md font-medium border-0 ${isExpress ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+              {isExpress ? '⚡ Express' : '📅 Scheduled'}
+            </Badge>
+          </div>
+          <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date}</p>
+        {b.rating && (
+          <div className="flex items-center gap-1 mt-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`h-3 w-3 ${i < b.rating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground/30'}`} strokeWidth={1.5} />
+            ))}
+            <span className="text-[10px] text-muted-foreground ml-1">{b.rating}/5</span>
+          </div>
+        )}
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+              <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <MapPin className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} />
+                  {b.address_line1}, {b.address_postcode}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} />
+                  {b.date} at {b.time} · {b.duration}h
+                </div>
+                {b.review && (
+                  <div className="bg-card rounded-xl p-3 border border-border/50">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Customer Review</p>
+                    <p className="text-xs text-foreground italic">"{b.review}"</p>
+                  </div>
+                )}
+                {photos && (
+                  <div className="flex gap-2">
+                    {photos.before && (
+                      <div className="flex-1 rounded-xl overflow-hidden border border-border cursor-pointer" onClick={(e) => { e.stopPropagation(); setViewerImage(photos.before!); }}>
+                        <img src={photos.before} alt="Before" className="w-full h-20 object-cover" />
+                        <p className="text-[8px] font-bold text-center py-0.5 text-muted-foreground uppercase">Before</p>
+                      </div>
+                    )}
+                    {photos.after && (
+                      <div className="flex-1 rounded-xl overflow-hidden border border-border cursor-pointer" onClick={(e) => { e.stopPropagation(); setViewerImage(photos.after!); }}>
+                        <img src={photos.after} alt="After" className="w-full h-20 object-cover" />
+                        <p className="text-[8px] font-bold text-center py-0.5 text-muted-foreground uppercase">After</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   };
@@ -644,21 +738,16 @@ export default function CleanerJobs() {
                 <EmptyState icon={CircleCheck} title="No completed jobs" description="Your completed jobs will show here" />
               ) : (
                 <div className="space-y-2">
-                  {completed.map(b => (
-                    <div key={b.id} className="bg-muted/30 rounded-2xl p-4">
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-semibold text-foreground text-sm">{b.service_name}</h4>
-                        <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date}</p>
-                      {b.rating && <p className="text-[11px] text-primary mt-1">★ {b.rating}/5</p>}
-                    </div>
-                  ))}
+                  {completed.map(b => <DoneCard key={b.id} b={b} />)}
                 </div>
               )}
             </TabsContent>
           </Tabs>
         </div>
+
+        {viewerImage && (
+          <ImageViewer images={[viewerImage]} initialIndex={0} onClose={() => setViewerImage(null)} />
+        )}
       </PageTransition>
     </CleanerLayout>
   );
