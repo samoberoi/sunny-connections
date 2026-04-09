@@ -11,7 +11,7 @@ export default function AdminReports() {
   const { data: bookings = [] } = useQuery({
     queryKey: ['admin-report-bookings'],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('total_cost, status, date, service_name, address_postcode, customer_id, cleaner_id, cleaner_name, duration');
+      const { data } = await supabase.from('bookings').select('total_cost, status, date, service_name, address_postcode, customer_id, cleaner_id, cleaner_name, duration').limit(5000);
       return data || [];
     },
   });
@@ -52,7 +52,10 @@ export default function AdminReports() {
       const key = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
       map[key] = (map[key] || 0) + Number(b.total_cost);
     });
-    return Object.entries(map).sort((a, b) => new Date('01 ' + a[0]).getTime() - new Date('01 ' + b[0]).getTime()).slice(-6).map(([month, revenue]) => ({ month, revenue }));
+    return Object.entries(map).sort((a, b) => {
+      const parseDate = (k: string) => { const [m, y] = k.split(' '); return new Date(`20${y}`, new Date(Date.parse(m + ' 1, 2000')).getMonth()); };
+      return parseDate(a[0]).getTime() - parseDate(b[0]).getTime();
+    }).slice(-6).map(([month, revenue]) => ({ month, revenue }));
   }, [completed]);
 
   const growth = monthlyData.length >= 2 ? (() => {
