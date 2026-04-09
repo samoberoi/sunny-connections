@@ -9,12 +9,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { playNotificationSound } from '@/lib/notificationSound';
 
-const quickTemplates = [
+const cleanerTemplates = [
   'I am on the way 🚗',
   'Stuck in traffic 🚦',
   'I have arrived 📍',
   'Please open the door 🚪',
-  'Thank you! 😊',
+  'Starting now 🧹',
+];
+
+const customerTemplates = [
+  "I'm at home 🏠",
+  'Please come fast ⏰',
+  'Door is open 🚪',
+  'Take your time 😊',
+  'Thank you! 🙏',
 ];
 
 export default function Chat() {
@@ -27,6 +35,19 @@ export default function Chat() {
   const bookingId = state?.bookingId;
   const otherName = state?.otherName || 'Chat';
   const otherPhone = state?.otherPhone;
+
+  // Determine role-specific templates
+  const { data: bookingContext } = useQuery({
+    queryKey: ['chat-booking-context', bookingId],
+    queryFn: async () => {
+      if (!bookingId) return null;
+      const { data } = await supabase.from('bookings').select('customer_id').eq('id', bookingId).maybeSingle();
+      return data;
+    },
+    enabled: !!bookingId,
+  });
+  const isCustomer = bookingContext?.customer_id === user?.id;
+  const quickTemplates = isCustomer ? customerTemplates : cleanerTemplates;
 
   const { data: messages = [] } = useQuery({
     queryKey: ['chat-messages', bookingId],

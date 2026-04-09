@@ -48,6 +48,7 @@ export default function CleanerJobs() {
   const [notes, setNotes] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>('all');
+  const [upcomingFilter, setUpcomingFilter] = useState<string>('today');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
 
@@ -126,6 +127,10 @@ export default function CleanerJobs() {
   const scheduleCount = available.filter(b => !isExpressBooking(b)).length;
 
   const upcomingJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['assigned', 'en-route'].includes(b.status));
+  const todayStr = new Date().toISOString().split('T')[0];
+  const upcomingToday = upcomingJobs.filter(b => b.date === todayStr);
+  const upcomingFuture = upcomingJobs.filter(b => b.date > todayStr);
+  const filteredUpcoming = upcomingFilter === 'today' ? upcomingToday : upcomingFuture;
   const activeJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['otp-verified', 'in-progress'].includes(b.status));
   const myJobs = [...upcomingJobs, ...activeJobs];
   const completed = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && b.status === 'completed');
@@ -566,11 +571,24 @@ export default function CleanerJobs() {
             </TabsContent>
 
             <TabsContent value="upcoming">
-              {upcomingJobs.length === 0 ? (
-                <EmptyState icon={CalendarDays} title="No upcoming jobs" description="Accept a job to see it here" />
+              <div className="mb-4">
+                <ToggleGroup type="single" value={upcomingFilter} onValueChange={v => setUpcomingFilter(v || 'today')} className="bg-muted/30 rounded-xl p-1 w-full">
+                  <ToggleGroupItem value="today" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                    Today ({upcomingToday.length})
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="future" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm relative">
+                    Upcoming ({upcomingFuture.length})
+                    {upcomingFuture.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              {filteredUpcoming.length === 0 ? (
+                <EmptyState icon={CalendarDays} title={upcomingFilter === 'today' ? 'No jobs today' : 'No upcoming jobs'} description={upcomingFilter === 'today' ? 'Check upcoming for future jobs' : 'Accept a job to see it here'} />
               ) : (
                 <div className="space-y-2">
-                  {upcomingJobs.map(b => <JobCard key={b.id} b={b} />)}
+                  {filteredUpcoming.map(b => <JobCard key={b.id} b={b} />)}
                 </div>
               )}
             </TabsContent>
