@@ -153,8 +153,9 @@ export default function CustomerHome() {
                   </h1>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => navigate('/notifications')} className="w-11 h-11 rounded-full bg-white/80 backdrop-blur-md border border-border flex items-center justify-center shadow-sm">
+                  <button onClick={() => navigate('/notifications')} className="w-11 h-11 rounded-full bg-white/80 backdrop-blur-md border border-border flex items-center justify-center shadow-sm relative">
                     <Bell className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+                    <NotificationBadge />
                   </button>
                   <button onClick={() => navigate('/profile')} className="w-11 h-11 rounded-full bg-foreground flex items-center justify-center shadow-sm">
                     <User className="h-5 w-5 text-background" strokeWidth={1.5} />
@@ -238,7 +239,7 @@ export default function CustomerHome() {
                 <p className="text-primary-foreground/60 text-[10px] font-bold uppercase tracking-[0.15em]">Refer a Mate</p>
                 <p className="text-primary-foreground text-2xl font-display font-black">First 3 for £50</p>
               </div>
-              <Button size="sm" className="rounded-full font-bold bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-10 px-5">
+              <Button size="sm" onClick={() => navigate('/profile')} className="rounded-full font-bold bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-10 px-5">
                 Share <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </motion.div>
@@ -247,7 +248,7 @@ export default function CustomerHome() {
             <motion.section variants={fadeUp} className="pb-6">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display font-bold text-foreground text-sm">Top Rated</h3>
-                <span className="text-[11px] text-muted-foreground font-medium">View all →</span>
+                <button onClick={() => navigate('/services')} className="text-[11px] text-muted-foreground font-medium hover:text-foreground transition-colors">View all →</button>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                 {topCleaners.map((cleaner, i) => (

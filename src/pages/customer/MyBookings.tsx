@@ -95,8 +95,8 @@ export default function MyBookings() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelNote, setCancelNote] = useState('');
+  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
+  const [cancelNotes, setCancelNotes] = useState<Record<string, string>>({});
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['my-bookings', user?.id],
@@ -138,12 +138,11 @@ export default function MyBookings() {
   const cancelBooking = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const { error } = await supabase.from('bookings').update({
-        status: 'cancelled' as any,
+        status: 'cancelled',
         notes: `Cancelled by customer: ${reason}`,
       }).eq('id', id);
       if (error) throw error;
 
-      // Notify admin
       if (user?.id) {
         await supabase.from('notifications').insert({
           user_id: user.id,
@@ -153,11 +152,11 @@ export default function MyBookings() {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       toast.success('Booking cancelled');
-      setCancelReason('');
-      setCancelNote('');
+      setCancelReasons(prev => { const n = { ...prev }; delete n[variables.id]; return n; });
+      setCancelNotes(prev => { const n = { ...prev }; delete n[variables.id]; return n; });
     },
     onError: () => toast.error('Failed to cancel booking'),
   });

@@ -34,7 +34,7 @@ export default function Wallet() {
   return (
     <CustomerLayout>
       <PageTransition>
-        <div className="px-5 pt-14 pb-6 space-y-5">
+        <div className="px-5 pt-6 pb-6 space-y-5">
           <div className="flex items-center gap-3">
             <BackButton to="/profile" />
             <h1 className="text-2xl font-display font-black text-foreground">Wallet</h1>
