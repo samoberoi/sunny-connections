@@ -63,13 +63,43 @@ export default function CleanerSchedule() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['my-leaves'] });
       setDialogOpen(false);
       setStartDate('');
       setEndDate('');
       setReason('');
       toast.success('Leave request submitted!');
+
+      // Notify admins
+      try {
+        const { data: adminRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'admin');
+        if (adminRoles?.length) {
+          const adminNotifs = adminRoles.map(r => ({
+            user_id: r.user_id,
+            title: 'New Leave Request',
+            message: `${cleanerRecord?.name || 'A cleaner'} has requested leave from ${startDate} to ${endDate}.`,
+            type: 'system' as const,
+          }));
+          await supabase.from('notifications').insert(adminNotifs);
+        }
+
+        // Notify affected customers
+        if (cleanerRecord?.id) {
+          const { data: affected } = await supabase.from('bookings').select('customer_id, customer_name, date, service_name')
+            .eq('cleaner_id', cleanerRecord.id).in('status', ['assigned', 'en-route'])
+            .gte('date', startDate).lte('date', endDate);
+          if (affected?.length) {
+            const custNotifs = affected.map(b => ({
+              user_id: b.customer_id,
+              title: 'Cleaner Leave Notice',
+              message: `Your cleaner has requested leave on ${b.date}. We'll assign a replacement if approved.`,
+              type: 'booking' as const,
+            }));
+            await supabase.from('notifications').insert(custNotifs);
+          }
+        }
+      } catch { /* notifications are best-effort */ }
     },
     onError: () => toast.error('Failed to submit leave request'),
   });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, ChevronRight, ChevronLeft, Locate, Gift } from 'lucide-react';
+import { User, MapPin, ChevronRight, ChevronLeft, Locate, Gift, Mail, Camera, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,11 @@ interface CustomerOnboardingProps {
 export default function CustomerOnboarding({ onComplete }: CustomerOnboardingProps) {
   const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
-  const [name, setName] = useState(user?.name || '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [postcode, setPostcode] = useState('');
   const [addressLine, setAddressLine] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
@@ -24,6 +28,14 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
   const [referralApplied, setReferralApplied] = useState(false);
 
   const totalSteps = 3;
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
 
   const autoDetectAddress = async () => {
     setDetecting(true);
@@ -67,8 +79,22 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
     if (!user?.id) return;
     setSaving(true);
     try {
+      let avatarUrl: string | null = null;
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const path = `avatars/${user.id}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from('job-photos').upload(path, avatarFile, { upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from('job-photos').getPublicUrl(path);
+          avatarUrl = urlData.publicUrl;
+        }
+      }
+
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       await supabase.from('profiles').update({
-        name: name.trim() || user.name,
+        name: fullName,
+        email: email.trim() || null,
+        avatar: avatarUrl,
         onboarding_completed: true,
       }).eq('user_id', user.id);
 
@@ -125,11 +151,42 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
                   <User className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">Your Name</h3>
-                  <p className="text-xs text-muted-foreground">What should we call you?</p>
+                  <h3 className="font-display font-bold text-foreground">About You</h3>
+                  <p className="text-xs text-muted-foreground">Tell us a bit about yourself</p>
                 </div>
               </div>
-              <Input placeholder="Full name *" value={name} onChange={e => setName(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+
+              {/* Avatar upload */}
+              <div className="flex justify-center">
+                <label className="relative cursor-pointer group">
+                  <div className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
+                    <Camera className="h-3.5 w-3.5 text-background" strokeWidth={1.5} />
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                </label>
+              </div>
+              <p className="text-center text-[10px] text-muted-foreground">Tap to add a photo (optional)</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input placeholder="First name *" value={firstName} onChange={e => setFirstName(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+                <Input placeholder="Last name *" value={lastName} onChange={e => setLastName(e.target.value)} className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
+              </div>
+
+              <div className="flex items-center gap-3 bg-muted/50 rounded-2xl px-4 py-3">
+                <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                <span className="text-sm text-foreground font-medium">{user?.phone || '—'}</span>
+                <span className="text-[9px] text-muted-foreground ml-auto">Auto-detected</span>
+              </div>
+
+              <Input placeholder="Email (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)}
+                className="h-14 rounded-2xl border-2 border-border bg-card text-base" />
             </motion.div>
           )}
 
@@ -201,7 +258,7 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
       <div className="px-6 pb-10 pt-4 bg-background space-y-2">
         <Button
           onClick={() => { if (step < totalSteps) setStep(s => s + 1); else handleSave(); }}
-          disabled={(step === 1 && !name.trim()) || (step === 2 && (!postcode.trim() || !addressLine.trim())) || saving}
+          disabled={(step === 1 && (!firstName.trim() || !lastName.trim())) || (step === 2 && (!postcode.trim() || !addressLine.trim())) || saving}
           className="w-full h-14 text-base font-bold rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40"
         >
           {saving ? 'Saving...' : step < totalSteps ? (
