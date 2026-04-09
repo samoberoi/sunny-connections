@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown, Clock, Calendar, Star } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown, Clock, Calendar, Star, HelpCircle, Wallet, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -268,6 +268,24 @@ export default function CustomerProfile() {
 
           {/* Cleaning History */}
           <BookingHistory userId={user?.id} />
+
+          {/* Quick links */}
+          <div className="bg-card rounded-3xl p-5 shadow-soft border border-border space-y-2">
+            <h3 className="font-display font-bold text-foreground text-sm mb-2">Quick Links</h3>
+            {[
+              { label: 'Wallet & Coins', icon: Wallet, to: '/wallet' },
+              { label: 'Help & Support', icon: HelpCircle, to: '/help' },
+              { label: 'Notifications', icon: Calendar, to: '/notifications' },
+            ].map(link => (
+              <button key={link.to} onClick={() => navigate(link.to)}
+                className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors text-left">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                  <link.icon className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                </div>
+                <span className="text-sm font-bold text-foreground">{link.label}</span>
+              </button>
+            ))}
+          </div>
 
           <div className="mb-2"><ReferralCard /></div>
 

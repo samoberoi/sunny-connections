@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { PoundSterling, Briefcase, Star, Clock } from 'lucide-react';
+import { PoundSterling, Briefcase, Star, Clock, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
@@ -34,6 +35,16 @@ export default function CleanerEarnings() {
     enabled: !!cleanerRecord?.id,
   });
 
+  const { data: photos = [] } = useQuery({
+    queryKey: ['cleaner-job-photos', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('job_photos').select('*').eq('uploaded_by', user.id).order('uploaded_at', { ascending: false }).limit(50);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
   const filteredBookings = useMemo(() => {
     const now = new Date();
     return allCompleted.filter(b => {
@@ -50,12 +61,24 @@ export default function CleanerEarnings() {
   const rated = filteredBookings.filter(b => b.rating);
   const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + (b.rating || 0), 0) / rated.length).toFixed(1) : '—';
 
+  // Projected monthly earnings
+  const projectedMonthly = useMemo(() => {
+    if (range !== 'month' || filteredBookings.length === 0) return null;
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return Math.round((totalEarnings / dayOfMonth) * daysInMonth);
+  }, [filteredBookings, totalEarnings, range]);
+
   const dayMap: Record<string, number> = {};
   filteredBookings.forEach(b => { const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short' }); dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost); });
   const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => ({ day: d, amount: dayMap[d] || 0 }));
   const max = Math.max(...weeklyData.map(d => d.amount), 1);
 
   const ranges: { key: DateRange; label: string }[] = [{ key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }, { key: 'all', label: 'All' }];
+
+  const photoMap: Record<string, any[]> = {};
+  photos.forEach((p: any) => { if (!photoMap[p.booking_id]) photoMap[p.booking_id] = []; photoMap[p.booking_id].push(p); });
 
   return (
     <CleanerLayout>
@@ -85,6 +108,9 @@ export default function CleanerEarnings() {
               <span className="text-5xl font-display font-black text-primary">£{totalEarnings}</span>
               <span className="text-sm text-background/30">.00</span>
             </div>
+            {projectedMonthly && (
+              <p className="text-[10px] text-background/40 mt-1">Projected: £{projectedMonthly} this month</p>
+            )}
           </div>
 
           {/* Stats */}
@@ -117,20 +143,46 @@ export default function CleanerEarnings() {
             </div>
           </div>
 
-          {/* Recent */}
+          {/* Job-by-job breakdown */}
           {filteredBookings.length > 0 && (
             <div className="bg-card rounded-3xl p-5 shadow-soft border border-border">
-              <h3 className="font-display font-bold text-foreground text-sm mb-3">Recent</h3>
-              <div className="space-y-3 max-h-56 overflow-y-auto scrollbar-hide">
-                {filteredBookings.slice(0, 20).map(b => (
-                  <div key={b.id} className="flex items-center justify-between py-1">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{b.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.date}</p>
+              <h3 className="font-display font-bold text-foreground text-sm mb-3">Job Breakdown</h3>
+              <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hide">
+                {filteredBookings.slice(0, 30).map(b => {
+                  const jobPhotos = photoMap[b.id] || [];
+                  return (
+                    <div key={b.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{b.service_name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {format(new Date(b.date), 'dd MMM yyyy')} · {b.duration}h · {b.address_postcode}
+                          </p>
+                        </div>
+                        <span className="font-display font-black text-foreground">£{b.total_cost}</span>
+                      </div>
+                      {b.rating && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Star className="h-3 w-3 text-primary" fill="currentColor" />
+                          <span className="text-xs font-bold">{b.rating}/5</span>
+                          {b.review && <span className="text-[10px] text-muted-foreground ml-1">"{b.review}"</span>}
+                        </div>
+                      )}
+                      {jobPhotos.length > 0 && (
+                        <div className="flex gap-2 mt-2">
+                          {jobPhotos.map((p: any) => (
+                            <div key={p.id} className="relative w-12 h-12 rounded-xl overflow-hidden bg-muted">
+                              <Camera className="h-4 w-4 text-muted-foreground absolute inset-0 m-auto" />
+                              <span className="absolute bottom-0 left-0 right-0 bg-foreground/80 text-background text-[7px] text-center font-bold">
+                                {p.photo_type}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="font-display font-black text-foreground">£{b.total_cost}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
