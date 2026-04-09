@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Star, LogOut, Shield, Award } from 'lucide-react';
+import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function CleanerProfile() {
   const { user, logout } = useAuth();
@@ -24,6 +25,15 @@ export default function CleanerProfile() {
     enabled: !!user?.id,
   });
 
+  const cleanerCode = cleaner?.id ? `CF-${cleaner.id.substring(0, 8).toUpperCase()}` : null;
+
+  const copyCode = () => {
+    if (cleanerCode) {
+      navigator.clipboard.writeText(cleanerCode);
+      toast.success('Cleaner ID copied!');
+    }
+  };
+
   return (
     <CleanerLayout>
       <PageTransition>
@@ -36,8 +46,13 @@ export default function CleanerProfile() {
           {/* Profile card */}
           <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="w-20 h-20 rounded-full bg-foreground mx-auto mb-3 flex items-center justify-center text-background font-bold text-2xl">
+              className="w-20 h-20 rounded-full bg-foreground mx-auto mb-3 flex items-center justify-center text-background font-bold text-2xl relative">
               {user?.name?.[0] || 'C'}
+              {cleaner?.verified && (
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                  <BadgeCheck className="h-4 w-4 text-primary-foreground" strokeWidth={2} />
+                </div>
+              )}
             </motion.div>
             <h2 className="text-2xl font-display font-black text-foreground">{user?.name}</h2>
             {cleaner && (
@@ -52,6 +67,44 @@ export default function CleanerProfile() {
             </div>
           </div>
 
+          {/* Certification Card */}
+          {cleaner?.verified && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-3xl p-5 border-2 border-primary/30 shadow-soft relative overflow-hidden">
+              <div className="absolute top-2 right-2 opacity-[0.06]">
+                <ShieldCheck className="h-24 w-24 text-primary" strokeWidth={1} />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-5 w-5 text-primary" strokeWidth={2} />
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">CleanFit Certified</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Cleaner ID</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-sm font-mono font-bold text-foreground">{cleanerCode}</p>
+                      <button onClick={copyCode} className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Status</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <BadgeCheck className="h-4 w-4 text-primary" strokeWidth={2} />
+                      <span className="text-sm font-bold text-primary">Verified</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 bg-primary/10 rounded-xl py-2 flex items-center justify-center gap-1.5">
+                  <BadgeCheck className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                  <span className="text-[10px] font-bold text-primary">Verified by CleanFit ✓</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Stats */}
           {cleaner && (
             <div className="grid grid-cols-2 gap-3">
@@ -60,8 +113,8 @@ export default function CleanerProfile() {
                   <Shield className="h-5 w-5 text-primary-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-primary-foreground">Verified</p>
-                  <p className="text-[10px] text-primary-foreground/60">DBS Checked</p>
+                  <p className="text-sm font-bold text-primary-foreground">{cleaner.verified ? 'Verified' : 'Pending'}</p>
+                  <p className="text-[10px] text-primary-foreground/60">{cleaner.verified ? 'DBS Checked' : 'Complete training'}</p>
                 </div>
               </div>
               <div className="bg-foreground rounded-3xl p-5 flex items-center gap-3">

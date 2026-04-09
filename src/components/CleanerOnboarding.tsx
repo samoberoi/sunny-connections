@@ -336,7 +336,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
           {saving ? 'Saving...' : step < totalSteps ? (
             <>Continue <ChevronRight className="h-4 w-4 ml-1" strokeWidth={2} /></>
           ) : (
-            <>Start Earning! 💪</>
+            <>Start Your Training 📚</>
           )}
         </Button>
       </div>

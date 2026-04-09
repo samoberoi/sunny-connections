@@ -19,8 +19,8 @@ export const phoneToEmail = (phone: string) => {
 export const DEFAULT_PASSWORD = 'cleanfit-test-1111';
 
 export const roleNames: Record<AuthAppRole, string> = {
-  customer: 'Alex Morgan',
-  cleaner: 'Emma Thompson',
+  customer: 'New User',
+  cleaner: 'New User',
   admin: 'Admin User',
 };
 
