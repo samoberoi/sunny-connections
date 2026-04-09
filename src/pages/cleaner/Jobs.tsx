@@ -271,6 +271,13 @@ export default function CleanerJobs() {
                             cleaner_name: null,
                             cleaner_avatar: null,
                           }).eq('id', selectedJob.id);
+                          // Notify customer
+                          await supabase.from('notifications').insert({
+                            user_id: selectedJob.customer_id,
+                            title: 'Cleaner Unavailable',
+                            message: `Your cleaner couldn't make it. We're finding a replacement.`,
+                            type: 'booking',
+                          });
                           queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] });
                           setSelectedBooking(null);
                           toast.success('Job returned to pool');
