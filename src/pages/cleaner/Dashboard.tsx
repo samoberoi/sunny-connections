@@ -100,7 +100,7 @@ export default function CleanerDashboard() {
             <div className="absolute top-0 left-0 right-0 px-5 pt-14 z-20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-display font-black text-white leading-none">{user?.name || 'Cleaner'}</h1>
+                  <h1 className="text-3xl font-display font-black text-white leading-none">{cleanerRecord?.name || user?.name || 'Cleaner'}</h1>
                   <p className="text-[11px] text-white/50 font-medium mt-1">Dashboard</p>
                 </div>
                 <motion.button whileTap={{ scale: 0.93 }} onClick={() => toggleAvailability.mutate()}
