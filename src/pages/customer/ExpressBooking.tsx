@@ -13,6 +13,7 @@ import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useServicesByMode } from '@/hooks/useServices';
+import ActiveOffers from '@/components/ActiveOffers';
 
 type Category = 'cleaning' | 'housekeeping';
 
