@@ -198,17 +198,6 @@ export default function AdminCustomers() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                        <div key={idx} className="flex justify-between text-xs py-1">
-                          <span className="text-muted-foreground truncate mr-2">{b.service_name}</span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-foreground">{b.date}</span>
-                            <Badge className={`text-[8px] rounded-lg border-0 capitalize ${b.status === 'completed' ? 'bg-primary/10 text-primary-ink' : b.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}>{b.status}</Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </DialogContent>
