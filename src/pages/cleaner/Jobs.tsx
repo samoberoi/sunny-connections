@@ -89,10 +89,18 @@ export default function CleanerJobs() {
   const acceptJob = useMutation({
     mutationFn: async (bookingId: string) => {
       if (!cleanerRecord || !user) return;
+      const { data: booking } = await supabase.from('bookings').select('customer_id').eq('id', bookingId).single();
       const { error } = await supabase.from('bookings').update({
         cleaner_id: cleanerRecord.id, cleaner_name: user.name, status: 'assigned' as any,
       }).eq('id', bookingId);
       if (error) throw error;
+      // Notify customer
+      if (booking?.customer_id) {
+        await supabase.from('notifications').insert({
+          user_id: booking.customer_id, title: 'Cleaner Assigned!',
+          message: `${user.name} has been assigned to your booking.`, type: 'booking',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] });
@@ -102,8 +110,21 @@ export default function CleanerJobs() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data: booking } = await supabase.from('bookings').select('customer_id, customer_name').eq('id', id).single();
       const { error } = await supabase.from('bookings').update({ status: status as any }).eq('id', id);
       if (error) throw error;
+      // Notify customer based on status
+      if (booking?.customer_id) {
+        const msgs: Record<string, { title: string; message: string }> = {
+          'en-route': { title: 'Cleaner On The Way!', message: `${user?.name || 'Your cleaner'} is heading to your location.` },
+          'in-progress': { title: 'Cleaning Started', message: 'Your cleaning is now in progress.' },
+          'completed': { title: 'Cleaning Complete! ✨', message: 'Your cleaning is done. Rate your experience!' },
+        };
+        const msg = msgs[status];
+        if (msg) {
+          await supabase.from('notifications').insert({ user_id: booking.customer_id, ...msg, type: 'booking' });
+        }
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cleaner-all-bookings'] }),
   });
