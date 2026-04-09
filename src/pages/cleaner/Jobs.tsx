@@ -66,7 +66,20 @@ export default function CleanerJobs() {
     enabled: !!cleanerRecord,
   });
 
+  // Reset photo state and derive hasArrived when switching jobs
   useEffect(() => {
+    setBeforePhotoUrl(null);
+    setAfterPhotoUrl(null);
+    if (selectedBooking) {
+      const booking = allBookings.find((b: any) => b.id === selectedBooking);
+      if (booking && ['otp-verified', 'in-progress'].includes(booking.status)) {
+        setHasArrived(true);
+      } else {
+        setHasArrived(false);
+      }
+    }
+  }, [selectedBooking, allBookings]);
+
     const channel = supabase
       .channel('cleaner-bookings-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
