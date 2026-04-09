@@ -90,6 +90,7 @@ export default function ScheduleBooking() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [useCoins, setUseCoins] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
@@ -589,6 +590,9 @@ export default function ScheduleBooking() {
                     </div>
                   </motion.button>
                 )}
+
+                {/* Coupon Code */}
+                <CouponCodeInput onApply={(discount) => setCouponDiscount(discount)} />
 
                 {/* Referral Code */}
                 <div className="bg-card rounded-3xl p-4 mb-4 shadow-soft border border-border">
