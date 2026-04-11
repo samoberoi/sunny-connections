@@ -139,13 +139,12 @@ export default function CustomerHome() {
     setOfferModal(null);
   };
 
-  const topCleaners = cleaners?.filter(c => c.available).slice(0, 4) || [];
-  const firstName = user?.name?.split(' ')[0] || 'there';
+  const onlineCleaners = cleaners?.filter(c => c.available) || [];
+  const topCleaners = onlineCleaners.slice(0, 4);
 
   const mapMarkers = useMemo(() => {
-    const availableCount = cleaners?.filter(c => c.available).length || 3;
-    return generateCleanerMarkers(Math.min(availableCount, 6));
-  }, [cleaners]);
+    return generateCleanerMarkers(Math.min(onlineCleaners.length, 6));
+  }, [onlineCleaners.length]);
 
   const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
   const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } };
