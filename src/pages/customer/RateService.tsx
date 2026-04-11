@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CircleCheck, Clock, MapPin, User, ShieldCheck, Camera } from 'lucide-react';
+import { CircleCheck, Clock, MapPin, User, ShieldCheck, Camera, Banknote, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from '@/components/StarRating';
@@ -18,6 +18,8 @@ export default function RateService() {
   const [review, setReview] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [cashConfirmed, setCashConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation();
