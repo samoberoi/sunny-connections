@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap, Repeat } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -176,7 +176,29 @@ export default function MyBookings() {
   });
 
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
-  const filteredUpcoming = upcoming.filter(b => {
+
+  // Group recurring bookings into single representative cards
+  const groupedUpcoming = useMemo(() => {
+    const grouped = new Map<string, any[]>();
+    upcoming.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
+    });
+    const result: any[] = [];
+    grouped.forEach(items => {
+      const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      const nearest = sorted[0];
+      result.push({ ...nearest, _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id), _nextDate: sorted[0]?.date });
+    });
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  }, [upcoming]);
+
+  const filteredUpcoming = groupedUpcoming.filter(b => {
     if (bookingFilter === 'express') {
       const name = (b.service_name || '').toLowerCase();
       return name.includes('express') || name.includes('blitz');
@@ -197,7 +219,7 @@ export default function MyBookings() {
 
           {bookings.length === 0 && <EmptyState icon={CalendarDays} title="No bookings yet" description="Book your first clean" />}
 
-          {upcoming.length > 0 && (
+          {groupedUpcoming.length > 0 && (
             <section className="mb-6">
               <h3 className="font-display font-bold text-foreground text-sm mb-3">Upcoming</h3>
               <div className="mb-3">
