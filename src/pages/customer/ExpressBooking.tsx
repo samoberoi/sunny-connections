@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Zap, Sparkles, Home, MapPin, ChevronRight, Bed, Locate, CheckCircle2, UtensilsCrossed, ShowerHead, Wind, WashingMachine, Brush, Sofa, Trash2, Tag, Gift } from 'lucide-react';
+import PaymentDetailsForm from '@/components/PaymentDetailsForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
@@ -36,6 +37,7 @@ export default function ExpressBooking() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [paymentDone, setPaymentDone] = useState(false);
 
   const services = category ? dbServices.filter(s => s.category === category) : [];
   const service = dbServices.find(s => s.id === selected);
@@ -234,6 +236,9 @@ export default function ExpressBooking() {
                 ))}
               </div>
 
+              {/* Payment Details Form */}
+              <PaymentDetailsForm method={paymentMethod} amount={totalPrice} onPaymentComplete={() => setPaymentDone(true)} />
+
               {/* Active Offers */}
               <ActiveOffers onApplyOffer={(discount) => setCouponDiscount(discount)} />
 
@@ -268,9 +273,9 @@ export default function ExpressBooking() {
               </div>
 
               {!showConfirm ? (
-                <Button onClick={() => setShowConfirm(true)} disabled={!address || !postcode}
+                <Button onClick={() => setShowConfirm(true)} disabled={!address || !postcode || (paymentMethod !== 'cash' && !paymentDone)}
                   className="w-full h-14 text-base font-bold rounded-full disabled:opacity-40 bg-primary text-primary-foreground">
-                  Book Instant Clean ⚡
+                  {paymentMethod === 'cash' ? 'Book Instant Clean ⚡' : paymentDone ? 'Book Instant Clean ⚡' : 'Complete Payment First'}
                 </Button>
               ) : (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-3xl p-5 text-center space-y-4 bg-card">

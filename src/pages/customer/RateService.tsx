@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CircleCheck, Clock, MapPin, User, ShieldCheck, Camera } from 'lucide-react';
+import { CircleCheck, Clock, MapPin, User, ShieldCheck, Camera, Banknote, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from '@/components/StarRating';
@@ -19,6 +19,7 @@ export default function RateService() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cashConfirmed, setCashConfirmed] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -195,6 +196,30 @@ export default function RateService() {
                   <span className="text-2xl font-display font-black text-primary">£{booking.total_cost}</span>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* Cash Payment Confirmation */}
+          {booking && booking.payment_method === 'cash' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className={`rounded-2xl p-5 mb-6 border-2 ${cashConfirmed ? 'border-primary/20 bg-primary/5' : 'border-amber-500/30 bg-amber-50'}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cashConfirmed ? 'bg-primary/10' : 'bg-amber-500/10'}`}>
+                  {cashConfirmed ? <CheckCircle2 className="h-5 w-5 text-primary" strokeWidth={1.5} /> : <Banknote className="h-5 w-5 text-amber-600" strokeWidth={1.5} />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">{cashConfirmed ? 'Cash Payment Confirmed' : 'Cash Payment Required'}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {cashConfirmed ? `You confirmed paying £${booking.total_cost} to ${booking.cleaner_name}` : `Please pay £${booking.total_cost} cash to your cleaner`}
+                  </p>
+                </div>
+              </div>
+              {!cashConfirmed && (
+                <Button onClick={() => { setCashConfirmed(true); toast.success('Cash payment confirmed! 💵'); }}
+                  className="w-full h-11 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-600 text-white">
+                  I've Paid £{booking.total_cost} Cash to Cleaner
+                </Button>
+              )}
             </motion.div>
           )}
 

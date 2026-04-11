@@ -6,6 +6,7 @@ import {
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
   Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate, CreditCard, Banknote, Smartphone, Coins, Tag
 } from 'lucide-react';
+import PaymentDetailsForm from '@/components/PaymentDetailsForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -93,6 +94,7 @@ export default function ScheduleBooking() {
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [useCoins, setUseCoins] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [paymentDone, setPaymentDone] = useState(false);
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
@@ -607,7 +609,10 @@ export default function ScheduleBooking() {
                         {pm.label}
                       </motion.button>
                     ))}
-                  </div>
+                </div>
+
+                {/* Payment Details Form */}
+                <PaymentDetailsForm method={paymentMethod} amount={totalCost} onPaymentComplete={() => setPaymentDone(true)} />
                 </div>
 
                 {/* CleanFit Coins */}
@@ -689,8 +694,8 @@ export default function ScheduleBooking() {
                   </div>
                 </div>
 
-                <Button onClick={handleBook} disabled={submitting} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
-                  {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
+                <Button onClick={handleBook} disabled={submitting || (paymentMethod !== 'cash' && !paymentDone)} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
+                  {submitting ? 'Booking...' : paymentMethod === 'cash' ? `Book · £${totalCost} (Cash)` : paymentDone ? `Confirm Booking` : 'Complete Payment First'} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
             )}
