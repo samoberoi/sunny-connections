@@ -339,6 +339,10 @@ export default function CleanerJobs() {
 
   const goEnRoute = () => {
     if (selectedJob) {
+      if (!isJobTimeReady(selectedJob)) {
+        toast.error(`Too early! You can start ${getTimeUntilReady(selectedJob)} before the scheduled time.`);
+        return;
+      }
       updateStatus.mutate({ id: selectedJob.id, status: 'en-route' });
       toast.success("On your way! 🚗");
     }
