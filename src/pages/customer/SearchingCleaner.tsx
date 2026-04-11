@@ -136,7 +136,7 @@ export default function SearchingCleaner() {
       try {
         await supabase.functions.invoke('auto-assign-cleaner', { body: {} });
       } catch (e) {
-        console.log('Auto-assign trigger failed (non-critical):', e);
+        // Auto-assign trigger failed (non-critical)
       }
     };
     // First trigger after 3 minutes, then every 2 minutes
