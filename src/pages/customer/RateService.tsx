@@ -20,7 +20,6 @@ export default function RateService() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cashConfirmed, setCashConfirmed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation();
 
