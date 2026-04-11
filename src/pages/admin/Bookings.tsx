@@ -267,8 +267,13 @@ export default function AdminBookings() {
                   <span className="font-display font-black text-primary text-sm">£{b.total_cost}</span>
                 </div>
                 {b.cleaner_name && (
-                  <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
-                    Cleaner: <span className="font-semibold text-foreground">{b.cleaner_name}</span>
+                  <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
+                    <span>Cleaner: <span className="font-semibold text-foreground">{b.cleaner_name}</span></span>
+                    {b.rating && (
+                      <span className="flex items-center gap-1 text-primary font-semibold">
+                        <Star className="h-3 w-3 fill-primary" strokeWidth={1.5} /> {b.rating}/5
+                      </span>
+                    )}
                   </div>
                 )}
               </motion.div>
