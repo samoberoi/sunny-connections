@@ -41,7 +41,7 @@ export default function AdminCleaners() {
   const { data: bookings = [] } = useQuery({
     queryKey: ['admin-cleaner-bookings'],
     queryFn: async () => {
-      const { data } = await supabase.from('bookings').select('cleaner_id, total_cost, status, date, service_name');
+      const { data } = await supabase.from('bookings').select('cleaner_id, total_cost, status, date, service_name, rating, review, customer_name');
       return data || [];
     },
   });
