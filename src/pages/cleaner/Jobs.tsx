@@ -28,6 +28,32 @@ const isExpressBooking = (b: any) => {
   return name.includes('express') || name.includes('blitz');
 };
 
+/** Returns true if the current time is within 15 minutes of (or past) the booking's scheduled date+time */
+const isJobTimeReady = (booking: any): boolean => {
+  if (!booking?.date || !booking?.time) return true;
+  const scheduled = new Date(`${booking.date}T${booking.time}`);
+  const now = new Date();
+  const diffMs = scheduled.getTime() - now.getTime();
+  // Allow 15 minutes before scheduled time
+  return diffMs <= 15 * 60 * 1000;
+};
+
+/** Returns a human-readable string for how long until the job can start */
+const getTimeUntilReady = (booking: any): string => {
+  if (!booking?.date || !booking?.time) return '';
+  const scheduled = new Date(`${booking.date}T${booking.time}`);
+  const now = new Date();
+  const diffMs = scheduled.getTime() - now.getTime() - 15 * 60 * 1000;
+  if (diffMs <= 0) return '';
+  const mins = Math.ceil(diffMs / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remainMins = mins % 60;
+  if (hrs < 24) return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ${hrs % 24}h`;
+};
+
 function jobMatchesSpecialisations(serviceName: string, specialisations: string[]): boolean {
   if (!specialisations || specialisations.length === 0) return true;
   const sLower = serviceName.toLowerCase().trim();
@@ -52,7 +78,13 @@ export default function CleanerJobs() {
   const [expandedDoneId, setExpandedDoneId] = useState<string | null>(null);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [cashReceived, setCashReceived] = useState(false);
+  const [, setTick] = useState(0); // force re-render for countdown timer
 
+  // Re-render every 30s so the countdown / button-enable state stays fresh
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
     queryFn: async () => {
@@ -313,6 +345,10 @@ export default function CleanerJobs() {
 
   const goEnRoute = () => {
     if (selectedJob) {
+      if (!isJobTimeReady(selectedJob)) {
+        toast.error(`Too early! You can start ${getTimeUntilReady(selectedJob)} before the scheduled time.`);
+        return;
+      }
       updateStatus.mutate({ id: selectedJob.id, status: 'en-route' });
       toast.success("On your way! 🚗");
     }
@@ -426,9 +462,22 @@ export default function CleanerJobs() {
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
                   <Navigation className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
-                  <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
-                  <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm mb-2">
+                  <p className="font-semibold text-foreground text-sm mb-1">
+                    {isJobTimeReady(selectedJob) ? 'Ready to go?' : 'Scheduled Job'}
+                  </p>
+                  {!isJobTimeReady(selectedJob) ? (
+                    <div className="mb-4">
+                      <p className="text-[11px] text-muted-foreground mb-2">This job is scheduled for a future time</p>
+                      <div className="inline-flex items-center gap-1.5 bg-accent/50 text-accent-foreground px-3 py-1.5 rounded-xl">
+                        <Timer className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        <span className="text-xs font-semibold">Starts in {getTimeUntilReady(selectedJob)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
+                  )}
+                  <Button onClick={goEnRoute} disabled={!isJobTimeReady(selectedJob)}
+                    className="w-full h-11 rounded-2xl font-semibold text-sm mb-2 disabled:opacity-40">
                     I'm On My Way 🚗
                   </Button>
                   <AlertDialog>
