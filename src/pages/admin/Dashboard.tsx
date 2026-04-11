@@ -42,9 +42,28 @@ export default function AdminDashboard() {
   const pendingBookings = bookings.filter(b => b.status === 'pending');
 
   const mapMarkers = useMemo(() => {
-    if (mapView === 'cleaners') return generateCleanerMarkers(Math.min(activeCleaners.length || 4, 8));
-    return generateClientMarkers(Math.min(pendingBookings.length || 3, 6));
-  }, [mapView, activeCleaners.length, pendingBookings.length]);
+    if (mapView === 'cleaners') {
+      // Show only online/available cleaners with their real names
+      return activeCleaners.slice(0, 8).map((c: any, i: number) => ({
+        id: `cleaner-${c.id}`,
+        x: 15 + ((i * 37 + 13) % 70),
+        y: 15 + ((i * 29 + 7) % 65),
+        label: c.name || `Pro ${i + 1}`,
+        type: 'cleaner' as const,
+        pulse: i === 0,
+      }));
+    }
+    // Show only customers who have pending bookings (searching mode)
+    const searchingCustomers = pendingBookings.slice(0, 6);
+    return searchingCustomers.map((b: any, i: number) => ({
+      id: `client-${b.id}`,
+      x: 10 + ((i * 41 + 11) % 75),
+      y: 10 + ((i * 31 + 9) % 70),
+      label: b.customer_name || `Client ${i + 1}`,
+      type: 'client' as const,
+      pulse: true,
+    }));
+  }, [mapView, activeCleaners, pendingBookings]);
 
   const { revenueData, totalRevenue, growthPercent } = useMemo(() => {
     const monthMap: Record<string, number> = {};
