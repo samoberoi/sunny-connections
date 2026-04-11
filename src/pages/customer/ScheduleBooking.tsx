@@ -694,8 +694,8 @@ export default function ScheduleBooking() {
                   </div>
                 </div>
 
-                <Button onClick={handleBook} disabled={submitting} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
-                  {submitting ? 'Booking...' : `Pay £${totalCost} & Find Cleaner`} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
+                <Button onClick={handleBook} disabled={submitting || (paymentMethod !== 'cash' && !paymentDone)} className="w-full h-14 text-base font-bold rounded-full bg-primary text-primary-foreground disabled:opacity-40">
+                  {submitting ? 'Booking...' : paymentMethod === 'cash' ? `Book · £${totalCost} (Cash)` : paymentDone ? `Confirm Booking` : 'Complete Payment First'} <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2} />
                 </Button>
               </motion.div>
             )}
