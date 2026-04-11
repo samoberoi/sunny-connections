@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import SimulatedMap, { generateCleanerMarkers, generateClientMarkers } from '@/components/SimulatedMap';
+import SimulatedMap from '@/components/SimulatedMap';
 
 export default function AdminDashboard() {
   const [mapView, setMapView] = useState<'requests' | 'cleaners'>('requests');
