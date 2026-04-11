@@ -78,7 +78,13 @@ export default function CleanerJobs() {
   const [expandedDoneId, setExpandedDoneId] = useState<string | null>(null);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [cashReceived, setCashReceived] = useState(false);
+  const [, setTick] = useState(0); // force re-render for countdown timer
 
+  // Re-render every 30s so the countdown / button-enable state stays fresh
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
   const { data: cleanerRecord } = useQuery({
     queryKey: ['my-cleaner-record', user?.id],
     queryFn: async () => {
