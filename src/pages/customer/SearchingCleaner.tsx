@@ -129,6 +129,25 @@ export default function SearchingCleaner() {
     return () => clearInterval(interval);
   }, [phase, effectiveBookingId]);
 
+  // Trigger auto-assign edge function after 3 minutes of searching
+  useEffect(() => {
+    if (phase !== 'searching' || !effectiveBookingId) return;
+    const triggerAutoAssign = async () => {
+      try {
+        await supabase.functions.invoke('auto-assign-cleaner', { body: {} });
+      } catch (e) {
+        console.log('Auto-assign trigger failed (non-critical):', e);
+      }
+    };
+    // First trigger after 3 minutes, then every 2 minutes
+    const timeout = setTimeout(() => {
+      triggerAutoAssign();
+      const interval = setInterval(triggerAutoAssign, 120000);
+      return () => clearInterval(interval);
+    }, 180000);
+    return () => clearTimeout(timeout);
+  }, [phase, effectiveBookingId]);
+
   useEffect(() => {
     if (phase !== 'searching') return;
     const interval = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 500);
