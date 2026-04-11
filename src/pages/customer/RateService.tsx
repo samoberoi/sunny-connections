@@ -199,6 +199,30 @@ export default function RateService() {
             </motion.div>
           )}
 
+          {/* Cash Payment Confirmation */}
+          {booking && booking.payment_method === 'cash' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className={`rounded-2xl p-5 mb-6 border-2 ${cashConfirmed ? 'border-primary/20 bg-primary/5' : 'border-amber-500/30 bg-amber-50'}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cashConfirmed ? 'bg-primary/10' : 'bg-amber-500/10'}`}>
+                  {cashConfirmed ? <CheckCircle2 className="h-5 w-5 text-primary" strokeWidth={1.5} /> : <Banknote className="h-5 w-5 text-amber-600" strokeWidth={1.5} />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">{cashConfirmed ? 'Cash Payment Confirmed' : 'Cash Payment Required'}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {cashConfirmed ? `You confirmed paying £${booking.total_cost} to ${booking.cleaner_name}` : `Please pay £${booking.total_cost} cash to your cleaner`}
+                  </p>
+                </div>
+              </div>
+              {!cashConfirmed && (
+                <Button onClick={() => { setCashConfirmed(true); toast.success('Cash payment confirmed! 💵'); }}
+                  className="w-full h-11 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-600 text-white">
+                  I've Paid £{booking.total_cost} Cash to Cleaner
+                </Button>
+              )}
+            </motion.div>
+          )}
+
           <div className="border border-border rounded-2xl p-8 mb-6 text-center">
             <StarRating rating={rating} onRate={setRating} size="lg" />
             <p className="text-xs text-muted-foreground mt-3">
