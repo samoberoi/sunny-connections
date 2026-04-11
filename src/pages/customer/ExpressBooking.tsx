@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Zap, Sparkles, Home, MapPin, ChevronRight, Bed, Locate, CheckCircle2, UtensilsCrossed, ShowerHead, Wind, WashingMachine, Brush, Sofa, Trash2, Tag, Gift } from 'lucide-react';
+import PaymentDetailsForm from '@/components/PaymentDetailsForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerLayout from '@/components/layout/CustomerLayout';
