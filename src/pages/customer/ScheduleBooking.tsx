@@ -6,6 +6,7 @@ import {
   UtensilsCrossed, ShowerHead, Sofa, Trash2, Wind, WashingMachine, Bed, Shirt,
   Brush, CheckCircle2, StickyNote, Building2, Landmark, ArrowRight, Check, Crown, Locate, CreditCard, Banknote, Smartphone, Coins, Tag
 } from 'lucide-react';
+import PaymentDetailsForm from '@/components/PaymentDetailsForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
