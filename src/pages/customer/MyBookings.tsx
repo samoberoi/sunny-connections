@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap, Repeat } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -176,7 +176,29 @@ export default function MyBookings() {
   });
 
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
-  const filteredUpcoming = upcoming.filter(b => {
+
+  // Group recurring bookings into single representative cards
+  const groupedUpcoming = useMemo(() => {
+    const grouped = new Map<string, any[]>();
+    upcoming.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
+    });
+    const result: any[] = [];
+    grouped.forEach(items => {
+      const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      const nearest = sorted[0];
+      result.push({ ...nearest, _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id), _nextDate: sorted[0]?.date });
+    });
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  }, [upcoming]);
+
+  const filteredUpcoming = groupedUpcoming.filter(b => {
     if (bookingFilter === 'express') {
       const name = (b.service_name || '').toLowerCase();
       return name.includes('express') || name.includes('blitz');
@@ -197,13 +219,13 @@ export default function MyBookings() {
 
           {bookings.length === 0 && <EmptyState icon={CalendarDays} title="No bookings yet" description="Book your first clean" />}
 
-          {upcoming.length > 0 && (
+          {groupedUpcoming.length > 0 && (
             <section className="mb-6">
               <h3 className="font-display font-bold text-foreground text-sm mb-3">Upcoming</h3>
               <div className="mb-3">
                 <ToggleGroup type="single" value={bookingFilter} onValueChange={v => setBookingFilter(v || 'all')} className="bg-muted/30 rounded-xl p-1 w-full">
                   <ToggleGroupItem value="all" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                    All ({upcoming.length})
+                    All ({groupedUpcoming.length})
                   </ToggleGroupItem>
                   <ToggleGroupItem value="express" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
                     <Zap className="h-3 w-3 mr-1 text-amber-600" /> Express
@@ -222,14 +244,22 @@ export default function MyBookings() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-display font-bold text-foreground">{b.service_name}</h4>
-                        {(b as any).tier === 'premium' && (
-                          <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">👑 Premium</span>
-                        )}
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {(b as any).tier === 'premium' && (
+                            <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block">👑 Premium</span>
+                          )}
+                          {b._recurringCount > 1 && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                              <Repeat className="h-2.5 w-2.5" strokeWidth={1.5} />
+                              {b.recurring} · {b._recurringCount} sessions
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Badge className={`${statusStyles[b.status]} text-[10px] rounded-full font-bold border-0`}>{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h</div>
+                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> Next: {b.date} at {b.time} · {b.duration}h</div>
                       <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}</div>
                     </div>
                     {b.cleaner_name && (

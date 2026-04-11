@@ -167,7 +167,28 @@ export default function CleanerJobs() {
   const upcomingJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['assigned', 'en-route'].includes(b.status));
   const todayStr = new Date().toISOString().split('T')[0];
   const upcomingToday = upcomingJobs.filter(b => b.date === todayStr);
-  const upcomingFuture = upcomingJobs.filter(b => b.date > todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  const upcomingFutureRaw = upcomingJobs.filter(b => b.date > todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+  // Group recurring bookings in Upcoming future view
+  const upcomingFuture = (() => {
+    const grouped = new Map<string, any[]>();
+    upcomingFutureRaw.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.customer_id}|${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
+    });
+    const result: any[] = [];
+    grouped.forEach(items => {
+      const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      result.push({ ...sorted[0], _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id) });
+    });
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  })();
+
   const filteredUpcoming = upcomingFilter === 'today' ? upcomingToday : upcomingFuture;
   const activeJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['otp-verified', 'in-progress'].includes(b.status));
   const myJobs = [...upcomingJobs, ...activeJobs];
