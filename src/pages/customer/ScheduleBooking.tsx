@@ -94,6 +94,7 @@ export default function ScheduleBooking() {
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [useCoins, setUseCoins] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [paymentDone, setPaymentDone] = useState(false);
   const totalSteps = 6;
 
   const { data: coinData } = useCoinBalance();
