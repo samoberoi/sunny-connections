@@ -102,6 +102,48 @@ export default function CleanerDashboard() {
     }
   }, [bookings]);
 
+  // 15-minute pre-job reminder — checks every 30 seconds
+  const notifiedJobIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!bookings.length) return;
+
+    const checkUpcoming = () => {
+      const now = new Date();
+      bookings
+        .filter(b => ['assigned', 'en-route'].includes(b.status) && b.date && b.time)
+        .forEach(async (b) => {
+          if (notifiedJobIds.current.has(b.id)) return;
+          const [h, m] = b.time.split(':').map(Number);
+          const scheduled = new Date(b.date);
+          scheduled.setHours(h, m, 0, 0);
+          const diffMs = scheduled.getTime() - now.getTime();
+          // Fire when between 0 and 15 minutes away
+          if (diffMs > 0 && diffMs <= 15 * 60 * 1000) {
+            notifiedJobIds.current.add(b.id);
+            const mins = Math.ceil(diffMs / 60000);
+            playNotificationSound();
+            toast.warning(`⏰ Job starting in ${mins} min!`, {
+              duration: 10000,
+              description: `${b.service_name} at ${b.time} — ${b.address_line1}`,
+            });
+            // Persist to notifications table
+            if (user?.id) {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                title: `Job in ${mins} minutes`,
+                message: `${b.service_name} at ${b.time} — ${b.address_line1}. Time to head out!`,
+                type: 'booking' as const,
+              });
+            }
+          }
+        });
+    };
+
+    checkUpcoming();
+    const interval = setInterval(checkUpcoming, 30000);
+    return () => clearInterval(interval);
+  }, [bookings, user?.id]);
+
   const filteredPending = useMemo(() => {
     const specs = cleanerRecord?.specialisations || [];
     if (!specs.length) return pendingJobs;
