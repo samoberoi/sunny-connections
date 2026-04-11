@@ -456,9 +456,22 @@ export default function CleanerJobs() {
               {selectedJob.status === 'assigned' && (
                 <motion.div key="assigned" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-muted/30 rounded-2xl p-6 text-center">
                   <Navigation className="h-6 w-6 text-primary mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="font-semibold text-foreground text-sm mb-1">Ready to go?</p>
-                  <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
-                  <Button onClick={goEnRoute} className="w-full h-11 rounded-2xl font-semibold text-sm mb-2">
+                  <p className="font-semibold text-foreground text-sm mb-1">
+                    {isJobTimeReady(selectedJob) ? 'Ready to go?' : 'Scheduled Job'}
+                  </p>
+                  {!isJobTimeReady(selectedJob) ? (
+                    <div className="mb-4">
+                      <p className="text-[11px] text-muted-foreground mb-2">This job is scheduled for a future time</p>
+                      <div className="inline-flex items-center gap-1.5 bg-accent/50 text-accent-foreground px-3 py-1.5 rounded-xl">
+                        <Timer className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        <span className="text-xs font-semibold">Starts in {getTimeUntilReady(selectedJob)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground mb-4">Tap below when you're heading out</p>
+                  )}
+                  <Button onClick={goEnRoute} disabled={!isJobTimeReady(selectedJob)}
+                    className="w-full h-11 rounded-2xl font-semibold text-sm mb-2 disabled:opacity-40">
                     I'm On My Way 🚗
                   </Button>
                   <AlertDialog>
