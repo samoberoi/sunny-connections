@@ -28,6 +28,32 @@ const isExpressBooking = (b: any) => {
   return name.includes('express') || name.includes('blitz');
 };
 
+/** Returns true if the current time is within 15 minutes of (or past) the booking's scheduled date+time */
+const isJobTimeReady = (booking: any): boolean => {
+  if (!booking?.date || !booking?.time) return true;
+  const scheduled = new Date(`${booking.date}T${booking.time}`);
+  const now = new Date();
+  const diffMs = scheduled.getTime() - now.getTime();
+  // Allow 15 minutes before scheduled time
+  return diffMs <= 15 * 60 * 1000;
+};
+
+/** Returns a human-readable string for how long until the job can start */
+const getTimeUntilReady = (booking: any): string => {
+  if (!booking?.date || !booking?.time) return '';
+  const scheduled = new Date(`${booking.date}T${booking.time}`);
+  const now = new Date();
+  const diffMs = scheduled.getTime() - now.getTime() - 15 * 60 * 1000;
+  if (diffMs <= 0) return '';
+  const mins = Math.ceil(diffMs / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remainMins = mins % 60;
+  if (hrs < 24) return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ${hrs % 24}h`;
+};
+
 function jobMatchesSpecialisations(serviceName: string, specialisations: string[]): boolean {
   if (!specialisations || specialisations.length === 0) return true;
   const sLower = serviceName.toLowerCase().trim();
