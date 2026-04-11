@@ -225,7 +225,7 @@ export default function MyBookings() {
               <div className="mb-3">
                 <ToggleGroup type="single" value={bookingFilter} onValueChange={v => setBookingFilter(v || 'all')} className="bg-muted/30 rounded-xl p-1 w-full">
                   <ToggleGroupItem value="all" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                    All ({upcoming.length})
+                    All ({groupedUpcoming.length})
                   </ToggleGroupItem>
                   <ToggleGroupItem value="express" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
                     <Zap className="h-3 w-3 mr-1 text-amber-600" /> Express
@@ -244,14 +244,22 @@ export default function MyBookings() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-display font-bold text-foreground">{b.service_name}</h4>
-                        {(b as any).tier === 'premium' && (
-                          <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">👑 Premium</span>
-                        )}
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {(b as any).tier === 'premium' && (
+                            <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block">👑 Premium</span>
+                          )}
+                          {b._recurringCount > 1 && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                              <Repeat className="h-2.5 w-2.5" strokeWidth={1.5} />
+                              {b.recurring} · {b._recurringCount} sessions
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Badge className={`${statusStyles[b.status]} text-[10px] rounded-full font-bold border-0`}>{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h</div>
+                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> Next: {b.date} at {b.time} · {b.duration}h</div>
                       <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}</div>
                     </div>
                     {b.cleaner_name && (
