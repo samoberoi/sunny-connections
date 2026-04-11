@@ -236,6 +236,9 @@ export default function ExpressBooking() {
                 ))}
               </div>
 
+              {/* Payment Details Form */}
+              <PaymentDetailsForm method={paymentMethod} amount={totalPrice} onPaymentComplete={() => setPaymentDone(true)} />
+
               {/* Active Offers */}
               <ActiveOffers onApplyOffer={(discount) => setCouponDiscount(discount)} />
 
