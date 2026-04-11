@@ -273,9 +273,9 @@ export default function ExpressBooking() {
               </div>
 
               {!showConfirm ? (
-                <Button onClick={() => setShowConfirm(true)} disabled={!address || !postcode}
+                <Button onClick={() => setShowConfirm(true)} disabled={!address || !postcode || (paymentMethod !== 'cash' && !paymentDone)}
                   className="w-full h-14 text-base font-bold rounded-full disabled:opacity-40 bg-primary text-primary-foreground">
-                  Book Instant Clean ⚡
+                  {paymentMethod === 'cash' ? 'Book Instant Clean ⚡' : paymentDone ? 'Book Instant Clean ⚡' : 'Complete Payment First'}
                 </Button>
               ) : (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border-2 border-primary rounded-3xl p-5 text-center space-y-4 bg-card">
