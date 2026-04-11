@@ -609,7 +609,10 @@ export default function ScheduleBooking() {
                         {pm.label}
                       </motion.button>
                     ))}
-                  </div>
+                </div>
+
+                {/* Payment Details Form */}
+                <PaymentDetailsForm method={paymentMethod} amount={totalCost} onPaymentComplete={() => setPaymentDone(true)} />
                 </div>
 
                 {/* CleanFit Coins */}
