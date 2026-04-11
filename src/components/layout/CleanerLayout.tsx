@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { LayoutDashboard, Briefcase, PoundSterling, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationTracker from '@/components/LocationTracker';
+import NewJobPopup from '@/components/NewJobPopup';
 
 const navItems = [
   { to: '/cleaner', icon: LayoutDashboard, label: 'Home' },
@@ -18,6 +19,7 @@ export default function CleanerLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <LocationTracker />
+      <NewJobPopup />
       <div className="flex-1 pb-24">{children}</div>
       <nav className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-foreground rounded-[2rem] shadow-elevated">
