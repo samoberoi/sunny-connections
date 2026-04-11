@@ -141,6 +141,7 @@ export default function CustomerHome() {
 
   const onlineCleaners = cleaners?.filter(c => c.available) || [];
   const topCleaners = onlineCleaners.slice(0, 4);
+  const firstName = user?.name?.split(' ')[0] || 'there';
 
   const mapMarkers = useMemo(() => {
     return generateCleanerMarkers(Math.min(onlineCleaners.length, 6));
