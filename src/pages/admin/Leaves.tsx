@@ -15,7 +15,7 @@ export default function AdminLeaves() {
   const { data: leaves = [] } = useQuery({
     queryKey: ['admin-leaves'],
     queryFn: async () => {
-      const { data } = await supabase.from('cleaner_leaves').select('*, cleaners(name, user_id, specialisations)').order('created_at', { ascending: false });
+      const { data } = await supabase.from('cleaner_leaves').select('*, cleaners!cleaner_leaves_cleaner_id_fkey(name, user_id, specialisations)').order('created_at', { ascending: false });
       return data || [];
     },
   });
