@@ -207,6 +207,30 @@ export default function AdminCleaners() {
                     </div>
                   </div>
                 )}
+                {/* Recent Reviews */}
+                {(() => {
+                  const reviews = bookings.filter((b: any) => b.cleaner_id === selected.id && b.rating);
+                  if (reviews.length === 0) return null;
+                  return (
+                    <div>
+                      <p className="text-xs font-bold text-foreground mb-2">Recent Reviews ({reviews.length})</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {reviews.slice(0, 5).map((r: any, i: number) => (
+                          <div key={i} className="bg-muted/30 rounded-xl p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-semibold text-foreground">{r.customer_name}</span>
+                              <span className="flex items-center gap-0.5 text-xs text-primary font-bold">
+                                <Star className="h-3 w-3 fill-primary" strokeWidth={1.5} /> {r.rating}/5
+                              </span>
+                            </div>
+                            {r.review && <p className="text-[11px] text-muted-foreground">{r.review}</p>}
+                            <p className="text-[9px] text-muted-foreground/60 mt-1">{r.date} · {r.service_name}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {selected.user_id && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
