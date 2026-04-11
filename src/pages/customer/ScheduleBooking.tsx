@@ -278,7 +278,7 @@ export default function ScheduleBooking() {
         }
       }
 
-      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp } });
+      navigate('/booking-confirmation', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp, isScheduled: true } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
 
