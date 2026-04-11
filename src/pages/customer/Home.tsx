@@ -139,13 +139,13 @@ export default function CustomerHome() {
     setOfferModal(null);
   };
 
-  const topCleaners = cleaners?.filter(c => c.available).slice(0, 4) || [];
+  const onlineCleaners = cleaners?.filter(c => c.available) || [];
+  const topCleaners = onlineCleaners.slice(0, 4);
   const firstName = user?.name?.split(' ')[0] || 'there';
 
   const mapMarkers = useMemo(() => {
-    const availableCount = cleaners?.filter(c => c.available).length || 3;
-    return generateCleanerMarkers(Math.min(availableCount, 6));
-  }, [cleaners]);
+    return generateCleanerMarkers(Math.min(onlineCleaners.length, 6));
+  }, [onlineCleaners.length]);
 
   const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
   const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } };
@@ -214,7 +214,7 @@ export default function CustomerHome() {
             <div className="absolute bottom-6 left-6 z-20">
               <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-border">
                 <MapPin className="h-3.5 w-3.5 text-primary-ink" strokeWidth={2} />
-                <span className="text-[11px] font-bold text-foreground/70">{topCleaners.length} cleaners nearby</span>
+                <span className="text-[11px] font-bold text-foreground/70">{onlineCleaners.length} cleaners online nearby</span>
               </div>
             </div>
           </div>
