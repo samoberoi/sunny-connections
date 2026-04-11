@@ -521,7 +521,26 @@ export default function CleanerJobs() {
                     onPhotoUploaded={(url) => setAfterPhotoUrl(url)}
                     existingUrl={afterPhotoUrl || undefined}
                   />
-                  <Button onClick={completeJob} disabled={!afterPhotoUrl}
+                  {/* Cash Payment Confirmation for cleaner */}
+                  {(selectedJob as any).payment_method === 'cash' && (
+                    <div className={`rounded-2xl p-4 border-2 ${cashReceived ? 'border-primary/20 bg-primary/5' : 'border-amber-500/30 bg-amber-50'}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-bold text-foreground">{cashReceived ? '✅ Cash received' : '💵 Cash Payment'}</span>
+                      </div>
+                      {!cashReceived ? (
+                        <>
+                          <p className="text-[11px] text-muted-foreground mb-2">Did the customer pay you £{selectedJob.total_cost} in cash?</p>
+                          <Button onClick={() => { setCashReceived(true); toast.success('Cash received confirmed! 💵'); }}
+                            variant="outline" className="w-full h-9 rounded-xl text-xs font-semibold border-amber-500/30 text-amber-700">
+                            Yes, I received £{selectedJob.total_cost} cash
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground">£{selectedJob.total_cost} cash confirmed from {selectedJob.customer_name}</p>
+                      )}
+                    </div>
+                  )}
+                  <Button onClick={completeJob} disabled={!afterPhotoUrl || ((selectedJob as any).payment_method === 'cash' && !cashReceived)}
                     className="w-full h-11 rounded-2xl font-semibold text-sm disabled:opacity-40">
                     Mark Complete ✅
                   </Button>
