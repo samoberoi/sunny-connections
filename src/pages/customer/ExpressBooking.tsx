@@ -37,6 +37,7 @@ export default function ExpressBooking() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [referralCode, setReferralCode] = useState(() => localStorage.getItem('applied_referral_code') || '');
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [paymentDone, setPaymentDone] = useState(false);
 
   const services = category ? dbServices.filter(s => s.category === category) : [];
   const service = dbServices.find(s => s.id === selected);
