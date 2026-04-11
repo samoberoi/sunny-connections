@@ -214,7 +214,7 @@ export default function CustomerHome() {
             <div className="absolute bottom-6 left-6 z-20">
               <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-border">
                 <MapPin className="h-3.5 w-3.5 text-primary-ink" strokeWidth={2} />
-                <span className="text-[11px] font-bold text-foreground/70">{topCleaners.length} cleaners nearby</span>
+                <span className="text-[11px] font-bold text-foreground/70">{onlineCleaners.length} cleaners online nearby</span>
               </div>
             </div>
           </div>
