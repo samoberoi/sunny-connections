@@ -294,7 +294,10 @@ export default function CleanerDashboard() {
                         </div>
                         <span className="text-lg font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
-                      <p className="text-[11px] text-background/60">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                      <p className="text-[11px] text-background/60">
+                        {b.customer_name} · {b.address_postcode} · {b.duration}h
+                        {b._recurringCount > 1 && ` · ${b.recurring} (${b._recurringCount} sessions)`}
+                      </p>
                       <div className="flex items-center justify-end text-[11px] text-primary font-bold mt-2">View & Accept <ChevronRight className="h-3 w-3 ml-0.5" /></div>
                     </motion.div>
                   );
