@@ -79,6 +79,7 @@ export default function ScheduleBooking() {
   const [serviceQuantities, setServiceQuantities] = useState<Record<string, number>>({});
   const [recurring, setRecurring] = useState<'none' | 'weekly' | 'fortnightly' | 'monthly'>('none');
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(2);
   const [propertyType, setPropertyType] = useState('house');
