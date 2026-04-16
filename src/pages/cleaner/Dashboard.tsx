@@ -63,7 +63,25 @@ export default function CleanerDashboard() {
   });
 
   const activeJobs = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
-  const upcomingJobs = bookings.filter(b => ['assigned', 'en-route'].includes(b.status));
+  const upcomingJobsRaw = bookings.filter(b => ['assigned', 'en-route'].includes(b.status));
+  const upcomingJobs = useMemo(() => {
+    const grouped = new Map<string, any[]>();
+    upcomingJobsRaw.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.customer_id}|${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
+    });
+    const result: any[] = [];
+    grouped.forEach(items => {
+      const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      result.push({ ...sorted[0], _recurringCount: items.length, _lastDate: sorted[sorted.length - 1].date });
+    });
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  }, [upcomingJobsRaw]);
   const completedCount = bookings.filter(b => b.status === 'completed').length;
   const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
   const weekEarnings = bookings.filter(b => b.status === 'completed' && new Date(b.date) >= weekStart).reduce((s, b) => s + Number(b.total_cost), 0);
@@ -262,7 +280,10 @@ export default function CleanerDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-foreground truncate">{b.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {b.customer_name} · {b.date} at {b.time}
+                        {b._recurringCount > 1 && ` · ${b.recurring} (${b._recurringCount} sessions)`}
+                      </p>
                     </div>
                     <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
                   </motion.div>
