@@ -280,7 +280,10 @@ export default function CleanerDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-foreground truncate">{b.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.customer_name} · {b.date} at {b.time}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {b.customer_name} · {b.date} at {b.time}
+                        {b._recurringCount > 1 && ` · ${b.recurring} (${b._recurringCount} sessions)`}
+                      </p>
                     </div>
                     <span className="text-sm font-display font-black text-primary">£{b.total_cost}</span>
                   </motion.div>
