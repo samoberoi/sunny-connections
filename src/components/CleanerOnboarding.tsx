@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Wrench, Clock, ChevronRight, ChevronLeft, Check, MapPin, Briefcase, Locate, Eye, Zap, CalendarDays, Sparkles, Bed } from 'lucide-react';
+import { User, Wrench, ChevronRight, ChevronLeft, Check, MapPin, Briefcase, Locate, Eye, Zap, CalendarDays, Sparkles, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useServices } from '@/hooks/useServices';
-
-const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const timeSlots = ['Morning', 'Afternoon', 'Evening'];
 
 interface CleanerOnboardingProps {
   onComplete: () => void;
@@ -28,17 +25,13 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
   const [selectedModes, setSelectedModes] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4]);
-  const [selectedTimes, setSelectedTimes] = useState<string[]>(['Morning', 'Afternoon']);
-  const [preferredHours, setPreferredHours] = useState('8');
   const [saving, setSaving] = useState(false);
   const [detecting, setDetecting] = useState(false);
-  const totalSteps = 6;
+  const totalSteps = 5;
 
   const toggleItem = <T,>(list: T[], item: T, setter: (v: T[]) => void) =>
     setter(list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
 
-  // Filter specializations based on selected types
   const availableSpecs = allServices.filter(s => {
     if (selectedTypes.length === 0) return false;
     const typeMatch = (selectedTypes.includes('cleaning') && s.category === 'cleaning') ||
@@ -84,18 +77,6 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
         service_modes: selectedModes,
       }).eq('user_id', user.id);
 
-      const { data: cleaner } = await supabase.from('cleaners').select('id').eq('user_id', user.id).maybeSingle();
-      if (cleaner) {
-        const rows = selectedDays.map(day => ({
-          cleaner_id: cleaner.id,
-          day_of_week: day,
-          start_time: selectedTimes.includes('Morning') ? '07:00' : selectedTimes.includes('Afternoon') ? '12:00' : '17:00',
-          end_time: selectedTimes.includes('Evening') ? '21:00' : selectedTimes.includes('Afternoon') ? '17:00' : '12:00',
-          available: true,
-        }));
-        await supabase.from('cleaner_availability').insert(rows);
-      }
-
       await refreshProfile();
       toast.success('Profile set up! Let\'s start training 📚');
       onComplete();
@@ -105,9 +86,9 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
 
   const fadeVariants = { enter: { opacity: 0, x: 30 }, center: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -30 } };
 
-  const stepIcons = [User, Zap, Briefcase, Wrench, Clock, Eye];
-  const stepTitles = ['Personal Info', 'Service Mode', 'Service Type & Experience', 'Specialisations', 'Availability', 'Review & Confirm'];
-  const stepDescs = ['Tell us about yourself', 'How do you want to work?', 'What type of services?', 'Select what you\'re great at', 'When can you work?', 'Check everything looks good'];
+  const stepIcons = [User, Zap, Briefcase, Wrench, Eye];
+  const stepTitles = ['Personal Info', 'Service Mode', 'Service Type & Experience', 'Specialisations', 'Review & Confirm'];
+  const stepDescs = ['Tell us about yourself', 'How do you want to work?', 'What type of services?', 'Select what you\'re great at', 'Check everything looks good'];
 
   const canAdvance = () => {
     switch (step) {
@@ -115,8 +96,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
       case 2: return selectedModes.length > 0;
       case 3: return selectedTypes.length > 0;
       case 4: return selectedSpecs.length > 0;
-      case 5: return selectedDays.length > 0 && selectedTimes.length > 0;
-      case 6: return true;
+      case 5: return true;
       default: return false;
     }
   };
@@ -296,64 +276,16 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
             </motion.div>
           )}
 
-          {/* Step 5: Availability */}
+          {/* Step 5: Review */}
           {step === 5 && (
-            <motion.div key="cs5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-5 pt-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">{stepTitles[4]}</h3>
-                  <p className="text-xs text-muted-foreground">{stepDescs[4]}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Days</p>
-                <div className="flex gap-2">
-                  {dayLabels.map((d, i) => (
-                    <button key={i} onClick={() => toggleItem(selectedDays, i, setSelectedDays)}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-bold border transition-all ${
-                        selectedDays.includes(i) ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{d}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Preferred Times</p>
-                <div className="flex gap-2">
-                  {timeSlots.map(t => (
-                    <button key={t} onClick={() => toggleItem(selectedTimes, t, setSelectedTimes)}
-                      className={`flex-1 py-3.5 rounded-2xl text-xs font-bold border transition-all ${
-                        selectedTimes.includes(t) ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{t}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Preferred hours/day</p>
-                <div className="flex gap-2">
-                  {['4', '6', '8', '10'].map(h => (
-                    <button key={h} onClick={() => setPreferredHours(h)}
-                      className={`flex-1 py-3 rounded-2xl text-sm font-bold border transition-all ${
-                        preferredHours === h ? 'bg-foreground text-background border-foreground' : 'border-border bg-card text-muted-foreground'
-                      }`}>{h}h</button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 6: Review */}
-          {step === 6 && (
-            <motion.div key="cs6" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4 pt-4">
+            <motion.div key="cs5" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4 pt-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
                   <Eye className="h-5 w-5 text-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-foreground">{stepTitles[5]}</h3>
-                  <p className="text-xs text-muted-foreground">{stepDescs[5]}</p>
+                  <h3 className="font-display font-bold text-foreground">{stepTitles[4]}</h3>
+                  <p className="text-xs text-muted-foreground">{stepDescs[4]}</p>
                 </div>
               </div>
               <div className="bg-card rounded-3xl p-5 border border-border shadow-soft space-y-3">
@@ -385,7 +317,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
                 </div>
                 <div className="pt-2 border-t border-border">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Availability</p>
-                  <p className="text-xs text-foreground">{selectedDays.map(d => dayLabels[d]).join(', ')} · {selectedTimes.join(', ')} · {preferredHours}h/day</p>
+                  <p className="text-xs text-foreground">Available any day — just go online when you're ready to work! 🟢</p>
                 </div>
               </div>
             </motion.div>
