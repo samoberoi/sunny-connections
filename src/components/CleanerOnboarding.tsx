@@ -61,10 +61,17 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
     setSaving(true);
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim() || user.name;
-      await supabase.from('profiles').update({
+      const { error: profileError } = await supabase.from('profiles').update({
         name: fullName,
         onboarding_completed: true,
       }).eq('user_id', user.id);
+
+      if (profileError) {
+        console.error('Profile update failed:', profileError);
+        toast.error('Could not save profile. Please try again.');
+        setSaving(false);
+        return;
+      }
 
       await supabase.from('cleaners').update({
         name: fullName,
@@ -80,8 +87,12 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
       await refreshProfile();
       toast.success('Profile set up! Let\'s start training 📚');
       onComplete();
-    } catch { toast.error('Something went wrong'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error('Cleaner onboarding save error:', err);
+      toast.error('Something went wrong');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const fadeVariants = { enter: { opacity: 0, x: 30 }, center: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -30 } };
