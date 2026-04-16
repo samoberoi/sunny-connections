@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat } from 'lucide-react';
+import RecurringJobDetail from '@/components/RecurringJobDetail';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -106,6 +107,7 @@ export default function CleanerJobs() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
+  const [selectedRecurringGroup, setSelectedRecurringGroup] = useState<string[] | null>(null);
   const [otp, setOtp] = useState('');
   const [notes, setNotes] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
@@ -408,6 +410,27 @@ export default function CleanerJobs() {
 
   const PropIcon = selectedJob ? (propertyIcons[selectedJob.property_type] || Home) : Home;
 
+  // ─── Recurring Group Detail View ───
+  if (selectedRecurringGroup && selectedRecurringGroup.length > 0) {
+    const groupSiblings = allBookings.filter(b => selectedRecurringGroup.includes(b.id));
+    const rep = groupSiblings.sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (rep) {
+      return (
+        <CleanerLayout>
+          <PageTransition>
+            <RecurringJobDetail
+              representative={rep}
+              siblings={groupSiblings}
+              onAccept={() => acceptJob.mutate(rep.id)}
+              onBack={() => setSelectedRecurringGroup(null)}
+              isAccepting={acceptJob.isPending}
+            />
+          </PageTransition>
+        </CleanerLayout>
+      );
+    }
+  }
+
   // ─── Job Detail View ───
   if (selectedJob) {
     const isExpress = isExpressBooking(selectedJob);
@@ -681,9 +704,15 @@ export default function CleanerJobs() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => !showAccept && setSelectedBooking(b.id)}
+        onClick={() => {
+          if (showAccept && b._recurringCount > 1) {
+            setSelectedRecurringGroup(b._siblingIds || [b.id]);
+          } else if (!showAccept) {
+            setSelectedBooking(b.id);
+          }
+        }}
         className={`rounded-2xl p-4 transition-colors ${
-          showAccept ? 'border border-primary/10 bg-primary/[0.02]' : 'bg-muted/30 cursor-pointer hover:bg-muted/50'
+          showAccept ? 'border border-primary/10 bg-primary/[0.02] cursor-pointer' : 'bg-muted/30 cursor-pointer hover:bg-muted/50'
         }`}
       >
         <div className="flex items-start justify-between mb-2">
@@ -718,10 +747,23 @@ export default function CleanerJobs() {
           </div>
         </div>
         {showAccept ? (
-          <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
-            className="w-full rounded-xl text-xs font-semibold h-9">
-            Accept Job
-          </Button>
+          b._recurringCount > 1 ? (
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedRecurringGroup(b._siblingIds || [b.id]); }}
+                className="flex-1 rounded-xl text-xs font-semibold h-9">
+                View {b._recurringCount} Sessions
+              </Button>
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
+                className="flex-1 rounded-xl text-xs font-semibold h-9">
+                Accept All
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
+              className="w-full rounded-xl text-xs font-semibold h-9">
+              Accept Job
+            </Button>
+          )
         ) : (
           <div className="flex items-center justify-between">
             <Badge className={`text-[9px] rounded-lg font-medium border-0 capitalize ${
