@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap, Repeat } from 'lucide-react';
+import { Clock, MapPin, CalendarDays, XCircle, RotateCcw, Heart, Crown, MessageSquare, CalendarClock, Zap, Repeat, SkipForward, ChevronDown, ChevronUp, CheckCircle2, CircleDashed } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
