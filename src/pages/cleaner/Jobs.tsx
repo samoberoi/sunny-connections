@@ -257,7 +257,8 @@ export default function CleanerJobs() {
     const result: any[] = [];
     grouped.forEach(items => {
       const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
-      result.push({ ...sorted[0], _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id) });
+      const lastDate = sorted[sorted.length - 1].date;
+      result.push({ ...sorted[0], _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id), _lastDate: lastDate });
     });
     return result.sort((a, b) => a.date.localeCompare(b.date));
   })();
