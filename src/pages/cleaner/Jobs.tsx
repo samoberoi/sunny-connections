@@ -410,6 +410,27 @@ export default function CleanerJobs() {
 
   const PropIcon = selectedJob ? (propertyIcons[selectedJob.property_type] || Home) : Home;
 
+  // ─── Recurring Group Detail View ───
+  if (selectedRecurringGroup && selectedRecurringGroup.length > 0) {
+    const groupSiblings = allBookings.filter(b => selectedRecurringGroup.includes(b.id));
+    const rep = groupSiblings.sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (rep) {
+      return (
+        <CleanerLayout>
+          <PageTransition>
+            <RecurringJobDetail
+              representative={rep}
+              siblings={groupSiblings}
+              onAccept={() => acceptJob.mutate(rep.id)}
+              onBack={() => setSelectedRecurringGroup(null)}
+              isAccepting={acceptJob.isPending}
+            />
+          </PageTransition>
+        </CleanerLayout>
+      );
+    }
+  }
+
   // ─── Job Detail View ───
   if (selectedJob) {
     const isExpress = isExpressBooking(selectedJob);
