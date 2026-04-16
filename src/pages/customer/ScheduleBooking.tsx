@@ -175,7 +175,7 @@ export default function ScheduleBooking() {
       case 1: return category !== null && selectedServices.length > 0;
       case 2: return true;
       case 3: return !!recurring;
-      case 4: return !!date && !!time;
+      case 4: return !!date && !!time && (recurring === 'none' || !!endDate);
       case 5: return !!address && !!postcode;
       case 6: return true;
       default: return false;
