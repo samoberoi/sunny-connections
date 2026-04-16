@@ -482,11 +482,47 @@ export default function ScheduleBooking() {
             {step === 4 && (
               <motion.div key="step4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
-                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" strokeWidth={1.5} /> Date</h3>
+                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" strokeWidth={1.5} />
+                    {recurring !== 'none' ? 'Start Date' : 'Date'}
+                  </h3>
                   <div className="border border-border rounded-3xl p-3 bg-card">
-                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} className={cn("mx-auto pointer-events-auto")} />
+                    <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); if (endDate && d && endDate < d) setEndDate(undefined); }}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} className={cn("mx-auto pointer-events-auto")} />
                   </div>
                 </section>
+
+                {recurring !== 'none' && (
+                  <section className="mb-6">
+                    <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" strokeWidth={1.5} /> End Date
+                    </h3>
+                    <div className="border border-border rounded-3xl p-3 bg-card">
+                      <Calendar mode="single" selected={endDate} onSelect={setEndDate}
+                        disabled={(d) => d < (date || new Date(new Date().setHours(0, 0, 0, 0)))}
+                        className={cn("mx-auto pointer-events-auto")} />
+                    </div>
+                    {date && endDate && (
+                      <div className="mt-3 p-3 bg-primary/10 rounded-2xl">
+                        <p className="text-xs text-muted-foreground">
+                          {(() => {
+                            const intervalDays = recurring === 'weekly' ? 7 : recurring === 'fortnightly' ? 14 : 30;
+                            let count = 1;
+                            const d = new Date(date);
+                            while (true) {
+                              const next = new Date(d);
+                              next.setDate(d.getDate() + intervalDays * count);
+                              if (next > endDate) break;
+                              count++;
+                            }
+                            return `📅 ${count} session${count > 1 ? 's' : ''} (${recurring}) from ${date.toLocaleDateString('en-GB')} to ${endDate.toLocaleDateString('en-GB')}`;
+                          })()}
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                )}
+
                 <section>
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Clock className="h-4 w-4" strokeWidth={1.5} /> Time</h3>
                   <div className="grid grid-cols-4 gap-2">
