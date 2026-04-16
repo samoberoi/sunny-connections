@@ -79,6 +79,7 @@ export default function ScheduleBooking() {
   const [serviceQuantities, setServiceQuantities] = useState<Record<string, number>>({});
   const [recurring, setRecurring] = useState<'none' | 'weekly' | 'fortnightly' | 'monthly'>('none');
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(2);
   const [propertyType, setPropertyType] = useState('house');
@@ -174,7 +175,7 @@ export default function ScheduleBooking() {
       case 1: return category !== null && selectedServices.length > 0;
       case 2: return true;
       case 3: return !!recurring;
-      case 4: return !!date && !!time;
+      case 4: return !!date && !!time && (recurring === 'none' || !!endDate);
       case 5: return !!address && !!postcode;
       case 6: return true;
       default: return false;
@@ -221,14 +222,15 @@ export default function ScheduleBooking() {
       }).select().single();
       if (error) throw error;
 
-      // Generate future recurring instances
-      if (recurring !== 'none' && date) {
+      // Generate future recurring instances based on start and end date
+      if (recurring !== 'none' && date && endDate) {
         const intervalDays = recurring === 'weekly' ? 7 : recurring === 'fortnightly' ? 14 : 30;
-        const futureCount = recurring === 'weekly' ? 11 : recurring === 'fortnightly' ? 7 : 5; // ~3 months
         const futureBookings = [];
-        for (let i = 1; i <= futureCount; i++) {
+        let i = 1;
+        while (true) {
           const futureDate = new Date(date);
           futureDate.setDate(futureDate.getDate() + intervalDays * i);
+          if (futureDate > endDate) break;
           futureBookings.push({
             customer_id: user.id, customer_name: user.name, service_id: serviceId,
             service_name: `Scheduled: ${selectedNames}`,
@@ -237,6 +239,7 @@ export default function ScheduleBooking() {
             total_cost: totalCost, property_type: propertyType, notes: notes || null,
             tier, payment_method: paymentMethod, referral_code: referralCode || null,
           });
+          i++;
         }
         if (futureBookings.length > 0) {
           await supabase.from('bookings').insert(futureBookings);
@@ -481,11 +484,47 @@ export default function ScheduleBooking() {
             {step === 4 && (
               <motion.div key="step4" variants={fadeVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                 <section className="mb-6">
-                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" strokeWidth={1.5} /> Date</h3>
+                  <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" strokeWidth={1.5} />
+                    {recurring !== 'none' ? 'Start Date' : 'Date'}
+                  </h3>
                   <div className="border border-border rounded-3xl p-3 bg-card">
-                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} className={cn("mx-auto pointer-events-auto")} />
+                    <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); if (endDate && d && endDate < d) setEndDate(undefined); }}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} className={cn("mx-auto pointer-events-auto")} />
                   </div>
                 </section>
+
+                {recurring !== 'none' && (
+                  <section className="mb-6">
+                    <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" strokeWidth={1.5} /> End Date
+                    </h3>
+                    <div className="border border-border rounded-3xl p-3 bg-card">
+                      <Calendar mode="single" selected={endDate} onSelect={setEndDate}
+                        disabled={(d) => d < (date || new Date(new Date().setHours(0, 0, 0, 0)))}
+                        className={cn("mx-auto pointer-events-auto")} />
+                    </div>
+                    {date && endDate && (
+                      <div className="mt-3 p-3 bg-primary/10 rounded-2xl">
+                        <p className="text-xs text-muted-foreground">
+                          {(() => {
+                            const intervalDays = recurring === 'weekly' ? 7 : recurring === 'fortnightly' ? 14 : 30;
+                            let count = 1;
+                            const d = new Date(date);
+                            while (true) {
+                              const next = new Date(d);
+                              next.setDate(d.getDate() + intervalDays * count);
+                              if (next > endDate) break;
+                              count++;
+                            }
+                            return `📅 ${count} session${count > 1 ? 's' : ''} (${recurring}) from ${date.toLocaleDateString('en-GB')} to ${endDate.toLocaleDateString('en-GB')}`;
+                          })()}
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                )}
+
                 <section>
                   <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2"><Clock className="h-4 w-4" strokeWidth={1.5} /> Time</h3>
                   <div className="grid grid-cols-4 gap-2">
