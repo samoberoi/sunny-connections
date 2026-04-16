@@ -38,12 +38,11 @@ export default function NewJobPopup() {
         schema: 'public',
         table: 'bookings',
         filter: 'status=eq.pending',
-      }, (payload) => {
+      }, async (payload) => {
         const newJob = payload.new as any;
         if (!newJob || seenJobIds.current.has(newJob.id)) return;
-        if (newJob.cleaner_id) return; // already assigned
+        if (newJob.cleaner_id) return;
 
-        // Check specialisation match
         const specs = cleanerRecord?.specialisations || [];
         if (specs.length > 0) {
           const sLower = (newJob.service_name || '').toLowerCase().trim();
@@ -54,12 +53,36 @@ export default function NewJobPopup() {
           if (!matches) return;
         }
 
-        // Only show if cleaner is online
         if (!cleanerRecord?.available) return;
 
         seenJobIds.current.add(newJob.id);
+
+        // For recurring jobs, find the nearest instance date
+        let displayJob = newJob;
+        if (newJob.recurring && newJob.recurring !== 'none') {
+          const { data: siblings } = await supabase.from('bookings').select('*')
+            .eq('customer_id', newJob.customer_id)
+            .eq('service_name', newJob.service_name)
+            .eq('recurring', newJob.recurring)
+            .eq('status', 'pending')
+            .is('cleaner_id', null)
+            .order('date', { ascending: true })
+            .limit(1);
+          if (siblings && siblings.length > 0) {
+            displayJob = { ...siblings[0], _recurringCount: undefined };
+            // Mark all siblings as seen
+            const { data: allSiblings } = await supabase.from('bookings').select('id')
+              .eq('customer_id', newJob.customer_id)
+              .eq('service_name', newJob.service_name)
+              .eq('recurring', newJob.recurring)
+              .eq('status', 'pending')
+              .is('cleaner_id', null);
+            allSiblings?.forEach(s => seenJobIds.current.add(s.id));
+          }
+        }
+
         playNotificationSound();
-        setPopupJob(newJob);
+        setPopupJob(displayJob);
       })
       .subscribe();
 
