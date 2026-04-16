@@ -883,7 +883,7 @@ export default function CleanerJobs() {
                     return filteredUpcoming.map(b => {
                       const showHeader = b.date !== lastDate;
                       lastDate = b.date;
-                      const dateLabel = new Date(b.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+                      const dateLabel = formatDateUK(b.date);
                       return (
                         <div key={b.id}>
                           {showHeader && upcomingFilter === 'future' && (
