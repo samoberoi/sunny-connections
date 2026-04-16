@@ -23,6 +23,44 @@ import { toast } from 'sonner';
 
 const propertyIcons: Record<string, any> = { flat: Building2, house: Home, office: Landmark };
 
+/** Format a date string (YYYY-MM-DD) to readable UK format without timezone shift */
+function formatDateUK(dateStr: string): string {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Format time string (HH:MM:SS or HH:MM) to 12-hour format */
+function formatTime12h(timeStr: string): string {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+/** Calculate end time given start time and duration in hours */
+function calcEndTime(timeStr: string, durationHrs: number): string {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const endH = h + durationHrs;
+  return formatTime12h(`${endH}:${String(m).padStart(2, '0')}`);
+}
+
+/** Build a booking schedule summary string */
+function buildScheduleText(b: any): string {
+  const date = formatDateUK(b.date);
+  const start = formatTime12h(b.time);
+  const end = calcEndTime(b.time, b.duration);
+  const timeRange = `${start} – ${end} (${b.duration}h)`;
+  // For recurring bookings with siblings, show date range
+  if (b._recurringCount > 1 && b._lastDate && b._lastDate !== b.date) {
+    return `${date} → ${formatDateUK(b._lastDate)} · ${timeRange}`;
+  }
+  return `${date} · ${timeRange}`;
+}
+
 const isExpressBooking = (b: any) => {
   const name = (b.service_name || '').toLowerCase();
   return name.includes('express') || name.includes('blitz');
@@ -182,7 +220,8 @@ export default function CleanerJobs() {
     const result: any[] = [];
     grouped.forEach(bookings => {
       const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));
-      const representative = { ...sorted[0], _recurringCount: bookings.length, _siblingIds: bookings.map((bb: any) => bb.id) };
+      const lastDate = sorted[sorted.length - 1].date;
+      const representative = { ...sorted[0], _recurringCount: bookings.length, _siblingIds: bookings.map((bb: any) => bb.id), _lastDate: lastDate };
       result.push(representative);
     });
     return result;
@@ -216,7 +255,8 @@ export default function CleanerJobs() {
     const result: any[] = [];
     grouped.forEach(items => {
       const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
-      result.push({ ...sorted[0], _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id) });
+      const lastDate = sorted[sorted.length - 1].date;
+      result.push({ ...sorted[0], _recurringCount: items.length, _siblingIds: items.map((bb: any) => bb.id), _lastDate: lastDate });
     });
     return result.sort((a, b) => a.date.localeCompare(b.date));
   })();
@@ -427,7 +467,7 @@ export default function CleanerJobs() {
                 {[
                   { icon: PropIcon, text: selectedJob.property_type },
                   { icon: MapPin, text: `${selectedJob.address_line1}, ${selectedJob.address_postcode}` },
-                  { icon: Clock, text: `${selectedJob.date} at ${selectedJob.time} · ${selectedJob.duration}h` },
+                  { icon: Clock, text: buildScheduleText(selectedJob) },
                 ].map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                     <Ic className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={1.5} />
@@ -674,7 +714,7 @@ export default function CleanerJobs() {
             <MapPin className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
+            <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {buildScheduleText(b)}
           </div>
         </div>
         {showAccept ? (
@@ -740,7 +780,7 @@ export default function CleanerJobs() {
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} />
-                  {b.date} at {b.time} · {b.duration}h
+                  {b.date} at {formatTime12h(b.time)} · {b.duration}h
                 </div>
                 {b.review && (
                   <div className="bg-card rounded-xl p-3 border border-border/50">
@@ -843,7 +883,7 @@ export default function CleanerJobs() {
                     return filteredUpcoming.map(b => {
                       const showHeader = b.date !== lastDate;
                       lastDate = b.date;
-                      const dateLabel = new Date(b.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+                      const dateLabel = formatDateUK(b.date);
                       return (
                         <div key={b.id}>
                           {showHeader && upcomingFilter === 'future' && (
