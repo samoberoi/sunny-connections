@@ -53,14 +53,12 @@ function buildScheduleText(b: any): string {
   const date = formatDateUK(b.date);
   const start = formatTime12h(b.time);
   const end = calcEndTime(b.time, b.duration);
-  let text = `${date} · ${start} – ${end} (${b.duration}h)`;
+  const timeRange = `${start} – ${end} (${b.duration}h)`;
   // For recurring bookings with siblings, show date range
-  if (b._recurringCount > 1 && b._siblingIds) {
-    // The last sibling date can be inferred; we have the count but not all dates here
-    // Just indicate recurring period
-    text = `From ${date} · ${start} – ${end} (${b.duration}h)`;
+  if (b._recurringCount > 1 && b._lastDate && b._lastDate !== b.date) {
+    return `${date} → ${formatDateUK(b._lastDate)} · ${timeRange}`;
   }
-  return text;
+  return `${date} · ${timeRange}`;
 }
 
 const isExpressBooking = (b: any) => {
