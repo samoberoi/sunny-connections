@@ -467,7 +467,7 @@ export default function CleanerJobs() {
                 {[
                   { icon: PropIcon, text: selectedJob.property_type },
                   { icon: MapPin, text: `${selectedJob.address_line1}, ${selectedJob.address_postcode}` },
-                  { icon: Clock, text: `${selectedJob.date} at ${selectedJob.time} · ${selectedJob.duration}h` },
+                  { icon: Clock, text: buildScheduleText(selectedJob) },
                 ].map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                     <Ic className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={1.5} />
@@ -714,7 +714,7 @@ export default function CleanerJobs() {
             <MapPin className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {b.date} at {b.time} · {b.duration}h
+            <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} /> {buildScheduleText(b)}
           </div>
         </div>
         {showAccept ? (
@@ -780,7 +780,7 @@ export default function CleanerJobs() {
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <Clock className="h-3 w-3 text-muted-foreground/70" strokeWidth={1.5} />
-                  {b.date} at {b.time} · {b.duration}h
+                  {b.date} at {formatTime12h(b.time)} · {b.duration}h
                 </div>
                 {b.review && (
                   <div className="bg-card rounded-xl p-3 border border-border/50">
