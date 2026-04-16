@@ -461,7 +461,7 @@ export default function ScheduleBooking() {
                           <h4 className="font-bold text-foreground text-sm">{f.label}</h4>
                           <p className="text-xs text-muted-foreground">{f.desc}</p>
                         </div>
-                        {f.discount && <span className="text-xs font-bold text-primary-foreground bg-foreground px-3 py-1.5 rounded-full">{f.discount}% off</span>}
+                        {f.discount && <span className="text-xs font-bold text-background bg-foreground px-3 py-1.5 rounded-full">{f.discount}% off</span>}
                       </motion.button>
                     ))}
                   </div>
