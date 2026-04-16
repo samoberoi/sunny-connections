@@ -29,10 +29,12 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       const onboardingDone = !!profile?.onboarding_completed;
       setNeedsOnboarding(!onboardingDone);
 
-      // Check if role intro slides were shown
-      const introSeen = sessionStorage.getItem(`role_intro_${user.id}`);
+      // Check if role intro slides were shown (localStorage persists across tabs/redirects)
+      const introSeen = localStorage.getItem(`role_intro_${user.id}`);
       if (!onboardingDone && !introSeen) {
         setShowRoleIntro(true);
+      } else {
+        setShowRoleIntro(false);
       }
 
       // For cleaners, also check training completion
