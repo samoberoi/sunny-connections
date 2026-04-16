@@ -146,14 +146,33 @@ export default function CleanerDashboard() {
 
   const filteredPending = useMemo(() => {
     const specs = cleanerRecord?.specialisations || [];
-    if (!specs.length) return pendingJobs;
-    return pendingJobs.filter(b => {
-      const sLower = (b.service_name || '').toLowerCase().trim();
-      return specs.some((spec: string) => {
-        const specLower = spec.toLowerCase().trim();
-        return sLower === specLower || sLower.includes(specLower) || specLower.includes(sLower);
-      });
+    const specFiltered = specs.length
+      ? pendingJobs.filter(b => {
+          const sLower = (b.service_name || '').toLowerCase().trim();
+          return specs.some((spec: string) => {
+            const specLower = spec.toLowerCase().trim();
+            return sLower === specLower || sLower.includes(specLower) || specLower.includes(sLower);
+          });
+        })
+      : pendingJobs;
+
+    // Group recurring bookings into single cards
+    const grouped = new Map<string, any[]>();
+    specFiltered.forEach(b => {
+      if (b.recurring && b.recurring !== 'none') {
+        const key = `${b.customer_id}|${b.service_name}|${b.recurring}`;
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(b);
+      } else {
+        grouped.set(b.id, [b]);
+      }
     });
+    const result: any[] = [];
+    grouped.forEach(items => {
+      const sorted = items.sort((a: any, b: any) => a.date.localeCompare(b.date));
+      result.push({ ...sorted[0], _recurringCount: items.length });
+    });
+    return result.sort((a, b) => a.date.localeCompare(b.date));
   }, [pendingJobs, cleanerRecord?.specialisations]);
 
   const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
@@ -275,7 +294,10 @@ export default function CleanerDashboard() {
                         </div>
                         <span className="text-lg font-display font-black text-primary">£{b.total_cost}</span>
                       </div>
-                      <p className="text-[11px] text-background/60">{b.customer_name} · {b.address_postcode} · {b.duration}h</p>
+                      <p className="text-[11px] text-background/60">
+                        {b.customer_name} · {b.address_postcode} · {b.duration}h
+                        {b._recurringCount > 1 && ` · ${b.recurring} (${b._recurringCount} sessions)`}
+                      </p>
                       <div className="flex items-center justify-end text-[11px] text-primary font-bold mt-2">View & Accept <ChevronRight className="h-3 w-3 ml-0.5" /></div>
                     </motion.div>
                   );
