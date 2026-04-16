@@ -91,12 +91,19 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
       }
 
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-      await supabase.from('profiles').update({
+      const { error: profileError } = await supabase.from('profiles').update({
         name: fullName,
         email: email.trim() || null,
         avatar: avatarUrl,
         onboarding_completed: true,
       }).eq('user_id', user.id);
+
+      if (profileError) {
+        console.error('Profile update failed:', profileError);
+        toast.error('Could not save profile. Please try again.');
+        setSaving(false);
+        return;
+      }
 
       const fullAddress = houseNumber ? `${houseNumber} ${addressLine}` : addressLine;
       if (fullAddress && postcode) {
@@ -112,7 +119,8 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
       await refreshProfile();
       toast.success('Welcome to Clean Fit! 🎉');
       onComplete();
-    } catch {
+    } catch (err) {
+      console.error('Onboarding save error:', err);
       toast.error('Something went wrong');
     } finally {
       setSaving(false);

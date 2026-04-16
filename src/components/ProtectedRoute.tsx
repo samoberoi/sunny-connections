@@ -93,7 +93,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     const handleComplete = () => {
       setNeedsOnboarding(false);
       // Re-run the check so training gate activates for cleaners
-      setRecheckCounter(c => c + 1);
+      if (user?.role === 'cleaner') {
+        setRecheckCounter(c => c + 1);
+      }
     };
     if (user?.role === 'customer') return <CustomerOnboarding onComplete={handleComplete} />;
     if (user?.role === 'cleaner') return <CleanerOnboarding onComplete={handleComplete} />;
