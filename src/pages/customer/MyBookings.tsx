@@ -176,6 +176,36 @@ export default function MyBookings() {
     onError: () => toast.error('Failed to reschedule'),
   });
 
+  const skipSession = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bookings').update({
+        status: 'cancelled' as any,
+        notes: 'Skipped by customer',
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      toast.success('Session skipped');
+    },
+    onError: () => toast.error('Failed to skip session'),
+  });
+
+  function formatDateUK(dateStr: string): string {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatTime12h(timeStr: string): string {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+  }
+
   const upcoming = bookings.filter(b => !['completed', 'cancelled'].includes(b.status));
 
   // Group recurring bookings into single representative cards
