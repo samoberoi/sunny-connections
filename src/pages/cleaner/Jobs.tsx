@@ -747,10 +747,23 @@ export default function CleanerJobs() {
           </div>
         </div>
         {showAccept ? (
-          <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
-            className="w-full rounded-xl text-xs font-semibold h-9">
-            Accept Job
-          </Button>
+          b._recurringCount > 1 ? (
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedRecurringGroup(b._siblingIds || [b.id]); }}
+                className="flex-1 rounded-xl text-xs font-semibold h-9">
+                View {b._recurringCount} Sessions
+              </Button>
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
+                className="flex-1 rounded-xl text-xs font-semibold h-9">
+                Accept All
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={(e) => { e.stopPropagation(); acceptJob.mutate(b.id); }} disabled={acceptJob.isPending}
+              className="w-full rounded-xl text-xs font-semibold h-9">
+              Accept Job
+            </Button>
+          )
         ) : (
           <div className="flex items-center justify-between">
             <Badge className={`text-[9px] rounded-lg font-medium border-0 capitalize ${
