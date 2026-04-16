@@ -99,16 +99,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!isMounted) return;
-      setSession(nextSession);
-    });
-    void supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      if (!isMounted) return;
-      setSession(existingSession);
-      setIsAuthReady(true);
-    });
-    return () => { isMounted = false; subscription.unsubscribe(); };
+
+    // Always sign out on fresh app load so users start from login screen
+    const init = async () => {
+      await supabase.auth.signOut();
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        if (!isMounted) return;
+        setSession(nextSession);
+      });
+
+      if (isMounted) {
+        setSession(null);
+        setIsAuthReady(true);
+      }
+
+      return subscription;
+    };
+
+    let subscription: { unsubscribe: () => void } | null = null;
+    init().then(sub => { subscription = sub; });
+
+    return () => { isMounted = false; subscription?.unsubscribe(); };
   }, []);
 
   // Load user from profile when session changes
