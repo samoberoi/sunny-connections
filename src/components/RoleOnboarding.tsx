@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronRight, Sparkles, MapPin, Shield, Clock, PoundSterling, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,16 +48,18 @@ interface RoleOnboardingProps {
 
 export default function RoleOnboarding({ role, userName, onComplete }: RoleOnboardingProps) {
   const [current, setCurrent] = useState(0);
+  const [completed, setCompleted] = useState(false);
   const slides = role === 'cleaner' ? cleanerSlides : customerSlides;
 
-  if (role === 'admin') {
-    onComplete();
-    return null;
-  }
+  useEffect(() => {
+    if (role === 'admin') onComplete();
+  }, [role, onComplete]);
+
+  if (role === 'admin' || completed) return null;
 
   const next = () => {
     if (current < slides.length - 1) setCurrent(current + 1);
-    else onComplete();
+    else { setCompleted(true); onComplete(); }
   };
 
   const slide = slides[current];

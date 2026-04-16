@@ -81,11 +81,16 @@ export default function Login() {
     toast.success('Welcome to Clean Fit! 🎉');
     const onboardingKey = `onboarding_${role}_complete`;
     const seen = localStorage.getItem(onboardingKey);
-    if (!seen && role !== 'admin') { setTimeout(() => setStep('onboarding'), 300); }
-    else { setTimeout(goToDashboard, 300); }
+    if (!seen && role !== 'admin') {
+      // Mark as seen immediately to prevent re-showing on re-render
+      localStorage.setItem(onboardingKey, '1');
+      setTimeout(() => setStep('onboarding'), 300);
+    } else {
+      setTimeout(goToDashboard, 300);
+    }
   };
 
-  const handleOnboardingComplete = () => { localStorage.setItem(`onboarding_${role}_complete`, '1'); goToDashboard(); };
+  const handleOnboardingComplete = () => { goToDashboard(); };
 
   const slideVariants = { enter: { opacity: 0, x: 20 }, center: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
 
