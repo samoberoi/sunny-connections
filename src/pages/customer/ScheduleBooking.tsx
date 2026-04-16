@@ -222,14 +222,15 @@ export default function ScheduleBooking() {
       }).select().single();
       if (error) throw error;
 
-      // Generate future recurring instances
-      if (recurring !== 'none' && date) {
+      // Generate future recurring instances based on start and end date
+      if (recurring !== 'none' && date && endDate) {
         const intervalDays = recurring === 'weekly' ? 7 : recurring === 'fortnightly' ? 14 : 30;
-        const futureCount = recurring === 'weekly' ? 11 : recurring === 'fortnightly' ? 7 : 5; // ~3 months
         const futureBookings = [];
-        for (let i = 1; i <= futureCount; i++) {
+        let i = 1;
+        while (true) {
           const futureDate = new Date(date);
           futureDate.setDate(futureDate.getDate() + intervalDays * i);
+          if (futureDate > endDate) break;
           futureBookings.push({
             customer_id: user.id, customer_name: user.name, service_id: serviceId,
             service_name: `Scheduled: ${selectedNames}`,
@@ -238,6 +239,7 @@ export default function ScheduleBooking() {
             total_cost: totalCost, property_type: propertyType, notes: notes || null,
             tier, payment_method: paymentMethod, referral_code: referralCode || null,
           });
+          i++;
         }
         if (futureBookings.length > 0) {
           await supabase.from('bookings').insert(futureBookings);
