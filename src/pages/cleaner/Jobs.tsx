@@ -222,7 +222,8 @@ export default function CleanerJobs() {
     const result: any[] = [];
     grouped.forEach(bookings => {
       const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));
-      const representative = { ...sorted[0], _recurringCount: bookings.length, _siblingIds: bookings.map((bb: any) => bb.id) };
+      const lastDate = sorted[sorted.length - 1].date;
+      const representative = { ...sorted[0], _recurringCount: bookings.length, _siblingIds: bookings.map((bb: any) => bb.id), _lastDate: lastDate };
       result.push(representative);
     });
     return result;
