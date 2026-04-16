@@ -704,9 +704,15 @@ export default function CleanerJobs() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => !showAccept && setSelectedBooking(b.id)}
+        onClick={() => {
+          if (showAccept && b._recurringCount > 1) {
+            setSelectedRecurringGroup(b._siblingIds || [b.id]);
+          } else if (!showAccept) {
+            setSelectedBooking(b.id);
+          }
+        }}
         className={`rounded-2xl p-4 transition-colors ${
-          showAccept ? 'border border-primary/10 bg-primary/[0.02]' : 'bg-muted/30 cursor-pointer hover:bg-muted/50'
+          showAccept ? 'border border-primary/10 bg-primary/[0.02] cursor-pointer' : 'bg-muted/30 cursor-pointer hover:bg-muted/50'
         }`}
       >
         <div className="flex items-start justify-between mb-2">
