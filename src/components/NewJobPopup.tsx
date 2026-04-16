@@ -90,12 +90,13 @@ export default function NewJobPopup() {
   }, [cleanerRecord]);
 
   // Also poll for new pending jobs (fallback for missed realtime events)
+  // Order by date ascending so we always pick the nearest instance first
   const { data: pendingJobs = [] } = useQuery({
     queryKey: ['popup-pending-jobs'],
     queryFn: async () => {
       const { data } = await supabase.from('bookings').select('*')
         .is('cleaner_id', null).eq('status', 'pending')
-        .order('created_at', { ascending: false }).limit(20);
+        .order('date', { ascending: true }).limit(50);
       return data || [];
     },
     enabled: !!cleanerRecord?.available,
@@ -106,10 +107,25 @@ export default function NewJobPopup() {
     if (!cleanerRecord?.available || !pendingJobs.length) return;
     const currentIds = new Set(pendingJobs.map((j: any) => j.id));
     const specs = cleanerRecord?.specialisations || [];
+    // Track which recurring groups we've already seen
+    const seenRecurringKeys = new Set<string>();
 
     for (const job of pendingJobs) {
+      // For recurring jobs, create a group key and skip if already seen
+      const recurringKey = (job.recurring && job.recurring !== 'none')
+        ? `${job.customer_id}|${job.service_name}|${job.recurring}`
+        : null;
+
+      if (recurringKey) {
+        if (seenRecurringKeys.has(recurringKey)) {
+          seenJobIds.current.add(job.id);
+          continue;
+        }
+        seenRecurringKeys.add(recurringKey);
+      }
+
       if (prevPendingIds.current.has(job.id) || seenJobIds.current.has(job.id)) continue;
-      // Check specialisation
+
       if (specs.length > 0) {
         const sLower = (job.service_name || '').toLowerCase().trim();
         const matches = specs.some((spec: string) => {
@@ -118,10 +134,21 @@ export default function NewJobPopup() {
         });
         if (!matches) continue;
       }
-      seenJobIds.current.add(job.id);
+
+      // Mark all siblings as seen for recurring
+      if (recurringKey) {
+        pendingJobs.filter(j =>
+          j.customer_id === job.customer_id &&
+          j.service_name === job.service_name &&
+          j.recurring === job.recurring
+        ).forEach(j => seenJobIds.current.add(j.id));
+      } else {
+        seenJobIds.current.add(job.id);
+      }
+
       playNotificationSound();
-      setPopupJob(job);
-      break; // show one at a time
+      setPopupJob(job); // Already sorted by date asc, so this is the nearest
+      break;
     }
     prevPendingIds.current = currentIds;
   }, [pendingJobs, cleanerRecord]);
