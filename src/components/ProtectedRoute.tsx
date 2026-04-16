@@ -81,7 +81,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         role={user!.role}
         userName={user!.name}
         onComplete={() => {
-          sessionStorage.setItem(`role_intro_${user!.id}`, '1');
+          localStorage.setItem(`role_intro_${user!.id}`, '1');
           setShowRoleIntro(false);
         }}
       />
