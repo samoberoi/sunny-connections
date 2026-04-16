@@ -42,15 +42,8 @@ export default function CleanerSchedule() {
     enabled: !!cleanerRecord?.id,
   });
 
-  const { data: upcomingJobs = [] } = useQuery({
-    queryKey: ['cleaner-upcoming-schedule', cleanerRecord?.id],
-    queryFn: async () => {
-      if (!cleanerRecord?.id) return [];
-      const { data } = await supabase.from('bookings').select('*').eq('cleaner_id', cleanerRecord.id).in('status', ['assigned', 'en-route']).order('date');
-      return data || [];
-    },
-    enabled: !!cleanerRecord?.id,
-  });
+
+
 
   const requestLeave = useMutation({
     mutationFn: async () => {
@@ -116,8 +109,7 @@ export default function CleanerSchedule() {
         <div className="px-5 pt-6 pb-28 space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <BackButton />
-              <h1 className="text-lg font-display font-black text-foreground">My Schedule</h1>
+              <h1 className="text-lg font-display font-black text-foreground">My Leave</h1>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -149,33 +141,8 @@ export default function CleanerSchedule() {
             </Dialog>
           </div>
 
-          {/* Upcoming jobs */}
-          <section>
-            <h3 className="font-display font-bold text-foreground text-sm mb-3 flex items-center gap-2">
-              <Calendar className="h-4 w-4" strokeWidth={1.5} /> Upcoming Jobs
-            </h3>
-            {upcomingJobs.length === 0 ? (
-              <div className="bg-card rounded-3xl p-6 text-center shadow-soft border border-border">
-                <Clock className="h-5 w-5 text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">No upcoming jobs</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {upcomingJobs.map(job => (
-                  <div key={job.id} className="bg-card rounded-2xl p-4 shadow-soft border border-border flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                      <Calendar className="h-4 w-4 text-foreground" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{job.service_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{job.date} at {job.time}</p>
-                    </div>
-                    <span className="text-sm font-display font-black text-foreground">£{job.total_cost}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+
+
 
           {/* Leave History */}
           <section>
