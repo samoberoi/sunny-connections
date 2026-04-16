@@ -59,7 +59,7 @@ export default function RoleOnboarding({ role, userName, onComplete }: RoleOnboa
 
   const next = () => {
     if (current < slides.length - 1) setCurrent(current + 1);
-    else onComplete();
+    else { setCompleted(true); onComplete(); }
   };
 
   const slide = slides[current];
