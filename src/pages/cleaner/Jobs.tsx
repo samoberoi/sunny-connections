@@ -23,6 +23,46 @@ import { toast } from 'sonner';
 
 const propertyIcons: Record<string, any> = { flat: Building2, house: Home, office: Landmark };
 
+/** Format a date string (YYYY-MM-DD) to readable UK format without timezone shift */
+function formatDateUK(dateStr: string): string {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Format time string (HH:MM:SS or HH:MM) to 12-hour format */
+function formatTime12h(timeStr: string): string {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+/** Calculate end time given start time and duration in hours */
+function calcEndTime(timeStr: string, durationHrs: number): string {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const endH = h + durationHrs;
+  return formatTime12h(`${endH}:${String(m).padStart(2, '0')}`);
+}
+
+/** Build a booking schedule summary string */
+function buildScheduleText(b: any): string {
+  const date = formatDateUK(b.date);
+  const start = formatTime12h(b.time);
+  const end = calcEndTime(b.time, b.duration);
+  let text = `${date} · ${start} – ${end} (${b.duration}h)`;
+  // For recurring bookings with siblings, show date range
+  if (b._recurringCount > 1 && b._siblingIds) {
+    // The last sibling date can be inferred; we have the count but not all dates here
+    // Just indicate recurring period
+    text = `From ${date} · ${start} – ${end} (${b.duration}h)`;
+  }
+  return text;
+}
+
 const isExpressBooking = (b: any) => {
   const name = (b.service_name || '').toLowerCase();
   return name.includes('express') || name.includes('blitz');
