@@ -83,11 +83,22 @@ export default function CustomerHome() {
   }, [user?.id, queryClient]);
 
 
-  // Check for unclaimed offers
-  const { data: unclaimedOffers = [] } = useQuery({
-    queryKey: ['unclaimed-offers', user?.id],
+  // Check if customer has any bookings (to gate welcome offers)
+  const { data: hasBookings } = useQuery({
+    queryKey: ['has-bookings', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return true;
+      const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('customer_id', user.id);
+      return (count || 0) > 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Check for unclaimed offers — only for new customers with zero bookings
+  const { data: unclaimedOffers = [] } = useQuery({
+    queryKey: ['unclaimed-offers', user?.id, hasBookings],
+    queryFn: async () => {
+      if (!user?.id || hasBookings) return [];
       const today = new Date().toISOString().split('T')[0];
       const { data: offers } = await supabase.from('offers').select('*').eq('active', true).lte('valid_from', today).gte('valid_until', today);
       if (!offers?.length) return [];
@@ -95,20 +106,25 @@ export default function CustomerHome() {
       const claimedIds = new Set((claims || []).map(c => c.offer_id));
       return offers.filter(o => !claimedIds.has(o.id));
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && hasBookings === false,
   });
 
-  // Check for active coupons to show as pop-up
+  // Check for active coupons to show as pop-up — only for new customers
   const { data: activeCoupons = [] } = useQuery({
-    queryKey: ['active-coupons-popup'],
+    queryKey: ['active-coupons-popup', hasBookings],
     queryFn: async () => {
+      if (hasBookings) return [];
       const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase.from('coupons').select('*').eq('active', true).gte('expires_at', today);
       return (data || []).filter(c => c.used_count < c.max_uses);
     },
+    enabled: hasBookings === false,
   });
 
   useEffect(() => {
+    // Only show popups to new customers (no bookings yet)
+    if (hasBookings !== false) return;
+
     // Show unclaimed offers first, then active coupons
     if (unclaimedOffers.length > 0 && !offerModal) {
       const shownKey = `offer_popup_${unclaimedOffers[0].id}`;
@@ -124,7 +140,7 @@ export default function CustomerHome() {
         sessionStorage.setItem(shownKey, '1');
       }
     }
-  }, [unclaimedOffers, activeCoupons]);
+  }, [unclaimedOffers, activeCoupons, hasBookings]);
 
   const claimOffer = async (offer: any) => {
     if (!user?.id) return;
