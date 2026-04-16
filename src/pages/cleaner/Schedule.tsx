@@ -42,15 +42,8 @@ export default function CleanerSchedule() {
     enabled: !!cleanerRecord?.id,
   });
 
-  const { data: upcomingJobs = [] } = useQuery({
-    queryKey: ['cleaner-upcoming-schedule', cleanerRecord?.id],
-    queryFn: async () => {
-      if (!cleanerRecord?.id) return [];
-      const { data } = await supabase.from('bookings').select('*').eq('cleaner_id', cleanerRecord.id).in('status', ['assigned', 'en-route']).order('date');
-      return data || [];
-    },
-    enabled: !!cleanerRecord?.id,
-  });
+
+
 
   const requestLeave = useMutation({
     mutationFn: async () => {
@@ -116,8 +109,7 @@ export default function CleanerSchedule() {
         <div className="px-5 pt-6 pb-28 space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <BackButton />
-              <h1 className="text-lg font-display font-black text-foreground">My Schedule</h1>
+              <h1 className="text-lg font-display font-black text-foreground">My Leave</h1>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
