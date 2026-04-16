@@ -290,7 +290,7 @@ export default function MyBookings() {
                       <Badge className={`${statusStyles[b.status]} text-[10px] rounded-full font-bold border-0`}>{b.status.replace('-', ' ')}</Badge>
                     </div>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> Next: {b.date} at {b.time} · {b.duration}h</div>
+                      <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> Next: {formatDateUK(b.date)} at {formatTime12h(b.time)} · {b.duration}h</div>
                       <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={1.5} /> {b.address_line1}, {b.address_postcode}</div>
                     </div>
                     {b.cleaner_name && (
@@ -303,6 +303,72 @@ export default function MyBookings() {
                       <span className="text-lg font-display font-black text-foreground">£{b.total_cost}</span>
                       <span className="text-[10px] text-muted-foreground capitalize">{b.recurring !== 'none' ? b.recurring : 'One-time'}</span>
                     </div>
+
+                    {/* Expandable Sessions for Recurring */}
+                    {b._recurringCount > 1 && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => setExpandedRecurring(expandedRecurring === b.id ? null : b.id)}
+                          className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-primary py-2 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
+                        >
+                          {expandedRecurring === b.id ? (
+                            <><ChevronUp className="h-3.5 w-3.5" /> Hide Sessions</>
+                          ) : (
+                            <><ChevronDown className="h-3.5 w-3.5" /> View All {b._recurringCount} Sessions</>
+                          )}
+                        </button>
+                        {expandedRecurring === b.id && (
+                          <div className="mt-3 space-y-2">
+                            {bookings
+                              .filter(s => b._siblingIds?.includes(s.id))
+                              .sort((a, b) => a.date.localeCompare(b.date))
+                              .map((session: any, idx: number) => {
+                                const isCompleted = session.status === 'completed';
+                                const isCancelled = session.status === 'cancelled';
+                                const isUpcoming = ['pending', 'assigned'].includes(session.status);
+                                return (
+                                  <div key={session.id}
+                                    className={`flex items-center justify-between rounded-xl p-3 border ${
+                                      isCompleted ? 'bg-primary/5 border-primary/20' :
+                                      isCancelled ? 'bg-muted/30 border-border/50 opacity-50' :
+                                      'bg-card border-border/50'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5">
+                                      {isCompleted ? (
+                                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" strokeWidth={1.5} />
+                                      ) : (
+                                        <CircleDashed className="h-4 w-4 text-muted-foreground/40 shrink-0" strokeWidth={1.5} />
+                                      )}
+                                      <div>
+                                        <p className="text-xs font-bold text-foreground">{formatDateUK(session.date)}</p>
+                                        <p className="text-[10px] text-muted-foreground">{formatTime12h(session.time)} · {session.duration}h</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={`text-[8px] rounded-md font-medium border-0 ${
+                                        isCompleted ? 'bg-primary/10 text-primary' :
+                                        isCancelled ? 'bg-destructive/10 text-destructive' :
+                                        'bg-muted text-muted-foreground'
+                                      }`}>
+                                        {isCancelled && session.notes === 'Skipped by customer' ? 'skipped' : session.status.replace('-', ' ')}
+                                      </Badge>
+                                      {isUpcoming && (
+                                        <button
+                                          onClick={() => skipSession.mutate(session.id)}
+                                          className="text-[10px] font-bold text-destructive/70 hover:text-destructive flex items-center gap-0.5"
+                                        >
+                                          <SkipForward className="h-3 w-3" /> Skip
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Reschedule */}
                     {['pending', 'assigned'].includes(b.status) && (
