@@ -99,6 +99,7 @@ export default function MyBookings() {
   const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
   const [cancelNotes, setCancelNotes] = useState<Record<string, string>>({});
   const [bookingFilter, setBookingFilter] = useState<string>('all');
+  const [expandedRecurring, setExpandedRecurring] = useState<string | null>(null);
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['my-bookings', user?.id],
