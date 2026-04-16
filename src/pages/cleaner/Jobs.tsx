@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat } from 'lucide-react';
+import RecurringJobDetail from '@/components/RecurringJobDetail';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -106,6 +107,7 @@ export default function CleanerJobs() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
+  const [selectedRecurringGroup, setSelectedRecurringGroup] = useState<string[] | null>(null);
   const [otp, setOtp] = useState('');
   const [notes, setNotes] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
