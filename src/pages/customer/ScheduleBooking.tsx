@@ -17,6 +17,7 @@ import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useCoinBalance } from '@/components/CoinBalance';
@@ -260,6 +261,15 @@ export default function ScheduleBooking() {
       await supabase.from('notifications').insert({
         user_id: user.id, title: 'Booking Confirmed! 🎉',
         message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
+      });
+
+      // Notify all matching cleaners so they can accept the job from their notifications
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: `Scheduled: ${selectedNames}`,
+        customer_name: user.name,
+        date: formatDateOnlyForDb(date),
+        time,
+        address_postcode: postcode,
       });
 
       if (useCoins && coinDiscount > 0 && user.id) {

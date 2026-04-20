@@ -12,6 +12,7 @@ import BackButton from '@/components/BackButton';
 import { useService } from '@/hooks/useServices';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { formatDateOnlyForDb } from '@/lib/date';
@@ -59,6 +60,16 @@ export default function Booking() {
         total_cost: totalCost, property_type: propertyType, notes: notes || null,
       }).select().single();
       if (error) throw error;
+
+      // Notify matching cleaners so the job appears in their notifications
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: service.name,
+        customer_name: user.name,
+        date: formatDateOnlyForDb(date),
+        time,
+        address_postcode: postcode,
+      });
+
       navigate('/searching-cleaner', {
         state: {
           bookingId: booking.id,

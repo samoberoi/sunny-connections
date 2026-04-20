@@ -10,6 +10,7 @@ import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -101,6 +102,15 @@ export default function ExpressBooking() {
         payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
       if (error) throw error;
+
+      // Notify matching cleaners of the new express job
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: `Express: ${service.name}`,
+        customer_name: user.name,
+        date: today,
+        time: now.toTimeString().slice(0, 5),
+        address_postcode: postcode,
+      });
 
       // Increment coupon used_count if applied
       if (couponDiscount > 0) {
