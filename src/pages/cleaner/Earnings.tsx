@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { formatDateUK, parseDateOnly } from '@/lib/date';
 
 type DateRange = 'week' | 'month' | 'all';
 
@@ -49,7 +50,8 @@ export default function CleanerEarnings() {
     const now = new Date();
     return allCompleted.filter(b => {
       if (range === 'all') return true;
-      const d = new Date(b.date);
+      const d = parseDateOnly(b.date);
+      if (!d) return false;
       if (range === 'week') { const w = new Date(now); w.setDate(w.getDate() - 7); return d >= w; }
       if (range === 'month') { const m = new Date(now); m.setMonth(m.getMonth() - 1); return d >= m; }
       return true;
@@ -71,7 +73,12 @@ export default function CleanerEarnings() {
   }, [filteredBookings, totalEarnings, range]);
 
   const dayMap: Record<string, number> = {};
-  filteredBookings.forEach(b => { const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short' }); dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost); });
+  filteredBookings.forEach(b => {
+    const parsed = parseDateOnly(b.date);
+    if (!parsed) return;
+    const day = parsed.toLocaleDateString('en-GB', { weekday: 'short' });
+    dayMap[day] = (dayMap[day] || 0) + Number(b.total_cost);
+  });
   const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => ({ day: d, amount: dayMap[d] || 0 }));
   const max = Math.max(...weeklyData.map(d => d.amount), 1);
 
@@ -156,7 +163,7 @@ export default function CleanerEarnings() {
                         <div>
                           <p className="text-sm font-bold text-foreground">{b.service_name}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            {format(new Date(b.date), 'dd MMM yyyy')} · {b.duration}h · {b.address_postcode}
+                            {formatDateUK(b.date)} · {b.duration}h · {b.address_postcode}
                           </p>
                         </div>
                         <span className="font-display font-black text-foreground">£{b.total_cost}</span>
