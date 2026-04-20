@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat, LayoutGrid, List as ListIcon } from 'lucide-react';
 import RecurringJobDetail from '@/components/RecurringJobDetail';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
@@ -114,6 +114,7 @@ export default function CleanerJobs() {
   const [hasArrived, setHasArrived] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [upcomingFilter, setUpcomingFilter] = useState<string>('today');
+  const [upcomingView, setUpcomingView] = useState<'list' | 'tile'>('list');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
   const [expandedDoneId, setExpandedDoneId] = useState<string | null>(null);
@@ -764,6 +765,44 @@ export default function CleanerJobs() {
     );
   };
 
+  // ─── Compact Tile View ───
+  const JobTile = ({ b }: { b: any }) => {
+    const PIcon = propertyIcons[b.property_type] || Home;
+    const isExpress = isExpressBooking(b);
+    const [, m, d] = b.date.split('-');
+    const monthShort = new Date(2000, Number(m) - 1, 1).toLocaleDateString('en-GB', { month: 'short' });
+    return (
+      <motion.button
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setSelectedBooking(b.id)}
+        className="text-left rounded-2xl p-3 bg-muted/30 hover:bg-muted/50 active:bg-muted/60 transition-colors flex flex-col gap-2"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isExpress ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
+              {isExpress ? <Zap className="h-3.5 w-3.5 text-amber-600" strokeWidth={1.5} /> : <PIcon className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none">{Number(d)} {monthShort}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{formatTime12h(b.time)}</p>
+            </div>
+          </div>
+          <span className="text-sm font-display font-black text-primary shrink-0">£{b.total_cost}</span>
+        </div>
+        <h4 className="font-semibold text-foreground text-xs leading-tight line-clamp-2">{b.service_name}</h4>
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
+          <MapPin className="h-2.5 w-2.5 shrink-0" strokeWidth={1.5} />
+          <span className="truncate">{b.address_postcode}</span>
+        </div>
+        <Badge className="text-[8px] rounded-md font-medium border-0 capitalize bg-muted text-muted-foreground self-start">
+          {b.status.replace('-', ' ')}
+        </Badge>
+      </motion.button>
+    );
+  };
+
   // ─── Done Card with expanded details ───
   const DoneCard = ({ b }: { b: any }) => {
     const isExpress = isExpressBooking(b);
@@ -887,7 +926,7 @@ export default function CleanerJobs() {
             </TabsContent>
 
             <TabsContent value="upcoming">
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 <ToggleGroup type="single" value={upcomingFilter} onValueChange={v => setUpcomingFilter(v || 'today')} className="bg-muted/30 rounded-xl p-1 w-full">
                   <ToggleGroupItem value="today" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
                     Today ({upcomingToday.length})
@@ -899,9 +938,25 @@ export default function CleanerJobs() {
                     )}
                   </ToggleGroupItem>
                 </ToggleGroup>
+                {filteredUpcoming.length > 0 && (
+                  <div className="flex justify-end">
+                    <ToggleGroup type="single" value={upcomingView} onValueChange={v => v && setUpcomingView(v as 'list' | 'tile')} className="bg-muted/30 rounded-xl p-0.5">
+                      <ToggleGroupItem value="list" aria-label="List view" className="rounded-lg h-7 w-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                        <ListIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="tile" aria-label="Tile view" className="rounded-lg h-7 w-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                        <LayoutGrid className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                )}
               </div>
               {filteredUpcoming.length === 0 ? (
                 <EmptyState icon={CalendarDays} title={upcomingFilter === 'today' ? 'No jobs today' : 'No upcoming jobs'} description={upcomingFilter === 'today' ? 'Check upcoming for future jobs' : 'Accept a job to see it here'} />
+              ) : upcomingView === 'tile' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredUpcoming.map(b => <JobTile key={b.id} b={b} />)}
+                </div>
               ) : (
                 <div className="space-y-2">
                   {(() => {
@@ -923,6 +978,7 @@ export default function CleanerJobs() {
                 </div>
               )}
             </TabsContent>
+
 
             <TabsContent value="active">
               {activeJobs.length === 0 ? (
