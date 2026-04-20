@@ -49,7 +49,7 @@ function RescheduleButton({ booking, onReschedule }: { booking: any; onReschedul
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-3 w-full rounded-full text-xs h-10 border-2 border-primary/20 text-primary hover:bg-primary/5 font-bold">
+        <Button size="sm" className="mt-3 w-full rounded-full text-xs h-10 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
           <CalendarClock className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Reschedule
         </Button>
       </DialogTrigger>
