@@ -12,6 +12,7 @@ import BackButton from '@/components/BackButton';
 import { useService } from '@/hooks/useServices';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { formatDateOnlyForDb } from '@/lib/date';

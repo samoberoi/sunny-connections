@@ -10,6 +10,7 @@ import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
