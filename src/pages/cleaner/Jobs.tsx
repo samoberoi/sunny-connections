@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat } from 'lucide-react';
+import { Clock, MapPin, User, CircleCheck, Briefcase, Home, Building2, Landmark, Phone, MessageCircle, ChevronRight, MapPinCheck, Zap, CalendarDays, XCircle, Camera, Navigation, Timer, Star, Repeat, LayoutGrid, List as ListIcon } from 'lucide-react';
 import RecurringJobDetail from '@/components/RecurringJobDetail';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Button } from '@/components/ui/button';
@@ -114,6 +114,7 @@ export default function CleanerJobs() {
   const [hasArrived, setHasArrived] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [upcomingFilter, setUpcomingFilter] = useState<string>('today');
+  const [upcomingView, setUpcomingView] = useState<'list' | 'tile'>('list');
   const [beforePhotoUrl, setBeforePhotoUrl] = useState<string | null>(null);
   const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null);
   const [expandedDoneId, setExpandedDoneId] = useState<string | null>(null);
