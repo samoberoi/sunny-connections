@@ -926,7 +926,7 @@ export default function CleanerJobs() {
             </TabsContent>
 
             <TabsContent value="upcoming">
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 <ToggleGroup type="single" value={upcomingFilter} onValueChange={v => setUpcomingFilter(v || 'today')} className="bg-muted/30 rounded-xl p-1 w-full">
                   <ToggleGroupItem value="today" className="flex-1 rounded-lg text-[11px] font-medium h-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
                     Today ({upcomingToday.length})
@@ -938,9 +938,25 @@ export default function CleanerJobs() {
                     )}
                   </ToggleGroupItem>
                 </ToggleGroup>
+                {filteredUpcoming.length > 0 && (
+                  <div className="flex justify-end">
+                    <ToggleGroup type="single" value={upcomingView} onValueChange={v => v && setUpcomingView(v as 'list' | 'tile')} className="bg-muted/30 rounded-xl p-0.5">
+                      <ToggleGroupItem value="list" aria-label="List view" className="rounded-lg h-7 w-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                        <ListIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="tile" aria-label="Tile view" className="rounded-lg h-7 w-8 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                        <LayoutGrid className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                )}
               </div>
               {filteredUpcoming.length === 0 ? (
                 <EmptyState icon={CalendarDays} title={upcomingFilter === 'today' ? 'No jobs today' : 'No upcoming jobs'} description={upcomingFilter === 'today' ? 'Check upcoming for future jobs' : 'Accept a job to see it here'} />
+              ) : upcomingView === 'tile' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredUpcoming.map(b => <JobTile key={b.id} b={b} />)}
+                </div>
               ) : (
                 <div className="space-y-2">
                   {(() => {
@@ -962,6 +978,7 @@ export default function CleanerJobs() {
                 </div>
               )}
             </TabsContent>
+
 
             <TabsContent value="active">
               {activeJobs.length === 0 ? (
