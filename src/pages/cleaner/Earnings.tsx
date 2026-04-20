@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PoundSterling, Briefcase, Star, Clock, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
 import CleanerLayout from '@/components/layout/CleanerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';

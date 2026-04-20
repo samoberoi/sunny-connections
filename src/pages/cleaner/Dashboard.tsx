@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getTodayDateOnly, parseDateOnly } from '@/lib/date';
+import { addDaysLocal, formatDateOnlyForDb, getTodayDateOnly, parseDateOnly } from '@/lib/date';
 
 export default function CleanerDashboard() {
   const { user } = useAuth();
@@ -96,11 +96,9 @@ export default function CleanerDashboard() {
   const reminderShown = useRef(false);
   useEffect(() => {
     if (reminderShown.current || !bookings.length) return;
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = getTodayDateOnly.call ? '' : '';
+    const tomorrowStr = formatDateOnlyForDb(addDaysLocal(new Date(), 1));
     const tomorrowJobs = bookings.filter(b => b.date === tomorrowStr && ['assigned', 'en-route'].includes(b.status));
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayDateOnly();
     const todayJobs = bookings.filter(b => b.date === todayStr && ['assigned', 'en-route', 'otp-verified', 'in-progress'].includes(b.status));
 
     if (tomorrowJobs.length > 0) {
@@ -136,7 +134,7 @@ export default function CleanerDashboard() {
         .forEach(async (b) => {
           if (notifiedJobIds.current.has(b.id)) return;
           const [h, m] = b.time.split(':').map(Number);
-          const scheduled = new Date(b.date);
+          const scheduled = parseDateOnly(b.date) || new Date();
           scheduled.setHours(h, m, 0, 0);
           const diffMs = scheduled.getTime() - now.getTime();
           // Fire when between 0 and 15 minutes away
