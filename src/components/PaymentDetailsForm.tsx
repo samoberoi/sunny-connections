@@ -124,15 +124,15 @@ export default function PaymentDetailsForm({ method, amount, onPaymentComplete, 
             <span className="text-[9px] text-muted-foreground">Secure</span>
           </div>
           <Input
-            placeholder="UPI ID (e.g. name@bank)"
+            placeholder="Email or mobile for payment receipt"
             value={upiId}
             onChange={e => setUpiId(e.target.value)}
             className="h-10 rounded-xl text-sm"
           />
-          <div className="flex gap-2">
-            {['GPay', 'PhonePe', 'Paytm'].map(app => (
-              <button key={app} onClick={() => setUpiId(`user@${app.toLowerCase()}`)}
-                className="flex-1 py-2 rounded-xl border border-border text-[10px] font-semibold text-muted-foreground hover:bg-muted/50 transition-colors">
+          <div className="grid grid-cols-2 gap-2">
+            {['Apple Pay', 'Google Pay', 'Klarna', 'Bank Transfer'].map(app => (
+              <button key={app} onClick={() => setUpiId(`pay@${app.toLowerCase().replace(/\s/g, '')}.uk`)}
+                className="py-2 rounded-xl border border-border text-[10px] font-semibold text-muted-foreground hover:bg-muted/50 transition-colors">
                 {app}
               </button>
             ))}
