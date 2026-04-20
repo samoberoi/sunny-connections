@@ -21,7 +21,7 @@ function ActiveOffersBanner() {
   const { data: offers = [] } = useQuery({
     queryKey: ['active-offers'],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateOnly();
       const { data } = await supabase.from('offers').select('*').eq('active', true).lte('valid_from', today).gte('valid_until', today).limit(3);
       return data || [];
     },
