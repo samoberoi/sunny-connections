@@ -283,10 +283,10 @@ export default function SearchingCleaner() {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" onClick={handleCall} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                      <Button size="sm" onClick={handleCall} className="flex-1 rounded-xl font-bold text-xs h-10 bg-primary text-primary-foreground hover:bg-primary/90">
                         <Phone className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Call
                       </Button>
-                      <Button variant="outline" size="sm" onClick={handleChat} className="flex-1 rounded-xl font-medium text-xs h-10 border-primary/20 text-primary hover:bg-accent">
+                      <Button size="sm" onClick={handleChat} className="flex-1 rounded-xl font-bold text-xs h-10 bg-primary text-primary-foreground hover:bg-primary/90">
                         <MessageCircle className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} /> Chat
                       </Button>
                     </div>
