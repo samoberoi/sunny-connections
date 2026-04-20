@@ -59,6 +59,16 @@ export default function Booking() {
         total_cost: totalCost, property_type: propertyType, notes: notes || null,
       }).select().single();
       if (error) throw error;
+
+      // Notify matching cleaners so the job appears in their notifications
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: service.name,
+        customer_name: user.name,
+        date: formatDateOnlyForDb(date),
+        time,
+        address_postcode: postcode,
+      });
+
       navigate('/searching-cleaner', {
         state: {
           bookingId: booking.id,

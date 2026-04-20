@@ -262,6 +262,15 @@ export default function ScheduleBooking() {
         message: `Your ${selectedNames} booking is confirmed. We're searching for a cleaner.`, type: 'booking',
       });
 
+      // Notify all matching cleaners so they can accept the job from their notifications
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: `Scheduled: ${selectedNames}`,
+        customer_name: user.name,
+        date: formatDateOnlyForDb(date),
+        time,
+        address_postcode: postcode,
+      });
+
       if (useCoins && coinDiscount > 0 && user.id) {
         const actualCoinsUsed = Math.min(coinDiscount, coinBalance);
         await supabase.from('customer_coins').update({

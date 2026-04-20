@@ -102,6 +102,15 @@ export default function ExpressBooking() {
       }).select().single();
       if (error) throw error;
 
+      // Notify matching cleaners of the new express job
+      await notifyMatchingCleanersOfNewBooking({
+        service_name: `Express: ${service.name}`,
+        customer_name: user.name,
+        date: today,
+        time: now.toTimeString().slice(0, 5),
+        address_postcode: postcode,
+      });
+
       // Increment coupon used_count if applied
       if (couponDiscount > 0) {
         const storedCode = localStorage.getItem('claimed_coupon_code');
