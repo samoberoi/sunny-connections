@@ -175,19 +175,15 @@
 @layer utilities {
   .bg-primary,
   .bg-sidebar-primary,
-  [class*="bg-primary"]:not([class*="bg-primary/"]):not([class*="bg-primary-"]) {
+  [class~="bg-primary"],
+  [class~="bg-sidebar-primary"] {
     color: hsl(var(--primary-foreground)) !important;
   }
-  .bg-primary *:not(svg):not(path):not([class*="text-"]),
-  .bg-sidebar-primary *:not(svg):not(path):not([class*="text-"]) {
-    color: hsl(var(--primary-foreground)) !important;
-  }
-  /* Allow explicit overrides: text-white / text-background on neon are user errors —
-     force them to black anyway since the rule is "neon = always black text". */
-  .bg-primary .text-white,
-  .bg-primary .text-background,
-  .bg-primary.text-white,
-  .bg-primary.text-background {
-    color: hsl(var(--primary-foreground)) !important;
+
+  .bg-primary *,
+  .bg-sidebar-primary *,
+  [class~="bg-primary"] *,
+  [class~="bg-sidebar-primary"] * {
+    color: inherit !important;
   }
 }
