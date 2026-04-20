@@ -170,7 +170,7 @@ export default function CustomerProfile() {
             <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mt-1">
               <Smartphone className="h-3 w-3" strokeWidth={1.5} /> {user?.phone || '—'}
             </div>
-            {profile?.email && <p className="text-xs text-muted-foreground mt-0.5">{profile.email}</p>}
+            
           </div>
 
           {/* Quick stats */}
