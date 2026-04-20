@@ -765,6 +765,44 @@ export default function CleanerJobs() {
     );
   };
 
+  // ─── Compact Tile View ───
+  const JobTile = ({ b }: { b: any }) => {
+    const PIcon = propertyIcons[b.property_type] || Home;
+    const isExpress = isExpressBooking(b);
+    const [, m, d] = b.date.split('-');
+    const monthShort = new Date(2000, Number(m) - 1, 1).toLocaleDateString('en-GB', { month: 'short' });
+    return (
+      <motion.button
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setSelectedBooking(b.id)}
+        className="text-left rounded-2xl p-3 bg-muted/30 hover:bg-muted/50 active:bg-muted/60 transition-colors flex flex-col gap-2"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isExpress ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
+              {isExpress ? <Zap className="h-3.5 w-3.5 text-amber-600" strokeWidth={1.5} /> : <PIcon className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none">{Number(d)} {monthShort}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{formatTime12h(b.time)}</p>
+            </div>
+          </div>
+          <span className="text-sm font-display font-black text-primary shrink-0">£{b.total_cost}</span>
+        </div>
+        <h4 className="font-semibold text-foreground text-xs leading-tight line-clamp-2">{b.service_name}</h4>
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
+          <MapPin className="h-2.5 w-2.5 shrink-0" strokeWidth={1.5} />
+          <span className="truncate">{b.address_postcode}</span>
+        </div>
+        <Badge className="text-[8px] rounded-md font-medium border-0 capitalize bg-muted text-muted-foreground self-start">
+          {b.status.replace('-', ' ')}
+        </Badge>
+      </motion.button>
+    );
+  };
+
   // ─── Done Card with expanded details ───
   const DoneCard = ({ b }: { b: any }) => {
     const isExpress = isExpressBooking(b);
