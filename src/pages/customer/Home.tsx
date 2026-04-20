@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import cleanBathroom from '@/assets/clean-bathroom.jpg';
 import CoinBalance from '@/components/CoinBalance';
 import { toast } from 'sonner';
+import { getTodayDateOnly } from '@/lib/date';
 
 function ActiveOffersBanner() {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ export default function CustomerHome() {
     queryKey: ['unclaimed-offers', user?.id, hasBookings],
     queryFn: async () => {
       if (!user?.id || hasBookings) return [];
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateOnly();
       const { data: offers } = await supabase.from('offers').select('*').eq('active', true).lte('valid_from', today).gte('valid_until', today);
       if (!offers?.length) return [];
       const { data: claims } = await supabase.from('offer_claims').select('offer_id').eq('customer_id', user.id);
@@ -114,7 +115,7 @@ export default function CustomerHome() {
     queryKey: ['active-coupons-popup', hasBookings],
     queryFn: async () => {
       if (hasBookings) return [];
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateOnly();
       const { data } = await supabase.from('coupons').select('*').eq('active', true).gte('expires_at', today);
       return (data || []).filter(c => c.used_count < c.max_uses);
     },
