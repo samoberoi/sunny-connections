@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar, Pencil, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { formatDateUK } from '@/lib/date';
 
 function CleanerJobHistory({ cleanerId }: { cleanerId: string }) {
   const { data: history = [], isLoading } = useQuery({
@@ -43,7 +43,7 @@ function CleanerJobHistory({ cleanerId }: { cleanerId: string }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-foreground truncate">{b.service_name}</p>
-              <p className="text-[10px] text-muted-foreground">{format(new Date(b.date), 'dd MMM yyyy')} · {b.duration}h</p>
+              <p className="text-[10px] text-muted-foreground">{formatDateUK(b.date)} · {b.duration}h</p>
               <p className="text-[10px] text-muted-foreground">Customer: {b.customer_name}</p>
             </div>
             <div className="text-right shrink-0">

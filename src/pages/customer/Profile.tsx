@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown, Clock, Calendar, Star, HelpCircle, Wallet, Shield } from 'lucide-react';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { formatDateUK } from '@/lib/date';
 
 function BookingHistory({ userId }: { userId?: string }) {
   const { data: history = [], isLoading } = useQuery({
@@ -45,7 +45,7 @@ function BookingHistory({ userId }: { userId?: string }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-foreground truncate">{b.service_name}</p>
-              <p className="text-[10px] text-muted-foreground">{format(new Date(b.date), 'dd MMM yyyy')} · {b.duration}h</p>
+              <p className="text-[10px] text-muted-foreground">{formatDateUK(b.date)} · {b.duration}h</p>
               {b.cleaner_name && <p className="text-[10px] text-muted-foreground">by {b.cleaner_name}</p>}
             </div>
             <div className="text-right shrink-0">

@@ -4,6 +4,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PoundSterling, TrendingUp, MapPin, Briefcase, Users, Star, Percent } from 'lucide-react';
+import { parseDateOnly } from '@/lib/date';
 
 const COLORS = ['hsl(78,85%,45%)', 'hsl(215,80%,55%)', 'hsl(160,65%,48%)', 'hsl(42,80%,55%)', 'hsl(0,60%,55%)', 'hsl(280,60%,55%)'];
 
@@ -48,7 +49,8 @@ export default function AdminReports() {
   const monthlyData = useMemo(() => {
     const map: Record<string, number> = {};
     completed.forEach((b: any) => {
-      const d = new Date(b.date);
+      const d = parseDateOnly(b.date);
+      if (!d) return;
       const key = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
       map[key] = (map[key] || 0) + Number(b.total_cost);
     });

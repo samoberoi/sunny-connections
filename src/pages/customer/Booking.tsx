@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { formatDateOnlyForDb } from '@/lib/date';
 
 export default function Booking() {
   const [searchParams] = useSearchParams();
@@ -53,7 +54,7 @@ export default function Booking() {
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name,
         service_id: service.id, service_name: service.name,
-        date: date.toISOString().split('T')[0], time, duration, recurring,
+        date: formatDateOnlyForDb(date), time, duration, recurring,
         address_line1: address, address_postcode: postcode, address_city: 'London',
         total_cost: totalCost, property_type: propertyType, notes: notes || null,
       }).select().single();
@@ -62,7 +63,7 @@ export default function Booking() {
         state: {
           bookingId: booking.id,
           service: { id: service.id, name: service.name, ratePerHour: service.rate_per_hour },
-          date: date.toISOString(), time, duration, recurring, address, postcode, totalCost,
+          date: formatDateOnlyForDb(date), time, duration, recurring, address, postcode, totalCost,
           otp: booking.otp,
         }
       });

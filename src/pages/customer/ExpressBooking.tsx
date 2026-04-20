@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useServicesByMode } from '@/hooks/useServices';
 import ActiveOffers from '@/components/ActiveOffers';
+import { getTodayDateOnly } from '@/lib/date';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -92,9 +93,10 @@ export default function ExpressBooking() {
     try {
       const now = new Date();
       const finalCost = totalPrice;
+      const today = getTodayDateOnly();
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: service.id, service_name: `Express: ${service.name}`,
-        date: now.toISOString().split('T')[0], time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration),
+        date: today, time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration),
         recurring: 'none', address_line1: address, address_postcode: postcode, address_city: 'London', total_cost: finalCost, property_type: 'house',
         payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
@@ -108,7 +110,7 @@ export default function ExpressBooking() {
         }
       }
 
-      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: now.toISOString(), time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration), address, postcode, totalCost: finalCost, otp: booking.otp, isExpress: true } });
+      navigate('/searching-cleaner', { state: { bookingId: booking.id, service: { name: `Express: ${service.name}` }, date: today, time: now.toTimeString().slice(0, 5), duration: Math.ceil(service.min_duration), address, postcode, totalCost: finalCost, otp: booking.otp, isExpress: true } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
 

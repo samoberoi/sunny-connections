@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import { toast } from 'sonner';
+import { formatDateUK } from '@/lib/date';
 
 export default function BookingConfirmation() {
   const { state } = useLocation();
@@ -70,7 +71,7 @@ export default function BookingConfirmation() {
               <CalendarDays className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {state?.date ? new Date(state.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Today'} at {state?.time || '09:00'}
+                  {state?.date ? formatDateUK(state.date, { weekday: 'long', day: 'numeric', month: 'long' }) : 'Today'} at {state?.time || '09:00'}
                 </p>
                 <p className="text-xs text-muted-foreground">{state?.duration || 3} hours · {state?.service?.name || 'Cleaning'}</p>
               </div>
