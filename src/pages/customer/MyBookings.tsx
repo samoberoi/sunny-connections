@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { formatDateUK, parseDateOnly } from '@/lib/date';
 
 const statusStyles: Record<string, string> = {
   pending: 'bg-primary/15 text-primary-ink',
@@ -43,7 +44,7 @@ const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'
 
 function RescheduleButton({ booking, onReschedule }: { booking: any; onReschedule: (date: string, time: string) => void }) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date(booking.date));
+  const [date, setDate] = useState<Date | undefined>(parseDateOnly(booking.date) ?? undefined);
   const [time, setTime] = useState(booking.time?.slice(0, 5) || '10:00');
 
   return (
@@ -190,13 +191,6 @@ export default function MyBookings() {
     },
     onError: () => toast.error('Failed to skip session'),
   });
-
-  function formatDateUK(dateStr: string): string {
-    if (!dateStr) return '';
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
 
   function formatTime12h(timeStr: string): string {
     if (!timeStr) return '';

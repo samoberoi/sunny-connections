@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getTodayDateOnly } from '@/lib/date';
 
 const propertyIcons: Record<string, any> = { flat: Building2, house: Home, office: Landmark };
 
@@ -238,7 +239,7 @@ export default function CleanerJobs() {
   const scheduleCount = available.filter(b => !isExpressBooking(b)).length;
 
   const upcomingJobs = allBookings.filter(b => b.cleaner_id === cleanerRecord?.id && ['assigned', 'en-route'].includes(b.status));
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayDateOnly();
   const upcomingToday = upcomingJobs.filter(b => b.date === todayStr);
   const upcomingFutureRaw = upcomingJobs.filter(b => b.date > todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
