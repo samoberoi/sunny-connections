@@ -17,7 +17,7 @@
 
     --primary: 78 85% 65%;
     --primary-foreground: 0 0% 7%;
-    --primary-ink: 78 55% 30%;
+    --primary-ink: 78 70% 28%;
 
     --secondary: 0 0% 93%;
     --secondary-foreground: 0 0% 7%;
@@ -109,6 +109,14 @@
 }
 
 @layer utilities {
+  /* Override: text-primary uses readable deep-green ink everywhere by default.
+     Use .text-primary-neon explicitly for the neon lime on dark backgrounds. */
+  .text-primary {
+    color: hsl(var(--primary-ink)) !important;
+  }
+  .text-primary-neon {
+    color: hsl(var(--primary)) !important;
+  }
   .text-gradient {
     background: linear-gradient(135deg, hsl(78, 60%, 30%), hsl(78, 70%, 42%));
     -webkit-background-clip: text;

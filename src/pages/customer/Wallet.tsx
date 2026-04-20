@@ -42,9 +42,9 @@ export default function Wallet() {
 
           {/* Balance card */}
           <div className="bg-foreground rounded-3xl p-6 text-center">
-            <Coins className="h-8 w-8 mx-auto mb-2 text-primary" strokeWidth={1.5} />
+            <Coins className="h-8 w-8 mx-auto mb-2 text-primary-neon" strokeWidth={1.5} />
             <p className="text-[10px] text-background/40 font-bold uppercase tracking-wider mb-1">Your Balance</p>
-            <div className="text-5xl font-display font-black text-primary">{coins?.balance || 0}</div>
+            <div className="text-5xl font-display font-black text-primary-neon">{coins?.balance || 0}</div>
             <p className="text-xs text-background/40 mt-1">CleanFit Coins</p>
           </div>
 
