@@ -23,6 +23,7 @@ import { useCoinBalance } from '@/components/CoinBalance';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { useServicesByMode, type ServiceRow } from '@/hooks/useServices';
 import ActiveOffers from '@/components/ActiveOffers';
+import { addDaysLocal, formatDateOnlyForDb } from '@/lib/date';
 
 type Category = 'cleaning' | 'housekeeping';
 
@@ -216,7 +217,7 @@ export default function ScheduleBooking() {
       if (!serviceId) { toast.error('No services selected'); setSubmitting(false); return; }
       const { data: booking, error } = await supabase.from('bookings').insert({
         customer_id: user.id, customer_name: user.name, service_id: serviceId, service_name: `Scheduled: ${selectedNames}`,
-        date: date.toISOString().split('T')[0], time, duration, recurring, address_line1: address, address_postcode: postcode,
+        date: formatDateOnlyForDb(date), time, duration, recurring, address_line1: address, address_postcode: postcode,
         address_city: 'London', total_cost: totalCost, property_type: propertyType, notes: notes || null,
         tier, payment_method: paymentMethod, referral_code: referralCode || null,
       }).select().single();
@@ -228,13 +229,12 @@ export default function ScheduleBooking() {
         const futureBookings = [];
         let i = 1;
         while (true) {
-          const futureDate = new Date(date);
-          futureDate.setDate(futureDate.getDate() + intervalDays * i);
+          const futureDate = addDaysLocal(date, intervalDays * i);
           if (futureDate > endDate) break;
           futureBookings.push({
             customer_id: user.id, customer_name: user.name, service_id: serviceId,
             service_name: `Scheduled: ${selectedNames}`,
-            date: futureDate.toISOString().split('T')[0], time, duration, recurring,
+            date: formatDateOnlyForDb(futureDate), time, duration, recurring,
             address_line1: address, address_postcode: postcode, address_city: 'London',
             total_cost: totalCost, property_type: propertyType, notes: notes || null,
             tier, payment_method: paymentMethod, referral_code: referralCode || null,
@@ -283,7 +283,7 @@ export default function ScheduleBooking() {
         }
       }
 
-      navigate('/booking-confirmation', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: date.toISOString(), time, duration, recurring, address, postcode, totalCost, otp: booking.otp, isScheduled: true } });
+      navigate('/booking-confirmation', { state: { bookingId: booking.id, service: { name: `Scheduled: ${selectedNames}` }, date: formatDateOnlyForDb(date), time, duration, recurring, address, postcode, totalCost, otp: booking.otp, isScheduled: true } });
     } catch { toast.error('Failed to create booking'); } finally { setSubmitting(false); }
   };
 
