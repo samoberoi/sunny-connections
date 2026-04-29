@@ -11,6 +11,8 @@ import SplashScreen from "@/components/SplashScreen";
 // Pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/legal/Privacy";
+import Support from "./pages/legal/Support";
 
 // Customer
 import Login from "./pages/customer/Login";
@@ -79,6 +81,8 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/cleaner/login" element={<Login />} />
               <Route path="/admin/login" element={<Login />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/support" element={<Support />} />
 
               {/* Customer */}
               <Route path="/home" element={<ProtectedRoute allowedRoles={['customer']}><CustomerHome /></ProtectedRoute>} />
