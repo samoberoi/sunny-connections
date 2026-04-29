@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.3cba4a3ec1f34ad6a31489cd8cd75c89',
+  appId: 'app.cleanfit.mobile',
   appName: 'Clean Fit',
   webDir: 'dist',
   server: {
