@@ -36,7 +36,6 @@ export default function Login() {
   const displayPhone = phone.length > 0 ? phone.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1 $2 $3').trim() : '';
 
   const roleLabels: Record<UserRole, string> = { customer: 'Clean Fit', cleaner: 'Clean Fit Pro', admin: 'Admin Panel' };
-  const roleHints: Record<UserRole, string> = { customer: '1111111111', cleaner: '2222222222', admin: '0000000000' };
 
   const handleSendOTP = async () => {
     if (phone.length < 10) { toast.error('Please enter a valid 10-digit mobile number'); return; }
@@ -44,7 +43,7 @@ export default function Login() {
     await login(phone, role);
     setIsLoading(false);
     setStep('otp');
-    toast.success('OTP sent! Use 1111 for testing.');
+    toast.success('OTP sent to your mobile');
   };
 
   const goToDashboard = () => {
@@ -58,7 +57,7 @@ export default function Login() {
     setIsLoading(true);
     const success = await verifyOtp(otp);
     setIsLoading(false);
-    if (!success) { toast.error('Invalid OTP. Use 1111 for testing.'); return; }
+    if (!success) { toast.error('Invalid OTP. Please try again.'); return; }
 
     // Admin access guard: check user_roles table
     if (role === 'admin') {
@@ -127,7 +126,7 @@ export default function Login() {
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Smartphone className="h-4 w-4 text-foreground" strokeWidth={1.5} />
                   </div>
-                  <Input value={displayPhone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={roleHints[role]}
+                  <Input value={displayPhone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder="Enter mobile number"
                     inputMode="numeric" maxLength={12}
                     className="pl-14 h-13 rounded-2xl border-2 border-border bg-background text-lg font-bold focus-visible:ring-primary/30 focus-visible:border-primary" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">{phone.length}/10</span>
@@ -136,9 +135,6 @@ export default function Login() {
                   className="w-full h-13 text-base font-bold rounded-full disabled:opacity-40 bg-foreground text-background hover:bg-foreground/90">
                   {isLoading ? 'Sending...' : 'Send OTP'}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  Test: <span className="font-mono font-bold text-foreground">{roleHints[role]}</span> · OTP: <span className="font-mono font-bold text-foreground">1111</span>
-                </p>
               </motion.div>
             ) : (
               <motion.div key="otp" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
