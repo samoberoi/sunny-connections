@@ -33,14 +33,16 @@ Deno.serve(async (req) => {
     // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin").maybeSingle();
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const isAdmin = !!roleData;
+
+    const body = await req.json().catch(() => ({}));
+    // Allow self-delete: if userId omitted or equals caller, treat as self-delete
+    const userId: string = (body?.userId && typeof body.userId === "string") ? body.userId : callerId;
+
+    if (userId !== callerId && !isAdmin) {
+      return new Response(JSON.stringify({ error: "You can only delete your own account" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { userId } = await req.json();
-    if (!userId || typeof userId !== "string") {
-      return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
 
     // Get cleaner id if exists
     const { data: cleanerData } = await adminClient.from("cleaners").select("id").eq("user_id", userId).maybeSingle();
