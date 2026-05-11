@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown, Clock, Calendar, Star, HelpCircle, Wallet, Shield } from 'lucide-react';
+import { Smartphone, MapPin, LogOut, Plus, Trash2, Pencil, Check, X, Home, Heart, Bed, ShowerHead, Crown, Clock, Calendar, Star, HelpCircle, Wallet, Shield, Camera, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
