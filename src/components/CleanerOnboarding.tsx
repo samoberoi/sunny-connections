@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrentPositionSafe } from '@/lib/geolocate';
 import { toast } from 'sonner';
 import { useServices } from '@/hooks/useServices';
 
@@ -42,9 +43,7 @@ export default function CleanerOnboarding({ onComplete }: CleanerOnboardingProps
   const autoDetect = async () => {
     setDetecting(true);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
+      const pos = await getCurrentPositionSafe(10_000);
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
       const data = await res.json();
       if (data?.address) {
