@@ -265,6 +265,7 @@ export default function CleanerProfile() {
             className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
           </Button>
+          <DeleteAccountButton />
         </div>
       </PageTransition>
     </CleanerLayout>
