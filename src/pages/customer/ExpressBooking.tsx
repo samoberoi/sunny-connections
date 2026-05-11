@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { notifyMatchingCleanersOfNewBooking } from '@/lib/notifyCleaners';
 import CouponCodeInput from '@/components/CouponCodeInput';
 import { toast } from 'sonner';
+import { getCurrentPositionSafe } from '@/lib/geolocate';
 import { useQuery } from '@tanstack/react-query';
 import { useServicesByMode } from '@/hooks/useServices';
 import ActiveOffers from '@/components/ActiveOffers';
@@ -66,20 +67,16 @@ export default function ExpressBooking() {
   const autoDetectAddress = async () => {
     setDetecting(true);
     try {
-      if ('geolocation' in navigator) {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-        );
-        const { latitude, longitude } = pos.coords;
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
-        const data = await res.json();
-        if (data?.address) {
-          const addr = data.address;
-          setPostcode(addr.postcode || '');
-          setAddress([addr.house_number, addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean).join(', '));
-          setSelectedAddressId(null);
-          toast.success('Address detected!');
-        }
+      const pos = await getCurrentPositionSafe(10_000);
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+      const data = await res.json();
+      if (data?.address) {
+        const addr = data.address;
+        setPostcode(addr.postcode || '');
+        setAddress([addr.house_number, addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean).join(', '));
+        setSelectedAddressId(null);
+        toast.success('Address detected!');
       }
     } catch {
       toast.error('Could not detect location');
