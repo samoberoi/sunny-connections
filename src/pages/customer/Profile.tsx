@@ -9,6 +9,7 @@ import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import ReferralCard from '@/components/ReferralCard';
+import DeleteAccountButton from '@/components/DeleteAccountButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -355,6 +356,7 @@ export default function CustomerProfile() {
           <Button onClick={async () => { await logout(); navigate('/'); }} variant="outline" className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
           </Button>
+          <DeleteAccountButton />
         </div>
       </PageTransition>
     </CustomerLayout>

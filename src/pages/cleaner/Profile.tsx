@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar, Pencil, Save, X } from 'lucide-react';
+import DeleteAccountButton from '@/components/DeleteAccountButton';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -265,6 +266,7 @@ export default function CleanerProfile() {
             className="w-full h-12 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/5 font-bold">
             <LogOut className="h-4 w-4 mr-2" strokeWidth={1.5} /> Log Out
           </Button>
+          <DeleteAccountButton />
         </div>
       </PageTransition>
     </CleanerLayout>
