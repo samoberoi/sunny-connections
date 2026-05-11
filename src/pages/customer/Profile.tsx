@@ -180,9 +180,44 @@ export default function CustomerProfile() {
 
           {/* Avatar card */}
           <div className="bg-card rounded-3xl p-6 shadow-soft border border-border text-center">
-            <div className="w-20 h-20 rounded-full bg-foreground mx-auto mb-4 flex items-center justify-center text-background font-bold text-2xl">
-              {user?.name?.[0] || 'A'}
+            <div className="relative w-24 h-24 mx-auto mb-4">
+              {profile?.avatar ? (
+                <img src={profile.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover border-2 border-primary/30" />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-3xl">
+                  {user?.name?.[0] || 'A'}
+                </div>
+              )}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                aria-label="Change profile picture"
+                className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md border-2 border-card disabled:opacity-50"
+              >
+                {uploadingAvatar ? <span className="text-[9px] font-bold">…</span> : <Pencil className="h-4 w-4" strokeWidth={2} />}
+              </button>
             </div>
+
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFile} />
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleAvatarFile} />
+
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <button
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground text-background text-[11px] font-bold disabled:opacity-50"
+              >
+                <Camera className="h-3 w-3" strokeWidth={2} /> Scan face
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-foreground text-[11px] font-bold disabled:opacity-50"
+              >
+                <Upload className="h-3 w-3" strokeWidth={2} /> Upload photo
+              </button>
+            </div>
+
             {editingName ? (
               <div className="flex items-center justify-center gap-2 mb-1">
                 <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-9 w-48 text-center rounded-full" autoFocus />
