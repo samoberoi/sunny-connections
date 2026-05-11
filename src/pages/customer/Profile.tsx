@@ -9,6 +9,7 @@ import CustomerLayout from '@/components/layout/CustomerLayout';
 import PageTransition from '@/components/PageTransition';
 import BackButton from '@/components/BackButton';
 import ReferralCard from '@/components/ReferralCard';
+import DeleteAccountButton from '@/components/DeleteAccountButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
