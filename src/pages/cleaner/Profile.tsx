@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Star, LogOut, Shield, Award, BadgeCheck, ShieldCheck, Copy, Clock, Calendar, Pencil, Save, X } from 'lucide-react';
+import DeleteAccountButton from '@/components/DeleteAccountButton';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
