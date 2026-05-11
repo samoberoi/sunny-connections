@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCurrentPositionSafe } from '@/lib/geolocate';
 
 interface CustomerOnboardingProps {
   onComplete: () => void;
@@ -40,11 +41,8 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
   const autoDetectAddress = async () => {
     setDetecting(true);
     try {
-      if ('geolocation' in navigator) {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-        );
-        const { latitude, longitude } = pos.coords;
+      const pos = await getCurrentPositionSafe(10_000);
+      const { latitude, longitude } = pos.coords;
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
         const data = await res.json();
         if (data?.address) {
@@ -54,7 +52,6 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
           setHouseNumber(addr.house_number || '');
           toast.success('Address detected!');
         }
-      }
     } catch {
       toast.error('Could not detect location. Please enter manually.');
     } finally {
@@ -177,7 +174,7 @@ export default function CustomerOnboarding({ onComplete }: CustomerOnboardingPro
                   <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
                     <Camera className="h-3.5 w-3.5 text-background" strokeWidth={1.5} />
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                  <input type="file" accept="image/jpeg,image/png,image/heic,image/webp" className="hidden" onChange={handleAvatarChange} />
                 </label>
               </div>
               <p className="text-center text-[10px] text-muted-foreground">Tap to add a photo (optional)</p>
