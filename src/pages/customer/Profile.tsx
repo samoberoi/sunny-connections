@@ -75,6 +75,34 @@ export default function CustomerProfile() {
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !user?.id) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setUploadingAvatar(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${user.id}/avatar_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const avatarUrl = urlData.publicUrl;
+      const { error: dbErr } = await supabase.from('profiles').update({ avatar: avatarUrl }).eq('user_id', user.id);
+      if (dbErr) throw dbErr;
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      toast.success('Profile picture updated!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile', user?.id],
